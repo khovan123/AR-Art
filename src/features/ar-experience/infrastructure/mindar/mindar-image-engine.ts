@@ -49,11 +49,11 @@ export class MindArImageEngine implements ArEngine {
     if (this.runtime) await this.stop();
 
     try {
-      const module = (await import(
+      const mindArModule = (await import(
         "mind-ar/dist/mindar-image-three.prod.js"
       )) as unknown as { MindARThree: MindArConstructor };
 
-      const runtime = new module.MindARThree({
+      const runtime = new mindArModule.MindARThree({
         container,
         imageTargetSrc: config.targetUrl,
         uiLoading: "no",
@@ -98,7 +98,8 @@ export class MindArImageEngine implements ArEngine {
         renderer.render(scene, camera);
       });
     } catch (cause) {
-      const error = cause instanceof Error ? cause : new Error("Unable to start the AR camera.");
+      const error =
+        cause instanceof Error ? cause : new Error("Unable to start the AR camera.");
       callbacks.onError(error);
       await this.stop();
       throw error;
@@ -152,7 +153,11 @@ export class MindArImageEngine implements ArEngine {
 
     const ring = new THREE.Mesh(
       new THREE.TorusGeometry(0.3, 0.008, 16, 96),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 }),
+      new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.8,
+      }),
     );
     ring.position.z = 0.06;
     group.add(ring);
