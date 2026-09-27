@@ -1,0 +1,26 @@
+import type { Metadata, Viewport } from "next";
+import { Geist } from "next/font/google";
+
+import "./globals.css";
+
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
+
+export const metadata: Metadata = {
+  title: "AR Art — WebAR image tracking",
+  description: "An open-source browser AR experience for image-tracked artwork.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#000000",
+};
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <html lang="en">
+      <body className={`${geist.variable} font-sans antialiased`}>{children}</body>
+    </html>
+  );
+}
