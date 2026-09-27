@@ -135,12 +135,15 @@ export function ArViewer({
           <div className="flex gap-2">
             {!isRunning ? (
               <Button
-                className="flex-1 bg-white text-black hover:bg-white/90"
-                onClick={() =>
-                  containerRef.current && void start(containerRef.current)
-                }
+                type="button"
+                className="flex-1 touch-manipulation bg-white text-black hover:bg-white/90 active:scale-[0.99]"
+                aria-busy={status === "starting"}
+                onClick={() => {
+                  const container = containerRef.current;
+                  if (container) void start(container);
+                }}
               >
-                Start camera
+                {status === "starting" ? "Starting camera…" : "Start camera"}
               </Button>
             ) : (
               <Button
