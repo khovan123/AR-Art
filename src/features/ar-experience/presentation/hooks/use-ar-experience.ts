@@ -12,81 +12,47 @@ import {
   preloadMindArRuntime,
 } from "@/features/ar-experience/infrastructure/mindar/mindar-image-engine";
 
-function cameraErrorMessage(cause: unknown) {
-  if (!(cause instanceof DOMException)) {
-    return cause instanceof Error ? cause.message : "Unable to access the camera.";
-  }
-
-  switch (cause.name) {
-    case "NotAllowedError":
-    case "SecurityError":
-      return "Camera permission was blocked. On iPhone Safari, open this site in Safari and allow Camera access for this website.";
-    case "NotFoundError":
-    case "DevicesNotFoundError":
-      return "No usable camera was found on this device.";
-    case "NotReadableError":
-    case "TrackStartError":
-      return "The camera is busy or unavailable. Close other camera apps and try again.";
-    case "OverconstrainedError":
-    case "ConstraintNotSatisfiedError":
-      return "The rear camera could not be selected. Try again or reload Safari.";
-    default:
-      return cause.message || "Unable to access the camera.";
-  }
-}
-
-async function requestCameraAccessFromGesture() {
-  if (!window.isSecureContext) {
-    throw new Error("Camera access requires HTTPS.");
-  }
-
-  if (!navigator.mediaDevices?.getUserMedia) {
-    throw new Error(
-      "This browser does not expose camera access. Open the page directly in Safari on iPhone.",
-    );
-  }
-
-  let stream: MediaStream | null = null;
-
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: {
-        facingMode: { ideal: "environment" },
-      },
-    });
-  } catch (cause) {
-    throw new Error(cameraErrorMessage(cause));
-  } finally {
-    stream?.getTracks().forEach((track) => track.stop());
-  }
-}
-
 export function useArExperience(config: ArExperienceConfig) {
   const sessionRef = useRef<ArSession | null>(null);
+  const startInFlightRef = useRef(false);
   const [status, setStatus] = useState<ArExperienceStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [runtimeReady, setRuntimeReady] = useState(false);
 
   useEffect(() => {
-    preloadMindArRuntime();
+    let cancelled = false;
+
+    preloadMindArRuntime()
+      .then(() => {
+        if (!cancelled) {
+          setRuntimeReady(true);
+          setError(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError("Unable to prepare the AR engine. Reload Safari and try again.");
+          setStatus("error");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const start = useCallback(
     async (container: HTMLElement) => {
-      if (status === "starting") return;
+      if (!runtimeReady || startInFlightRef.current) return;
 
+      startInFlightRef.current = true;
       setError(null);
       setStatus("starting");
 
+      const session = new ArSession(new MindArImageEngine());
+      sessionRef.current = session;
+
       try {
-        // Important for iPhone Safari: the first awaited operation from the
-        // user's tap is getUserMedia(), so the permission prompt remains tied
-        // to the user gesture. MindAR starts only after permission is granted.
-        await requestCameraAccessFromGesture();
-
-        const session = new ArSession(new MindArImageEngine());
-        sessionRef.current = session;
-
         await session.start(container, config, {
           onScanning: () => setStatus("scanning"),
           onTargetFound: () => setStatus("found"),
@@ -97,11 +63,15 @@ export function useArExperience(config: ArExperienceConfig) {
           },
         });
       } catch (cause) {
-        setError(cameraErrorMessage(cause));
+        const message =
+          cause instanceof Error ? cause.message : "Unable to start the AR camera.";
+        setError(message);
         setStatus("error");
+      } finally {
+        startInFlightRef.current = false;
       }
     },
-    [config, status],
+    [config, runtimeReady],
   );
 
   const stop = useCallback(async () => {
@@ -111,5 +81,5 @@ export function useArExperience(config: ArExperienceConfig) {
     setStatus("idle");
   }, []);
 
-  return { status, error, start, stop };
+  return { status, error, runtimeReady, start, stop };
 }
