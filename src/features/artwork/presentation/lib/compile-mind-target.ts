@@ -175,8 +175,10 @@ export async function compileMindTarget(
       buffer instanceof Uint8Array
         ? buffer
         : new Uint8Array(buffer);
+    const blobBuffer = new ArrayBuffer(bytes.byteLength);
+    new Uint8Array(blobBuffer).set(bytes);
 
-    return new Blob([bytes], { type: "application/octet-stream" });
+    return new Blob([blobBuffer], { type: "application/octet-stream" });
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : String(cause);
 
