@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
-import { Plus, ScanLine } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { ArrowUpRight, Plus, ScanLine } from "lucide-react";
 import * as THREE from "three";
 
 type ArtworkPalette = {
@@ -139,8 +140,15 @@ function addArtworkFrame(
 }
 
 export function ImmersiveArtExperience() {
+  const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
   const canvasHostRef = useRef<HTMLDivElement>(null);
   const scrollRootRef = useRef<HTMLElement>(null);
+  const endCtaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    router.prefetch("/create");
+  }, [router]);
 
   useEffect(() => {
     const host = canvasHostRef.current;
@@ -185,6 +193,10 @@ export function ImmersiveArtExperience() {
     warmLight.position.set(0, 3, -13);
     scene.add(warmLight);
 
+    const portalLight = new THREE.PointLight(0x8b5cf6, 0, 18, 2);
+    portalLight.position.set(0, 0, -31.2);
+    scene.add(portalLight);
+
     const artworkFrames = [
       addArtworkFrame(
         scene,
@@ -215,6 +227,7 @@ export function ImmersiveArtExperience() {
         -0.3,
       ),
     ];
+    const artworkBaseY = artworkFrames.map(({ group }) => group.position.y);
 
     const sculptureMaterial = new THREE.MeshPhysicalMaterial({
       color: 0xd8b4fe,
@@ -264,13 +277,122 @@ export function ImmersiveArtExperience() {
     torus.rotation.x = Math.PI * 0.42;
     scene.add(torus);
     sculptures.push(torus);
+    const sculptureBaseY = sculptures.map((mesh) => mesh.position.y);
+
+    const portalGroup = new THREE.Group();
+    portalGroup.position.set(0, 0, -33.8);
+    portalGroup.visible = false;
+    scene.add(portalGroup);
+
+    const portalMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      uniforms: {
+        uTime: { value: 0 },
+        uProgress: { value: 0 },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float uTime;
+        uniform float uProgress;
+        varying vec2 vUv;
+
+        void main() {
+          vec2 p = vUv - 0.5;
+          float radius = length(p);
+          float angle = atan(p.y, p.x);
+          float wave = sin(angle * 7.0 - uTime * 1.8 + radius * 18.0) * 0.5 + 0.5;
+          float core = smoothstep(0.52, 0.02, radius);
+          float rim = smoothstep(0.5, 0.26, radius) - smoothstep(0.29, 0.12, radius);
+
+          vec3 violet = vec3(0.48, 0.24, 1.0);
+          vec3 cyan = vec3(0.18, 0.86, 1.0);
+          vec3 color = mix(violet, cyan, wave + radius * 0.45);
+
+          float alpha = (core * 0.22 + rim * 0.62 + wave * core * 0.1) * uProgress;
+          gl_FragColor = vec4(color, alpha);
+        }
+      `,
+    });
+
+    const portalCore = new THREE.Mesh(
+      new THREE.CircleGeometry(1.72, 128),
+      portalMaterial,
+    );
+    portalGroup.add(portalCore);
+
+    const portalRingMaterials = [
+      new THREE.MeshBasicMaterial({
+        color: 0xc4b5fd,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+      new THREE.MeshBasicMaterial({
+        color: 0x67e8f9,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+      new THREE.MeshBasicMaterial({
+        color: 0xf0abfc,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    ];
+
+    const portalRings = [
+      new THREE.Mesh(
+        new THREE.TorusGeometry(2.28, 0.045, 16, 192),
+        portalRingMaterials[0],
+      ),
+      new THREE.Mesh(
+        new THREE.TorusGeometry(1.98, 0.025, 16, 192),
+        portalRingMaterials[1],
+      ),
+      new THREE.Mesh(
+        new THREE.TorusGeometry(2.56, 0.018, 12, 192),
+        portalRingMaterials[2],
+      ),
+    ];
+    portalRings.forEach((ring) => portalGroup.add(ring));
+
+    const shardGeometry = new THREE.BoxGeometry(0.055, 0.42, 0.07);
+    const shardMaterial = new THREE.MeshBasicMaterial({
+      color: 0xe0e7ff,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const portalShards: THREE.Mesh[] = [];
+    for (let index = 0; index < 18; index += 1) {
+      const angle = (index / 18) * Math.PI * 2;
+      const shard = new THREE.Mesh(shardGeometry, shardMaterial);
+      shard.position.set(Math.cos(angle) * 2.82, Math.sin(angle) * 2.82, 0);
+      shard.rotation.z = angle + Math.PI / 2;
+      portalGroup.add(shard);
+      portalShards.push(shard);
+    }
 
     const particleCount = window.innerWidth < 768 ? 450 : 900;
     const particlePositions = new Float32Array(particleCount * 3);
     for (let index = 0; index < particleCount; index += 1) {
       particlePositions[index * 3] = (Math.random() - 0.5) * 18;
       particlePositions[index * 3 + 1] = (Math.random() - 0.5) * 12;
-      particlePositions[index * 3 + 2] = 4 - Math.random() * 38;
+      particlePositions[index * 3 + 2] = 4 - Math.random() * 46;
     }
 
     const particleGeometry = new THREE.BufferGeometry();
@@ -301,7 +423,17 @@ export function ImmersiveArtExperience() {
       const rect = scrollRoot.getBoundingClientRect();
       const scrollable = Math.max(scrollRoot.offsetHeight - window.innerHeight, 1);
       scrollProgress = THREE.MathUtils.clamp(-rect.top / scrollable, 0, 1);
+      const endProgress = THREE.MathUtils.smootherstep(scrollProgress, 0.78, 0.98);
       scrollRoot.style.setProperty("--scroll-progress", String(scrollProgress));
+      scrollRoot.style.setProperty("--end-progress", String(endProgress));
+
+      const endCta = endCtaRef.current;
+      if (endCta) {
+        endCta.style.opacity = String(endProgress);
+        endCta.style.transform = `translate(-50%, -50%) scale(${0.88 + endProgress * 0.12})`;
+        endCta.style.pointerEvents = endProgress > 0.72 ? "auto" : "none";
+        endCta.setAttribute("aria-hidden", endProgress > 0.72 ? "false" : "true");
+      }
     };
 
     const updatePointer = (event: PointerEvent) => {
@@ -323,11 +455,15 @@ export function ImmersiveArtExperience() {
       pointer.lerp(targetPointer, 0.035);
 
       const travel = THREE.MathUtils.smootherstep(scrollProgress, 0, 1);
-      const targetZ = 8.2 - travel * 32.8;
-      const targetX =
+      const endFocus = THREE.MathUtils.smootherstep(scrollProgress, 0.8, 1);
+      const endReveal = THREE.MathUtils.smootherstep(scrollProgress, 0.74, 0.98);
+      const targetZ = 8.2 - travel * 35.6;
+      const pathX =
         Math.sin(travel * Math.PI * 3.4) * 0.82 + pointer.x * 0.34;
-      const targetY =
+      const pathY =
         Math.cos(travel * Math.PI * 2.7) * 0.42 + pointer.y * 0.24;
+      const targetX = THREE.MathUtils.lerp(pathX, pointer.x * 0.11, endFocus);
+      const targetY = THREE.MathUtils.lerp(pathY, pointer.y * 0.08, endFocus);
 
       camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetX, 0.055);
       camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetY, 0.055);
@@ -342,14 +478,40 @@ export function ImmersiveArtExperience() {
 
       artworkFrames.forEach(({ group }, index) => {
         group.rotation.z = Math.sin(time * 0.18 + index) * 0.018;
-        group.position.y += Math.sin(time * 0.65 + index * 1.7) * 0.0007;
+        group.position.y =
+          artworkBaseY[index] + Math.sin(time * 0.65 + index * 1.7) * 0.055;
       });
 
       sculptures.forEach((mesh, index) => {
         mesh.rotation.x = time * (0.12 + index * 0.035);
         mesh.rotation.y = time * (0.18 + index * 0.04);
-        mesh.position.y += Math.sin(time * 0.8 + index) * 0.0012;
+        mesh.position.y =
+          sculptureBaseY[index] + Math.sin(time * 0.8 + index) * 0.09;
       });
+
+      portalGroup.visible = endReveal > 0.001;
+      portalGroup.scale.setScalar(0.72 + endReveal * 0.28);
+      portalGroup.rotation.z = time * 0.025;
+      portalMaterial.uniforms.uTime.value = time;
+      portalMaterial.uniforms.uProgress.value = endReveal;
+      portalRingMaterials[0].opacity = endReveal * 0.9;
+      portalRingMaterials[1].opacity = endReveal * 0.58;
+      portalRingMaterials[2].opacity = endReveal * 0.32;
+      portalRings[0].rotation.z = time * 0.12;
+      portalRings[1].rotation.z = -time * 0.17;
+      portalRings[2].rotation.z = time * 0.07;
+      portalLight.intensity = endReveal * 42;
+
+      portalShards.forEach((shard, index) => {
+        const phase = time * 0.45 + index * 0.7;
+        const baseAngle = (index / portalShards.length) * Math.PI * 2;
+        const radius = 2.82 + Math.sin(phase) * 0.16;
+        shard.position.x = Math.cos(baseAngle + time * 0.035) * radius;
+        shard.position.y = Math.sin(baseAngle + time * 0.035) * radius;
+        shard.rotation.z = baseAngle + time * 0.035 + Math.PI / 2;
+        shard.scale.y = 0.72 + Math.sin(phase * 1.7) * 0.22;
+      });
+      shardMaterial.opacity = endReveal * 0.58;
 
       particles.rotation.y = time * 0.008;
       particles.rotation.x = Math.sin(time * 0.09) * 0.035;
@@ -397,10 +559,26 @@ export function ImmersiveArtExperience() {
 
       particleGeometry.dispose();
       particles.material.dispose();
+      portalCore.geometry.dispose();
+      portalMaterial.dispose();
+      portalRings.forEach((ring) => ring.geometry.dispose());
+      portalRingMaterials.forEach((material) => material.dispose());
+      shardGeometry.dispose();
+      shardMaterial.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     };
   }, []);
+
+  const navigateToCreate = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    if (isNavigating) return;
+
+    setIsNavigating(true);
+    window.setTimeout(() => {
+      router.push("/create");
+    }, 680);
+  };
 
   return (
     <main
@@ -442,6 +620,29 @@ export function ImmersiveArtExperience() {
             <span className="block size-1.5 rounded-full bg-white/70" />
           </div>
         </div>
+
+        <div
+          ref={endCtaRef}
+          aria-hidden="true"
+          className="immersive-end-cta absolute left-1/2 top-1/2 z-30 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center opacity-0"
+        >
+          <Link
+            href="/create"
+            onClick={navigateToCreate}
+            aria-label="Create an AR artwork"
+            className="immersive-create-button group relative flex h-16 min-w-48 items-center justify-center gap-4 overflow-hidden rounded-full border border-white/18 bg-white px-7 text-black shadow-[0_0_80px_rgba(196,181,253,0.28)] transition duration-500 hover:scale-[1.04] hover:shadow-[0_0_110px_rgba(103,232,249,0.34)] sm:h-20 sm:min-w-56"
+          >
+            <span className="relative z-10 text-[0.7rem] font-semibold tracking-[0.34em] sm:text-xs">
+              CREATE
+            </span>
+            <ArrowUpRight className="relative z-10 size-4 transition duration-500 group-hover:translate-x-1 group-hover:-translate-y-1" />
+          </Link>
+        </div>
+
+        <div
+          aria-hidden="true"
+          className={`immersive-route-transition ${isNavigating ? "is-active" : ""}`}
+        />
       </div>
     </main>
   );
