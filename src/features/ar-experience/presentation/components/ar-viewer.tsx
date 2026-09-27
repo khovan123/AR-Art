@@ -137,13 +137,12 @@ export function ArViewer({
               <Button
                 type="button"
                 className="flex-1 touch-manipulation bg-white text-black hover:bg-white/90 active:scale-[0.99]"
-                aria-busy={status === "starting"}
                 onClick={() => {
                   const container = containerRef.current;
                   if (container) void start(container);
                 }}
               >
-                {status === "starting" ? "Starting camera…" : "Start camera"}
+                Start camera
               </Button>
             ) : (
               <Button
