@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/atoms/badge";
+import { CreatorSpatialScene } from "@/features/artwork/presentation/components/creator-spatial-scene";
 import { Button } from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
@@ -175,8 +176,11 @@ export function ArtworkCreateForm() {
 
   if (result) {
     return (
-      <main className="creator-studio relative min-h-screen overflow-hidden px-5 py-6 text-white sm:px-8">
-        <div className="mx-auto w-full max-w-5xl">
+      <main className="creator-studio creator-studio-immersive relative min-h-screen overflow-hidden px-5 py-6 text-white sm:px-8">
+        <CreatorSpatialScene />
+        <div className="creator-ambient-orb creator-ambient-orb-a" />
+        <div className="creator-ambient-orb creator-ambient-orb-b" />
+        <div className="relative z-10 mx-auto w-full max-w-5xl">
           <Link href="/" className="inline-flex">
             <Button
               variant="outline"
@@ -187,7 +191,7 @@ export function ArtworkCreateForm() {
             </Button>
           </Link>
 
-          <section className="creator-panel mx-auto mt-12 grid max-w-5xl gap-8 rounded-[2.4rem] p-6 sm:p-9 md:grid-cols-[1.08fr_0.92fr]">
+          <section className="creator-panel creator-panel-3d creator-enter creator-enter-delay-1 mx-auto mt-12 grid max-w-5xl gap-8 rounded-[2.4rem] p-6 sm:p-9 md:grid-cols-[1.08fr_0.92fr]">
             <div>
               <Badge className="border-emerald-400/20 bg-emerald-400/10 text-emerald-200">
                 <Check className="mr-1 size-3" aria-hidden="true" />
@@ -252,7 +256,11 @@ export function ArtworkCreateForm() {
   }
 
   return (
-    <main className="creator-studio relative min-h-screen overflow-hidden">
+    <main className="creator-studio creator-studio-immersive relative min-h-screen overflow-hidden">
+      <CreatorSpatialScene />
+      <div className="creator-ambient-orb creator-ambient-orb-a" />
+      <div className="creator-ambient-orb creator-ambient-orb-b" />
+      <div className="pointer-events-none fixed inset-0 z-[1] bg-[radial-gradient(circle_at_70%_40%,transparent_0%,rgba(5,5,10,0.18)_38%,rgba(5,5,10,0.82)_100%)]" />
       <div className="relative z-10 mx-auto w-full max-w-[90rem] px-5 py-6 lg:px-10">
         <div className="flex items-center justify-between">
           <Link href="/">
@@ -265,7 +273,7 @@ export function ArtworkCreateForm() {
         </div>
 
         <section className="mx-auto mt-12 max-w-6xl">
-          <div className="max-w-2xl">
+          <div className="creator-enter max-w-2xl">
             <p className="text-xs font-medium uppercase tracking-[0.28em] text-violet-300/65">Build a spatial artwork</p>
             <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-[-0.05em] text-white sm:text-6xl">
               Upload once. Put the QR beside the artwork.
@@ -281,7 +289,7 @@ export function ArtworkCreateForm() {
             onSubmit={handleSubmit}
             className="mt-12 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]"
           >
-            <div className="creator-panel rounded-[2rem] p-5 sm:p-7">
+            <div className="creator-panel creator-panel-3d creator-enter creator-enter-delay-1 rounded-[2rem] p-5 sm:p-7">
               <div className="grid gap-6">
                 <div className="grid gap-2">
                   <Label htmlFor="title">Artwork title</Label>
@@ -322,7 +330,9 @@ export function ArtworkCreateForm() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="group cursor-pointer rounded-2xl border border-dashed border-white/12 bg-white/[0.025] p-4 transition hover:border-violet-300/30 hover:bg-white/[0.055]">
+                  <label
+                    className={`creator-file-card group cursor-pointer rounded-2xl border border-dashed p-4 transition ${targetImage ? "is-ready" : ""}`}
+                  >
                     <div className="flex items-center gap-3">
                       <span className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.055] text-white/70">
                         <ImagePlus className="size-5" aria-hidden="true" />
@@ -344,7 +354,9 @@ export function ArtworkCreateForm() {
                     />
                   </label>
 
-                  <label className="group cursor-pointer rounded-2xl border border-dashed border-border p-4 transition hover:bg-secondary/40">
+                  <label
+                    className={`creator-file-card group cursor-pointer rounded-2xl border border-dashed p-4 transition ${overlayVideo ? "is-ready" : ""}`}
+                  >
                     <div className="flex items-center gap-3">
                       <span className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.055] text-white/70">
                         <Video className="size-5" aria-hidden="true" />
@@ -367,7 +379,12 @@ export function ArtworkCreateForm() {
                   </label>
                 </div>
 
-                <Button size="lg" disabled={!canPublish} className="w-full">
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={!canPublish}
+                  className={`creator-publish-button w-full ${canPublish ? "is-ready" : ""}`}
+                >
                   {status === "working" ? (
                     <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
                   ) : (
@@ -375,6 +392,21 @@ export function ArtworkCreateForm() {
                   )}
                   {status === "working" ? "Publishing…" : "Publish & generate QR"}
                 </Button>
+
+                <div className="creator-readiness flex items-center justify-between gap-3 text-xs">
+                  <span className={title.trim() && artistName.trim() ? "is-ready" : ""}>
+                    <Check className="size-3.5" aria-hidden="true" />
+                    Details
+                  </span>
+                  <span className={targetImage ? "is-ready" : ""}>
+                    <Check className="size-3.5" aria-hidden="true" />
+                    Artwork
+                  </span>
+                  <span className={overlayVideo ? "is-ready" : ""}>
+                    <Check className="size-3.5" aria-hidden="true" />
+                    Animation
+                  </span>
+                </div>
 
                 {message && (
                   <p
@@ -391,7 +423,7 @@ export function ArtworkCreateForm() {
               </div>
             </div>
 
-            <aside className="creator-stage rounded-[2rem] p-5 text-white sm:p-7">
+            <aside className="creator-stage creator-panel-3d creator-enter creator-enter-delay-2 rounded-[2rem] p-5 text-white sm:p-7">
               <div className="flex items-center gap-2">
                 <Sparkles className="size-4 text-amber-300" aria-hidden="true" />
                 <p className="relative z-10 text-sm font-medium">Publishing sequence</p>
