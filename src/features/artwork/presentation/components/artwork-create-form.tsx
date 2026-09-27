@@ -175,7 +175,7 @@ export function ArtworkCreateForm() {
 
   if (result) {
     return (
-      <main className="min-h-screen bg-neutral-950 px-5 py-6 text-white sm:px-8">
+      <main className="creator-studio relative min-h-screen overflow-hidden px-5 py-6 text-white sm:px-8">
         <div className="mx-auto w-full max-w-5xl">
           <Link href="/" className="inline-flex">
             <Button
@@ -187,7 +187,7 @@ export function ArtworkCreateForm() {
             </Button>
           </Link>
 
-          <section className="mx-auto mt-12 grid max-w-4xl gap-8 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 shadow-2xl sm:p-9 md:grid-cols-[1fr_0.8fr]">
+          <section className="creator-panel mx-auto mt-12 grid max-w-5xl gap-8 rounded-[2.4rem] p-6 sm:p-9 md:grid-cols-[1.08fr_0.92fr]">
             <div>
               <Badge className="border-emerald-400/20 bg-emerald-400/10 text-emerald-200">
                 <Check className="mr-1 size-3" aria-hidden="true" />
@@ -236,13 +236,13 @@ export function ArtworkCreateForm() {
               </div>
             </div>
 
-            <div className="flex items-center justify-center rounded-3xl bg-white p-5">
+            <div className="creator-stage relative flex min-h-[24rem] items-center justify-center rounded-[2rem] p-8">
               {/* Generated data URL is intentionally rendered without next/image. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={result.qrDataUrl}
                 alt="QR code for the published AR artwork"
-                className="aspect-square w-full max-w-72"
+                className="relative z-10 aspect-square w-full max-w-64 rounded-2xl bg-white p-3 shadow-2xl"
               />
             </div>
           </section>
@@ -252,25 +252,25 @@ export function ArtworkCreateForm() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto w-full max-w-6xl px-5 py-6 md:px-8">
+    <main className="creator-studio relative min-h-screen overflow-hidden">
+      <div className="relative z-10 mx-auto w-full max-w-[90rem] px-5 py-6 lg:px-10">
         <div className="flex items-center justify-between">
           <Link href="/">
-            <Button variant="ghost">
+            <Button variant="ghost" className="text-white/60 hover:bg-white/[0.06] hover:text-white">
               <ArrowLeft className="size-4" aria-hidden="true" />
               Home
             </Button>
           </Link>
-          <Badge>Creator</Badge>
+          <Badge className="border-white/10 bg-white/[0.04] text-white/55">CREATOR STUDIO</Badge>
         </div>
 
-        <section className="mx-auto mt-10 max-w-5xl">
+        <section className="mx-auto mt-12 max-w-6xl">
           <div className="max-w-2xl">
-            <p className="text-sm font-medium text-muted-foreground">Publish AR artwork</p>
-            <h1 className="mt-2 text-4xl font-semibold tracking-[-0.035em] sm:text-5xl">
+            <p className="text-xs font-medium uppercase tracking-[0.28em] text-violet-300/65">Build a spatial artwork</p>
+            <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-[-0.05em] text-white sm:text-6xl">
               Upload once. Put the QR beside the artwork.
             </h1>
-            <p className="mt-4 text-base leading-7 text-muted-foreground">
+            <p className="mt-5 max-w-2xl text-base leading-7 text-white/45">
               The tracking file is generated automatically in your browser. Your original
               artwork image, tracking data, and AR video are then uploaded directly to
               storage using short-lived signed upload tokens.
@@ -279,9 +279,9 @@ export function ArtworkCreateForm() {
 
           <form
             onSubmit={handleSubmit}
-            className="mt-10 grid gap-6 lg:grid-cols-[1fr_0.72fr]"
+            className="mt-12 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]"
           >
-            <div className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-7">
+            <div className="creator-panel rounded-[2rem] p-5 sm:p-7">
               <div className="grid gap-6">
                 <div className="grid gap-2">
                   <Label htmlFor="title">Artwork title</Label>
@@ -316,20 +316,20 @@ export function ArtworkCreateForm() {
                     onChange={(event) => setDescription(event.target.value)}
                     placeholder="What should visitors know about this piece?"
                   />
-                  <p className="text-right text-xs text-muted-foreground">
+                  <p className="text-right text-xs text-white/40">
                     {description.length}/1200
                   </p>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="group cursor-pointer rounded-2xl border border-dashed border-border p-4 transition hover:bg-secondary/40">
+                  <label className="group cursor-pointer rounded-2xl border border-dashed border-white/12 bg-white/[0.025] p-4 transition hover:border-violet-300/30 hover:bg-white/[0.055]">
                     <div className="flex items-center gap-3">
-                      <span className="flex size-10 items-center justify-center rounded-xl bg-secondary">
+                      <span className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.055] text-white/70">
                         <ImagePlus className="size-5" aria-hidden="true" />
                       </span>
                       <div className="min-w-0">
                         <p className="text-sm font-medium">Tracking artwork</p>
-                        <p className="truncate text-xs text-muted-foreground">
+                        <p className="truncate text-xs text-white/40">
                           {targetImage
                             ? `${targetImage.name} · ${formatMb(targetImage.size)}`
                             : "JPG, PNG or WebP · max 6 MB"}
@@ -346,12 +346,12 @@ export function ArtworkCreateForm() {
 
                   <label className="group cursor-pointer rounded-2xl border border-dashed border-border p-4 transition hover:bg-secondary/40">
                     <div className="flex items-center gap-3">
-                      <span className="flex size-10 items-center justify-center rounded-xl bg-secondary">
+                      <span className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.055] text-white/70">
                         <Video className="size-5" aria-hidden="true" />
                       </span>
                       <div className="min-w-0">
                         <p className="text-sm font-medium">AR animation</p>
-                        <p className="truncate text-xs text-muted-foreground">
+                        <p className="truncate text-xs text-white/40">
                           {overlayVideo
                             ? `${overlayVideo.name} · ${formatMb(overlayVideo.size)}`
                             : "MP4 or WebM · max 6 MB"}
@@ -380,8 +380,8 @@ export function ArtworkCreateForm() {
                   <p
                     className={
                       status === "working"
-                        ? "text-sm text-muted-foreground"
-                        : "text-sm text-red-600"
+                        ? "text-sm text-white/40"
+                        : "text-sm text-rose-300"
                     }
                     role="status"
                   >
@@ -391,13 +391,13 @@ export function ArtworkCreateForm() {
               </div>
             </div>
 
-            <aside className="rounded-3xl border border-border bg-neutral-950 p-5 text-white shadow-sm sm:p-7">
+            <aside className="creator-stage rounded-[2rem] p-5 text-white sm:p-7">
               <div className="flex items-center gap-2">
                 <Sparkles className="size-4 text-amber-300" aria-hidden="true" />
-                <p className="text-sm font-medium">What happens after Publish</p>
+                <p className="relative z-10 text-sm font-medium">Publishing sequence</p>
               </div>
 
-              <ol className="mt-6 grid gap-4">
+              <ol className="relative z-10 mt-8 grid gap-5">
                 {[
                   ["Compile target", "Your artwork becomes a MindAR image target."],
                   ["Upload assets", "Image, tracking file, and video go to object storage."],
@@ -444,7 +444,7 @@ export function ArtworkCreateForm() {
                 </div>
               )}
 
-              <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <div className="relative z-10 mt-8 rounded-2xl border border-white/10 bg-black/20 p-4 backdrop-blur">
                 <div className="flex items-center gap-2 text-sm">
                   <QrCode className="size-4" aria-hidden="true" />
                   Visitor flow
