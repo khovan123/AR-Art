@@ -36,22 +36,39 @@ type MindArConstructor = new (options: {
 
 type MindArModule = { MindARThree: MindArConstructor };
 
+let mindArModule: MindArModule | null = null;
 let mindArModulePromise: Promise<MindArModule> | null = null;
 
 function loadMindArRuntime() {
+  if (mindArModule) return Promise.resolve(mindArModule);
+
   if (!mindArModulePromise) {
-    mindArModulePromise = import(
-      "mind-ar/dist/mindar-image-three.prod.js"
-    ) as unknown as Promise<MindArModule>;
+    mindArModulePromise = (
+      import("mind-ar/dist/mindar-image-three.prod.js") as unknown as Promise<MindArModule>
+    )
+      .then((module) => {
+        mindArModule = module;
+        return module;
+      })
+      .catch((cause) => {
+        mindArModulePromise = null;
+        throw cause;
+      });
   }
 
   return mindArModulePromise;
 }
 
 export function preloadMindArRuntime() {
-  void loadMindArRuntime().catch(() => {
-    mindArModulePromise = null;
-  });
+  return loadMindArRuntime().then(() => undefined);
+}
+
+function getPreloadedMindArRuntime() {
+  if (!mindArModule) {
+    throw new Error("AR engine is still loading. Wait a moment and tap Start camera again.");
+  }
+
+  return mindArModule;
 }
 
 export class MindArImageEngine implements ArEngine {
@@ -69,7 +86,10 @@ export class MindArImageEngine implements ArEngine {
     if (this.runtime) await this.stop();
 
     try {
-      const mindArModule = await loadMindArRuntime();
+      // This lookup is synchronous. The module is preloaded before the button
+      // becomes active so iPhone Safari reaches MindAR's getUserMedia() from
+      // the same user interaction without an import await in between.
+      const mindArModule = getPreloadedMindArRuntime();
 
       const runtime = new mindArModule.MindARThree({
         container,
