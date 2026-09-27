@@ -38,7 +38,7 @@ export function ArViewer({
     }),
     [config.overlay, config.targetIndex, config.targetUrl],
   );
-  const { status, error, start, stop } = useArExperience(stableConfig);
+  const { status, error, runtimeReady, start, stop } = useArExperience(stableConfig);
 
   useEffect(() => () => void stop(), [stop]);
 
@@ -46,7 +46,7 @@ export function ArViewer({
     status === "starting" || status === "scanning" || status === "found";
 
   const statusCopy = {
-    idle: "Camera is off",
+    idle: runtimeReady ? "Camera is off" : "Preparing AR…",
     starting: "Starting camera…",
     scanning: artwork ? "Point at the physical artwork" : "Point at the demo target",
     found: "Artwork detected",
@@ -136,13 +136,19 @@ export function ArViewer({
             {!isRunning ? (
               <Button
                 type="button"
+                disabled={!runtimeReady}
                 className="flex-1 touch-manipulation bg-white text-black hover:bg-white/90 active:scale-[0.99]"
+                onTouchEnd={(event) => {
+                  event.preventDefault();
+                  const container = containerRef.current;
+                  if (container) void start(container);
+                }}
                 onClick={() => {
                   const container = containerRef.current;
                   if (container) void start(container);
                 }}
               >
-                Start camera
+                {runtimeReady ? "Start camera" : "Preparing AR…"}
               </Button>
             ) : (
               <Button
