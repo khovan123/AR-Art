@@ -1,12 +1,18 @@
-const MINDAR_COMPILER_SRC =
-  "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js";
+const MINDAR_COMPILER_SOURCES = [
+  "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js",
+  "https://unpkg.com/mind-ar@1.2.5/dist/mindar-image.prod.js",
+] as const;
+
+const COMPILER_LOAD_TIMEOUT_MS = 20_000;
+
+type CompilerBuffer = ArrayBuffer | Uint8Array;
 
 type CompilerInstance = {
   compileImageTargets(
     images: HTMLImageElement[],
     onProgress?: (progress: number) => void,
   ): Promise<unknown[]>;
-  exportData(): Promise<ArrayBuffer>;
+  exportData(): CompilerBuffer | Promise<CompilerBuffer>;
 };
 
 type CompilerConstructor = new () => CompilerInstance;
@@ -18,6 +24,8 @@ type MindArGlobal = {
   Compiler?: CompilerConstructor;
 };
 
+let compilerLoadPromise: Promise<CompilerConstructor> | null = null;
+
 function getCompilerConstructor() {
   const mindAr = (
     window as typeof window & {
@@ -28,46 +36,114 @@ function getCompilerConstructor() {
   return mindAr?.IMAGE?.Compiler ?? mindAr?.Compiler;
 }
 
+function supportsWebGl() {
+  const canvas = document.createElement("canvas");
+
+  try {
+    return Boolean(
+      canvas.getContext("webgl2") ||
+        canvas.getContext("webgl") ||
+        canvas.getContext("experimental-webgl"),
+    );
+  } catch {
+    return false;
+  }
+}
+
+function removeStaleCompilerScripts() {
+  document
+    .querySelectorAll<HTMLScriptElement>("script[data-mindar-compiler]")
+    .forEach((script) => script.remove());
+}
+
+function loadCompilerModule(source: string) {
+  return new Promise<CompilerConstructor>((resolve, reject) => {
+    removeStaleCompilerScripts();
+
+    const script = document.createElement("script");
+    script.type = "module";
+    script.src = source;
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.dataset.mindarCompiler = source;
+
+    const timeout = window.setTimeout(() => {
+      script.remove();
+      reject(new Error("MindAR compiler loading timed out."));
+    }, COMPILER_LOAD_TIMEOUT_MS);
+
+    const cleanup = () => {
+      window.clearTimeout(timeout);
+      script.onload = null;
+      script.onerror = null;
+    };
+
+    script.onload = () => {
+      cleanup();
+
+      const Compiler = getCompilerConstructor();
+      if (!Compiler) {
+        script.remove();
+        reject(
+          new Error(
+            "MindAR compiler module loaded but did not expose the compiler API.",
+          ),
+        );
+        return;
+      }
+
+      resolve(Compiler);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      script.remove();
+      reject(new Error(`Unable to load MindAR compiler from ${source}.`));
+    };
+
+    document.head.appendChild(script);
+  });
+}
+
+async function initializeMindArCompiler() {
+  const existing = getCompilerConstructor();
+  if (existing) return existing;
+
+  if (!supportsWebGl()) {
+    throw new Error(
+      "WebGL is unavailable in this browser. Enable hardware acceleration or try a current Chrome, Edge, or Safari browser.",
+    );
+  }
+
+  let lastError: unknown = null;
+
+  for (const source of MINDAR_COMPILER_SOURCES) {
+    try {
+      return await loadCompilerModule(source);
+    } catch (cause) {
+      lastError = cause;
+    }
+  }
+
+  throw new Error(
+    lastError instanceof Error
+      ? lastError.message
+      : "Unable to initialize the MindAR image compiler.",
+  );
+}
+
 async function loadMindArCompiler() {
   const existing = getCompilerConstructor();
   if (existing) return existing;
 
-  await new Promise<void>((resolve, reject) => {
-    const prior = document.querySelector<HTMLScriptElement>(
-      `script[data-mindar-compiler="${MINDAR_COMPILER_SRC}"]`,
-    );
-
-    if (prior) {
-      if (getCompilerConstructor()) {
-        resolve();
-        return;
-      }
-
-      prior.addEventListener("load", () => resolve(), { once: true });
-      prior.addEventListener(
-        "error",
-        () => reject(new Error("Unable to load the MindAR compiler.")),
-        { once: true },
-      );
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = MINDAR_COMPILER_SRC;
-    script.async = true;
-    script.dataset.mindarCompiler = MINDAR_COMPILER_SRC;
-    script.onload = () => resolve();
-    script.onerror = () =>
-      reject(new Error("Unable to load the MindAR compiler."));
-    document.head.appendChild(script);
-  });
-
-  const Compiler = getCompilerConstructor();
-  if (!Compiler) {
-    throw new Error("MindAR compiler did not initialize in this browser.");
+  if (!compilerLoadPromise) {
+    compilerLoadPromise = initializeMindArCompiler().catch((cause) => {
+      compilerLoadPromise = null;
+      throw cause;
+    });
   }
 
-  return Compiler;
+  return compilerLoadPromise;
 }
 
 export async function compileMindTarget(
@@ -89,12 +165,32 @@ export async function compileMindTarget(
     const compiler = new Compiler();
 
     await compiler.compileImageTargets([image], (progress) => {
-      onProgress(Math.round(progress));
+      onProgress(Math.max(0, Math.min(100, Math.round(progress))));
     });
 
     const buffer = await compiler.exportData();
     onProgress(100);
-    return new Blob([buffer], { type: "application/octet-stream" });
+
+    const bytes =
+      buffer instanceof Uint8Array
+        ? buffer
+        : new Uint8Array(buffer);
+
+    return new Blob([bytes], { type: "application/octet-stream" });
+  } catch (cause) {
+    const message = cause instanceof Error ? cause.message : String(cause);
+
+    if (
+      message.includes("WebGL") ||
+      message.includes("compileAndRun") ||
+      message.includes("fragment shader")
+    ) {
+      throw new Error(
+        "MindAR could not compile this target with the current WebGL backend. Enable browser hardware acceleration and retry in Chrome or Edge.",
+      );
+    }
+
+    throw cause;
   } finally {
     URL.revokeObjectURL(imageUrl);
   }
