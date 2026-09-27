@@ -34,6 +34,26 @@ type MindArConstructor = new (options: {
   missTolerance?: number;
 }) => MindArRuntime;
 
+type MindArModule = { MindARThree: MindArConstructor };
+
+let mindArModulePromise: Promise<MindArModule> | null = null;
+
+function loadMindArRuntime() {
+  if (!mindArModulePromise) {
+    mindArModulePromise = import(
+      "mind-ar/dist/mindar-image-three.prod.js"
+    ) as unknown as Promise<MindArModule>;
+  }
+
+  return mindArModulePromise;
+}
+
+export function preloadMindArRuntime() {
+  void loadMindArRuntime().catch(() => {
+    mindArModulePromise = null;
+  });
+}
+
 export class MindArImageEngine implements ArEngine {
   private runtime: MindArRuntime | null = null;
   private animatedObject: THREE.Object3D | null = null;
@@ -49,9 +69,7 @@ export class MindArImageEngine implements ArEngine {
     if (this.runtime) await this.stop();
 
     try {
-      const mindArModule = (await import(
-        "mind-ar/dist/mindar-image-three.prod.js"
-      )) as unknown as { MindARThree: MindArConstructor };
+      const mindArModule = await loadMindArRuntime();
 
       const runtime = new mindArModule.MindARThree({
         container,
@@ -113,7 +131,13 @@ export class MindArImageEngine implements ArEngine {
       video.crossOrigin = "anonymous";
       video.loop = true;
       video.muted = true;
+      video.defaultMuted = true;
       video.playsInline = true;
+      video.autoplay = true;
+      video.setAttribute("muted", "");
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+      video.setAttribute("autoplay", "");
       video.preload = "auto";
       this.video = video;
 
