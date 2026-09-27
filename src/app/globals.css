@@ -490,3 +490,126 @@ a {
     animation: none;
   }
 }
+
+
+.immersive-scroll-cue {
+  opacity: calc(1 - var(--end-progress, 0));
+  transition: opacity 220ms ease;
+}
+
+.immersive-end-cta {
+  will-change: opacity, transform;
+}
+
+.immersive-create-button::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background:
+    conic-gradient(
+      from 0deg,
+      rgba(196,181,253,0),
+      rgba(196,181,253,0.95),
+      rgba(103,232,249,0.9),
+      rgba(244,114,182,0.75),
+      rgba(196,181,253,0)
+    );
+  opacity: 0.82;
+  animation: immersive-create-orbit 5s linear infinite;
+}
+
+.immersive-create-button::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.95), transparent 44%),
+    linear-gradient(120deg, #ffffff 0%, #f5f3ff 45%, #ecfeff 100%);
+}
+
+.immersive-create-button:hover::before {
+  animation-duration: 2.4s;
+}
+
+.immersive-route-transition {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  overflow: hidden;
+  opacity: 0;
+  background: #030305;
+  transition: opacity 520ms cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+.immersive-route-transition::before,
+.immersive-route-transition::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 999px;
+  transform: translate(-50%, -50%) scale(0.04);
+  transition:
+    transform 680ms cubic-bezier(0.76, 0, 0.24, 1),
+    opacity 520ms ease;
+}
+
+.immersive-route-transition::before {
+  width: min(160vmax, 1800px);
+  aspect-ratio: 1;
+  background:
+    radial-gradient(
+      circle,
+      rgba(255,255,255,0.98) 0%,
+      rgba(196,181,253,0.9) 11%,
+      rgba(103,232,249,0.46) 26%,
+      rgba(7,7,12,0.92) 58%,
+      #030305 72%
+    );
+  opacity: 0;
+}
+
+.immersive-route-transition::after {
+  width: min(72vmax, 880px);
+  aspect-ratio: 1;
+  border: 1px solid rgba(255,255,255,0.62);
+  box-shadow:
+    0 0 50px rgba(196,181,253,0.65),
+    0 0 120px rgba(103,232,249,0.38);
+  opacity: 0;
+}
+
+.immersive-route-transition.is-active {
+  opacity: 1;
+}
+
+.immersive-route-transition.is-active::before {
+  transform: translate(-50%, -50%) scale(1.12);
+  opacity: 1;
+}
+
+.immersive-route-transition.is-active::after {
+  transform: translate(-50%, -50%) scale(2.1);
+  opacity: 0.78;
+}
+
+@keyframes immersive-create-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .immersive-create-button::before {
+    animation: none;
+  }
+
+  .immersive-route-transition,
+  .immersive-route-transition::before,
+  .immersive-route-transition::after {
+    transition-duration: 120ms;
+  }
+}
