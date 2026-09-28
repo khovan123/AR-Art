@@ -60,13 +60,11 @@ export function ArViewer({
   };
 
   return (
-    <main className="relative h-svh min-h-svh overflow-hidden bg-black text-white">
+    <main className="fixed inset-0 h-[100dvh] w-screen overflow-hidden bg-black text-white">
       <div
         ref={containerRef}
-        className="absolute inset-0 isolate overflow-hidden bg-black [&>video]:!z-0 [&>video]:!h-full [&>video]:!w-full [&>video]:!object-cover [&>video]:!opacity-100 [&>video]:!visible [&>canvas]:!z-[1] [&>canvas]:pointer-events-none [&>div]:!z-[2] [&>div]:pointer-events-none"
+        className="absolute inset-0 isolate overflow-hidden bg-black [&>video]:!z-0 [&>video]:!opacity-100 [&>video]:!visible [&>canvas]:!z-[1] [&>canvas]:pointer-events-none [&>div]:!z-[2] [&>div]:pointer-events-none"
       />
-
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-28 bg-gradient-to-b from-black/35 to-transparent" />
 
       <Link
         href={backHref}
