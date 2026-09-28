@@ -6,8 +6,11 @@ import {
   ArrowLeft,
   Camera,
   CheckCircle2,
+  RotateCcw,
   ScanLine,
+  Settings,
   TriangleAlert,
+  X,
 } from "lucide-react";
 
 import { Badge } from "@/components/atoms/badge";
@@ -38,7 +41,14 @@ export function ArViewer({
     }),
     [config.overlay, config.targetIndex, config.targetUrl],
   );
-  const { status, error, start, stop } = useArExperience(stableConfig);
+  const {
+    status,
+    error,
+    cameraPermissionIssue,
+    start,
+    stop,
+    dismissCameraPermissionHelp,
+  } = useArExperience(stableConfig);
 
   useEffect(() => () => void stop(), [stop]);
 
@@ -97,6 +107,103 @@ export function ArViewer({
           </div>
         )}
       </section>
+
+      {cameraPermissionIssue && (
+        <div className="absolute inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="camera-permission-title"
+            className="w-full max-w-md rounded-[2rem] border border-white/12 bg-[#0b0b0e]/95 p-5 shadow-[0_30px_100px_rgba(0,0,0,0.65)] sm:p-6"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-amber-300/20 bg-amber-300/10 text-amber-200">
+                <Settings className="size-5" aria-hidden="true" />
+              </div>
+              <button
+                type="button"
+                onClick={dismissCameraPermissionHelp}
+                className="flex size-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white"
+                aria-label="Close camera permission help"
+              >
+                <X className="size-4" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="mt-5">
+              <p className="text-[0.68rem] font-medium uppercase tracking-[0.22em] text-amber-200/70">
+                iPhone Safari
+              </p>
+              <h2
+                id="camera-permission-title"
+                className="mt-2 text-xl font-semibold tracking-tight text-white"
+              >
+                Camera permission is required
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-white/60">
+                {cameraPermissionIssue === "timeout"
+                  ? "Safari did not show the camera permission prompt. This can happen when an older iOS version remembers a previous camera choice."
+                  : "Safari has blocked camera access for this website."}
+              </p>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <ol className="space-y-3 text-sm leading-5 text-white/75">
+                <li className="flex gap-3">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-white/15 text-[0.7rem] text-white/60">
+                    1
+                  </span>
+                  <span>
+                    In Safari, tap <strong className="font-medium text-white">aA</strong> in the address bar, then open <strong className="font-medium text-white">Website Settings</strong>.
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-white/15 text-[0.7rem] text-white/60">
+                    2
+                  </span>
+                  <span>
+                    Set <strong className="font-medium text-white">Camera → Allow</strong>.
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-white/15 text-[0.7rem] text-white/60">
+                    3
+                  </span>
+                  <span>
+                    If Camera is not listed, open <strong className="font-medium text-white">iPhone Settings → Safari → Camera</strong> and choose Ask or Allow, then reopen Safari.
+                  </span>
+                </li>
+              </ol>
+            </div>
+
+            <p className="mt-4 text-xs leading-5 text-white/40">
+              If this page was opened inside Messenger, Zalo, Facebook, or another app browser, open the same link directly in Safari.
+            </p>
+
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="border-white/12 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+                onClick={dismissCameraPermissionHelp}
+              >
+                Close
+              </Button>
+              <Button
+                type="button"
+                className="bg-white text-black hover:bg-white/90"
+                onClick={() => {
+                  const container = containerRef.current;
+                  if (container) void start(container);
+                }}
+              >
+                <RotateCcw className="size-4" aria-hidden="true" />
+                Try again
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="absolute inset-x-0 bottom-0 z-30 p-4 sm:p-6">
         <div className="mx-auto flex w-full max-w-lg flex-col gap-3 rounded-3xl border border-white/10 bg-black/50 p-4 backdrop-blur-xl">
