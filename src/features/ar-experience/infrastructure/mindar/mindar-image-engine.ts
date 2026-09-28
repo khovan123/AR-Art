@@ -17,6 +17,8 @@ type MindArRuntime = {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
   camera: THREE.Camera;
+  video?: HTMLVideoElement;
+  cssRenderer?: { domElement: HTMLElement };
   addAnchor(index: number): MindArAnchor;
   start(): Promise<void>;
   stop(): Promise<void> | void;
@@ -121,6 +123,58 @@ export class MindArImageEngine implements ArEngine {
       };
 
       await runtime.start();
+
+      // MindAR 1.2.5 assigns the camera video z-index:-2. Inside our
+      // full-screen black AR surface that places the live camera behind the
+      // page background on iOS Safari, even though getUserMedia is running.
+      // Normalize the camera/canvas stacking after MindAR creates the stream.
+      const cameraVideo =
+        runtime.video ?? container.querySelector<HTMLVideoElement>("video");
+
+      if (!cameraVideo || !(cameraVideo.srcObject instanceof MediaStream)) {
+        throw new Error(
+          "Camera started but the live preview stream is unavailable.",
+        );
+      }
+
+      cameraVideo.muted = true;
+      cameraVideo.defaultMuted = true;
+      cameraVideo.playsInline = true;
+      cameraVideo.autoplay = true;
+      cameraVideo.setAttribute("muted", "");
+      cameraVideo.setAttribute("playsinline", "");
+      cameraVideo.setAttribute("webkit-playsinline", "");
+      cameraVideo.setAttribute("autoplay", "");
+      Object.assign(cameraVideo.style, {
+        zIndex: "0",
+        display: "block",
+        visibility: "visible",
+        opacity: "1",
+        objectFit: "cover",
+        background: "#000",
+      });
+
+      const canvas = renderer.domElement;
+      Object.assign(canvas.style, {
+        zIndex: "1",
+        pointerEvents: "none",
+        background: "transparent",
+      });
+
+      if (runtime.cssRenderer?.domElement) {
+        Object.assign(runtime.cssRenderer.domElement.style, {
+          zIndex: "2",
+          pointerEvents: "none",
+        });
+      }
+
+      try {
+        await cameraVideo.play();
+      } catch {
+        // The stream may already be playing. Safari can reject a redundant
+        // play() while still rendering the live camera correctly.
+      }
+
       this.started = true;
       callbacks.onScanning();
 
