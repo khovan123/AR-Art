@@ -57,7 +57,7 @@ export function ArViewer({
     <main className="relative min-h-svh overflow-hidden bg-black text-white">
       <div
         ref={containerRef}
-        className="absolute inset-0 [&>video]:!h-full [&>video]:!w-full [&>video]:object-cover"
+        className="absolute inset-0 isolate overflow-hidden bg-black [&>video]:!z-0 [&>video]:!h-full [&>video]:!w-full [&>video]:!object-cover [&>video]:!opacity-100 [&>video]:!visible [&>canvas]:!z-[1] [&>canvas]:pointer-events-none [&>div]:!z-[2] [&>div]:pointer-events-none"
       />
       {!isRunning && (
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,#292524_0%,#111827_45%,#020617_80%)]" />
