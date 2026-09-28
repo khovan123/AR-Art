@@ -2,18 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef } from "react";
-import {
-  ArrowLeft,
-  Camera,
-  CheckCircle2,
-  RotateCcw,
-  ScanLine,
-  Settings,
-  TriangleAlert,
-  X,
-} from "lucide-react";
+import { ArrowLeft, RotateCcw, Settings, TriangleAlert, X } from "lucide-react";
 
-import { Badge } from "@/components/atoms/badge";
 import { Button } from "@/components/atoms/button";
 import type { ArExperienceConfig } from "@/features/ar-experience/domain/ar-experience";
 import { useArExperience } from "@/features/ar-experience/presentation/hooks/use-ar-experience";
@@ -30,9 +20,10 @@ interface ArViewerProps {
 export function ArViewer({
   config,
   backHref = "/",
-  artwork,
 }: ArViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const autoStartedRef = useRef(false);
+
   const stableConfig = useMemo(
     () => ({
       targetUrl: config.targetUrl,
@@ -41,6 +32,7 @@ export function ArViewer({
     }),
     [config.overlay, config.targetIndex, config.targetUrl],
   );
+
   const {
     status,
     error,
@@ -50,63 +42,47 @@ export function ArViewer({
     dismissCameraPermissionHelp,
   } = useArExperience(stableConfig);
 
-  useEffect(() => () => void stop(), [stop]);
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || autoStartedRef.current) return;
 
-  const isRunning =
-    status === "starting" || status === "scanning" || status === "found";
+    autoStartedRef.current = true;
+    void start(container);
 
-  const statusCopy = {
-    idle: "Camera is off",
-    starting: "Starting camera…",
-    scanning: artwork ? "Point at the physical artwork" : "Point at the demo target",
-    found: "Artwork detected",
-    error: "Camera could not start",
+    return () => {
+      void stop();
+    };
+  }, [start, stop]);
+
+  const retry = () => {
+    const container = containerRef.current;
+    if (container) void start(container);
   };
 
   return (
-    <main className="relative min-h-svh overflow-hidden bg-black text-white">
+    <main className="relative h-svh min-h-svh overflow-hidden bg-black text-white">
       <div
         ref={containerRef}
         className="absolute inset-0 isolate overflow-hidden bg-black [&>video]:!z-0 [&>video]:!h-full [&>video]:!w-full [&>video]:!object-cover [&>video]:!opacity-100 [&>video]:!visible [&>canvas]:!z-[1] [&>canvas]:pointer-events-none [&>div]:!z-[2] [&>div]:pointer-events-none"
       />
-      {!isRunning && (
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,#292524_0%,#111827_45%,#020617_80%)]" />
-      )}
 
-      <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-black/45 via-transparent to-black/60" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-28 bg-gradient-to-b from-black/35 to-transparent" />
 
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between p-4 sm:p-6">
-        <Link href={backHref} className="pointer-events-auto">
-          <Button
-            variant="outline"
-            size="icon"
-            className="border-white/15 bg-black/30 text-white hover:bg-black/50 hover:text-white"
-          >
-            <ArrowLeft className="size-4" aria-hidden="true" />
-            <span className="sr-only">Back</span>
-          </Button>
-        </Link>
-        <Badge className="max-w-[70vw] truncate border-white/15 bg-black/30 text-white/80">
-          {artwork ? artwork.title : "WebAR demo"}
-        </Badge>
-      </header>
-
-      <section className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-6">
-        {(status === "scanning" || status === "starting") && (
-          <div className="aspect-[1.8116] w-full max-w-sm rounded-3xl border border-dashed border-white/60 shadow-[0_0_0_999px_rgba(0,0,0,0.08)]">
-            <ScanLine
-              className="mx-auto mt-4 size-6 animate-pulse text-white/80"
-              aria-hidden="true"
-            />
-          </div>
-        )}
-        {status === "found" && (
-          <div className="flex items-center gap-2 rounded-full border border-emerald-300/25 bg-emerald-950/65 px-4 py-2 text-sm text-emerald-100 backdrop-blur">
-            <CheckCircle2 className="size-4" aria-hidden="true" />
-            Artwork detected
-          </div>
-        )}
-      </section>
+      <Link
+        href={backHref}
+        aria-label="Back"
+        className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))] z-30 sm:left-6"
+      >
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="size-11 rounded-full border-white/25 bg-black/25 text-white shadow-lg backdrop-blur-md hover:bg-black/45 hover:text-white"
+        >
+          <ArrowLeft className="size-5" aria-hidden="true" />
+          <span className="sr-only">Back</span>
+        </Button>
+      </Link>
 
       {cameraPermissionIssue && (
         <div className="absolute inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
@@ -136,148 +112,57 @@ export function ArViewer({
               </p>
               <h2
                 id="camera-permission-title"
-                className="mt-2 text-xl font-semibold tracking-tight text-white"
+                className="mt-2 text-xl font-semibold tracking-tight"
               >
                 Camera permission is required
               </h2>
               <p className="mt-2 text-sm leading-6 text-white/60">
                 {cameraPermissionIssue === "timeout"
-                  ? "Safari did not show the camera permission prompt. This can happen when an older iOS version remembers a previous camera choice."
+                  ? "Safari did not show the camera permission prompt."
                   : "Safari has blocked camera access for this website."}
               </p>
             </div>
 
             <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               <ol className="space-y-3 text-sm leading-5 text-white/75">
-                <li className="flex gap-3">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-white/15 text-[0.7rem] text-white/60">
-                    1
-                  </span>
-                  <span>
-                    In Safari, tap <strong className="font-medium text-white">aA</strong> in the address bar, then open <strong className="font-medium text-white">Website Settings</strong>.
-                  </span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-white/15 text-[0.7rem] text-white/60">
-                    2
-                  </span>
-                  <span>
-                    Set <strong className="font-medium text-white">Camera → Allow</strong>.
-                  </span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-white/15 text-[0.7rem] text-white/60">
-                    3
-                  </span>
-                  <span>
-                    If Camera is not listed, open <strong className="font-medium text-white">iPhone Settings → Safari → Camera</strong> and choose Ask or Allow, then reopen Safari.
-                  </span>
-                </li>
+                <li>1. Tap <strong className="font-medium text-white">aA → Website Settings</strong>.</li>
+                <li>2. Set <strong className="font-medium text-white">Camera → Allow</strong>.</li>
+                <li>3. Return here and tap <strong className="font-medium text-white">Try again</strong>.</li>
               </ol>
             </div>
 
             <p className="mt-4 text-xs leading-5 text-white/40">
-              If this page was opened inside Messenger, Zalo, Facebook, or another app browser, open the same link directly in Safari.
+              If the link opened inside Messenger, Zalo, Facebook, or another in-app browser, open it directly in Safari.
             </p>
 
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="border-white/12 bg-white/5 text-white hover:bg-white/10 hover:text-white"
-                onClick={dismissCameraPermissionHelp}
-              >
-                Close
-              </Button>
-              <Button
-                type="button"
-                className="bg-white text-black hover:bg-white/90"
-                onClick={() => {
-                  const container = containerRef.current;
-                  if (container) void start(container);
-                }}
-              >
-                <RotateCcw className="size-4" aria-hidden="true" />
-                Try again
-              </Button>
-            </div>
+            <Button
+              type="button"
+              className="mt-5 w-full bg-white text-black hover:bg-white/90"
+              onClick={retry}
+            >
+              <RotateCcw className="size-4" aria-hidden="true" />
+              Try again
+            </Button>
           </div>
         </div>
       )}
 
-      <footer className="absolute inset-x-0 bottom-0 z-30 p-4 sm:p-6">
-        <div className="mx-auto flex w-full max-w-lg flex-col gap-3 rounded-3xl border border-white/10 bg-black/50 p-4 backdrop-blur-xl">
-          {artwork && (
-            <div className="border-b border-white/10 pb-3">
-              <p className="truncate text-sm font-medium">{artwork.title}</p>
-              <p className="mt-0.5 truncate text-xs text-white/50">
-                by {artwork.artistName}
-              </p>
-            </div>
-          )}
-
-          <div className="flex items-start gap-3">
-            {status === "error" ? (
-              <TriangleAlert
-                className="mt-0.5 size-5 shrink-0 text-amber-300"
-                aria-hidden="true"
-              />
-            ) : (
-              <Camera
-                className="mt-0.5 size-5 shrink-0 text-white/80"
-                aria-hidden="true"
-              />
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium">{statusCopy[status]}</p>
-              <p className="mt-1 text-xs leading-5 text-white/60">
-                {error ??
-                  (artwork
-                    ? "Keep the full physical artwork in frame until the animation locks onto it."
-                    : "Open the demo target on another screen or print it, then point this camera at it.")}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            {!isRunning ? (
-              <Button
-                type="button"
-                className="flex-1 touch-manipulation bg-white text-black hover:bg-white/90 active:scale-[0.99]"
-                onTouchEnd={(event) => {
-                  event.preventDefault();
-                  const container = containerRef.current;
-                  if (container) void start(container);
-                }}
-                onClick={() => {
-                  const container = containerRef.current;
-                  if (container) void start(container);
-                }}
-              >
-                Start camera
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                className="flex-1 border-white/15 bg-white/10 text-white hover:bg-white/15 hover:text-white"
-                onClick={() => void stop()}
-              >
-                Stop camera
-              </Button>
-            )}
-            {!artwork && (
-              <Link href="/demo-target" className="flex-1">
-                <Button
-                  variant="outline"
-                  className="w-full border-white/15 bg-white/10 text-white hover:bg-white/15 hover:text-white"
-                >
-                  Target image
-                </Button>
-              </Link>
-            )}
+      {status === "error" && !cameraPermissionIssue && error && (
+        <div className="absolute inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md items-start gap-3 rounded-2xl border border-white/12 bg-black/70 p-4 backdrop-blur-xl">
+          <TriangleAlert className="mt-0.5 size-5 shrink-0 text-amber-300" aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">Camera could not start</p>
+            <p className="mt-1 text-xs leading-5 text-white/60">{error}</p>
+            <button
+              type="button"
+              onClick={retry}
+              className="mt-3 text-xs font-medium text-white underline underline-offset-4"
+            >
+              Try again
+            </button>
           </div>
         </div>
-      </footer>
+      )}
     </main>
   );
 }
