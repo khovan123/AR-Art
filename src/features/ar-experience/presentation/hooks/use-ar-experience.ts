@@ -13,7 +13,20 @@ import {
 } from "@/features/ar-experience/infrastructure/mindar/mindar-image-engine";
 
 const RUNTIME_TIMEOUT_MS = 15_000;
+const CAMERA_PERMISSION_TIMEOUT_MS = 8_000;
 const IOS_CAMERA_RELEASE_DELAY_MS = 180;
+
+export type CameraPermissionIssue = "blocked" | "timeout" | null;
+
+class CameraPermissionFlowError extends Error {
+  constructor(
+    readonly code: Exclude<CameraPermissionIssue, null>,
+    message: string,
+  ) {
+    super(message);
+    this.name = "CameraPermissionFlowError";
+  }
+}
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string) {
   return new Promise<T>((resolve, reject) => {
@@ -40,7 +53,7 @@ function describeCameraError(cause: unknown) {
   switch (cause.name) {
     case "NotAllowedError":
     case "SecurityError":
-      return "Camera permission is blocked for this site. In Safari, open Website Settings and set Camera to Allow.";
+      return "Camera permission is blocked for this site.";
     case "NotFoundError":
       return "No usable camera was found on this iPhone.";
     case "NotReadableError":
@@ -52,31 +65,76 @@ function describeCameraError(cause: unknown) {
   }
 }
 
-async function requestIosCameraPermission() {
+function releaseStream(stream: MediaStream | null) {
+  stream?.getTracks().forEach((track) => track.stop());
+}
+
+function requestCameraPermission() {
   if (!window.isSecureContext) {
-    throw new Error("Camera access requires HTTPS.");
+    return Promise.reject(new Error("Camera access requires HTTPS."));
   }
 
   if (!navigator.mediaDevices?.getUserMedia) {
-    throw new Error(
-      "Camera access is unavailable. Open this page directly in Safari, not an in-app browser.",
+    return Promise.reject(
+      new Error(
+        "Camera access is unavailable. Open this page directly in Safari, not an in-app browser.",
+      ),
     );
   }
 
-  try {
-    return await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: {
-        facingMode: { ideal: "environment" },
-      },
-    });
-  } catch (cause) {
-    throw new Error(describeCameraError(cause));
-  }
-}
+  return new Promise<MediaStream>((resolve, reject) => {
+    let finished = false;
 
-function releaseStream(stream: MediaStream | null) {
-  stream?.getTracks().forEach((track) => track.stop());
+    const timeout = window.setTimeout(() => {
+      if (finished) return;
+      finished = true;
+      reject(
+        new CameraPermissionFlowError(
+          "timeout",
+          "Safari did not show a camera permission prompt.",
+        ),
+      );
+    }, CAMERA_PERMISSION_TIMEOUT_MS);
+
+    navigator.mediaDevices
+      .getUserMedia({
+        audio: false,
+        video: {
+          facingMode: { ideal: "environment" },
+        },
+      })
+      .then((stream) => {
+        if (finished) {
+          releaseStream(stream);
+          return;
+        }
+
+        finished = true;
+        window.clearTimeout(timeout);
+        resolve(stream);
+      })
+      .catch((cause: unknown) => {
+        if (finished) return;
+
+        finished = true;
+        window.clearTimeout(timeout);
+
+        if (
+          cause instanceof DOMException &&
+          (cause.name === "NotAllowedError" || cause.name === "SecurityError")
+        ) {
+          reject(
+            new CameraPermissionFlowError(
+              "blocked",
+              "Camera permission is blocked for this site.",
+            ),
+          );
+          return;
+        }
+
+        reject(new Error(describeCameraError(cause)));
+      });
+  });
 }
 
 export function useArExperience(config: ArExperienceConfig) {
@@ -85,12 +143,10 @@ export function useArExperience(config: ArExperienceConfig) {
   const runtimePromiseRef = useRef<Promise<void> | null>(null);
   const [status, setStatus] = useState<ArExperienceStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [cameraPermissionIssue, setCameraPermissionIssue] =
+    useState<CameraPermissionIssue>(null);
 
   useEffect(() => {
-    // Warm the heavy MindAR/TensorFlow chunk in the background, but never
-    // disable the camera button while it is loading. iPhone Safari can leave
-    // long module requests pending, so the explicit tap flow has its own
-    // timeout and error state.
     runtimePromiseRef.current = preloadMindArRuntime();
     runtimePromiseRef.current.catch(() => undefined);
   }, []);
@@ -101,14 +157,16 @@ export function useArExperience(config: ArExperienceConfig) {
 
       startInFlightRef.current = true;
       setError(null);
+      setCameraPermissionIssue(null);
       setStatus("starting");
 
       let permissionStream: MediaStream | null = null;
 
       try {
-        // This is intentionally the first awaited browser API after the user
-        // taps. It keeps Safari's camera permission request tied to the gesture.
-        permissionStream = await requestIosCameraPermission();
+        // Keep the first browser request tied to the explicit user gesture.
+        // On older iOS Safari versions this may reject immediately or never
+        // show a permission prompt, so requestCameraPermission has a timeout.
+        permissionStream = await requestCameraPermission();
 
         const runtimePromise =
           runtimePromiseRef.current ?? preloadMindArRuntime();
@@ -123,8 +181,6 @@ export function useArExperience(config: ArExperienceConfig) {
         releaseStream(permissionStream);
         permissionStream = null;
 
-        // Give WebKit a brief moment to release the temporary permission stream
-        // before MindAR opens the same rear camera for tracking.
         await new Promise<void>((resolve) => {
           window.setTimeout(resolve, IOS_CAMERA_RELEASE_DELAY_MS);
         });
@@ -145,9 +201,17 @@ export function useArExperience(config: ArExperienceConfig) {
         releaseStream(permissionStream);
         permissionStream = null;
 
-        const message =
-          cause instanceof Error ? cause.message : "Unable to start the AR camera.";
-        setError(message);
+        if (cause instanceof CameraPermissionFlowError) {
+          setCameraPermissionIssue(cause.code);
+          setError(cause.message);
+        } else {
+          const message =
+            cause instanceof Error
+              ? cause.message
+              : "Unable to start the AR camera.";
+          setError(message);
+        }
+
         setStatus("error");
       } finally {
         startInFlightRef.current = false;
@@ -163,5 +227,18 @@ export function useArExperience(config: ArExperienceConfig) {
     setStatus("idle");
   }, []);
 
-  return { status, error, start, stop };
+  const dismissCameraPermissionHelp = useCallback(() => {
+    setCameraPermissionIssue(null);
+    setError(null);
+    setStatus("idle");
+  }, []);
+
+  return {
+    status,
+    error,
+    cameraPermissionIssue,
+    start,
+    stop,
+    dismissCameraPermissionHelp,
+  };
 }
