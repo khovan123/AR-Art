@@ -99,10 +99,6 @@ export class MindArImageEngine implements ArEngine {
         uiLoading: "no",
         uiScanning: "no",
         uiError: "no",
-        filterMinCF: 0.0005,
-        filterBeta: 0.001,
-        warmupTolerance: 5,
-        missTolerance: 5,
       });
 
       this.runtime = runtime;
@@ -150,7 +146,6 @@ export class MindArImageEngine implements ArEngine {
         display: "block",
         visibility: "visible",
         opacity: "1",
-        objectFit: "cover",
         background: "#000",
       });
 
