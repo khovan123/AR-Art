@@ -2,6 +2,8 @@ import type { ArtworkRepository } from "@/features/artwork/application/ports/art
 import type { ArtworkStorage } from "@/features/artwork/application/ports/artwork-storage";
 import type { PublishedArtwork } from "@/features/artwork/domain/artwork";
 
+const MAX_PUBLISHED_ARTWORKS = 10;
+
 export class PublishArtwork {
   constructor(
     private readonly repository: ArtworkRepository,
@@ -12,8 +14,20 @@ export class PublishArtwork {
     const artwork = await this.repository.findById(id);
     if (!artwork) throw new Error("Artwork draft was not found.");
 
+    if (artwork.status !== "published") {
+      const publishedCount = await this.repository.countPublished();
+      if (publishedCount >= MAX_PUBLISHED_ARTWORKS) {
+        throw new Error(
+          `The current Everie MVP supports up to ${MAX_PUBLISHED_ARTWORKS} published products.`,
+        );
+      }
+    }
+
     await this.storage.assertAssetsExist(artwork);
-    const published = await this.repository.markPublished(id);
+    const published =
+      artwork.status === "published"
+        ? artwork
+        : await this.repository.markPublished(id);
 
     return {
       ...published,
