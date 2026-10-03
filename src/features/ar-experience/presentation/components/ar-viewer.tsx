@@ -7,11 +7,13 @@ import { ArrowLeft, RotateCcw, Settings, TriangleAlert, X } from "lucide-react";
 import { Button } from "@/components/atoms/button";
 import type { ArExperienceConfig } from "@/features/ar-experience/domain/ar-experience";
 import { useArExperience } from "@/features/ar-experience/presentation/hooks/use-ar-experience";
+import { markArtworkCollected } from "@/features/collection/presentation/lib/collection-storage";
 
 interface ArViewerProps {
   config: ArExperienceConfig;
   backHref?: string;
   artwork?: {
+    slug: string;
     title: string;
     artistName: string;
   };
@@ -20,6 +22,7 @@ interface ArViewerProps {
 export function ArViewer({
   config,
   backHref = "/",
+  artwork,
 }: ArViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const autoStartedRef = useRef(false);
@@ -53,6 +56,12 @@ export function ArViewer({
       void stop();
     };
   }, [start, stop]);
+
+  useEffect(() => {
+    if (status === "found" && artwork?.slug) {
+      markArtworkCollected(artwork.slug);
+    }
+  }, [artwork?.slug, status]);
 
   const retry = () => {
     const container = containerRef.current;
