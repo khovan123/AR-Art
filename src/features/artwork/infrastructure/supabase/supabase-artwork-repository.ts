@@ -8,6 +8,7 @@ import { getSupabaseServerClient } from "@/features/artwork/infrastructure/supab
 
 type ArtworkRow = {
   id: string;
+  owner_id: string | null;
   slug: string;
   title: string;
   artist_name: string;
@@ -25,6 +26,7 @@ type ArtworkRow = {
 function mapArtwork(row: ArtworkRow): Artwork {
   return {
     id: row.id,
+    ownerId: row.owner_id,
     slug: row.slug,
     title: row.title,
     artistName: row.artist_name,
@@ -47,6 +49,7 @@ export class SupabaseArtworkRepository implements ArtworkRepository {
       .from("artworks")
       .insert({
         id: input.id,
+        owner_id: input.ownerId,
         slug: input.slug,
         title: input.title,
         artist_name: input.artistName,
@@ -101,6 +104,20 @@ export class SupabaseArtworkRepository implements ArtworkRepository {
       .returns<ArtworkRow[]>();
 
     if (error) throw new Error(`Unable to load published artworks: ${error.message}`);
+    return (data ?? []).map(mapArtwork);
+  }
+
+  async listForOwner(ownerId: string) {
+    const supabase = getSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("artworks")
+      .select("*")
+      .or(`owner_id.eq.${ownerId},owner_id.is.null`)
+      .order("created_at", { ascending: false })
+      .limit(EVERIE_MVP_MAX_PRODUCTS)
+      .returns<ArtworkRow[]>();
+
+    if (error) throw new Error(`Unable to load studio artworks: ${error.message}`);
     return (data ?? []).map(mapArtwork);
   }
 

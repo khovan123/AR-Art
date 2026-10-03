@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, LogIn, Plus, ScanLine } from "lucide-react";
+import { ArrowUpRight, LayoutDashboard, LogIn, Plus, ScanLine } from "lucide-react";
 import * as THREE from "three";
 
 import { getCurrentCollectionUser } from "@/features/collection/infrastructure/supabase/collection-repository";
@@ -641,6 +641,16 @@ export function ImmersiveArtExperience() {
             >
               <LogIn className="size-4" aria-hidden="true" />
               LOGIN
+            </Link>
+          )}
+
+          {authState === "authenticated" && (
+            <Link
+              href="/studio"
+              className="group flex h-11 items-center gap-2 rounded-full border border-white/12 bg-black/35 px-4 text-xs font-medium tracking-[0.12em] text-white/80 backdrop-blur-xl transition duration-300 hover:border-white/28 hover:bg-white/[0.08] hover:text-white"
+            >
+              <LayoutDashboard className="size-4" aria-hidden="true" />
+              STUDIO
             </Link>
           )}
 

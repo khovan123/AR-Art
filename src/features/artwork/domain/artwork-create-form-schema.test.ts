@@ -14,21 +14,18 @@ test("accepts valid artwork create form values and trims text", () => {
   const result = artworkCreateFormSchema.parse({
     title: "  Neon Rift  ",
     artistName: "  Everie Studio  ",
-    description: "  Spatial flower study  ",
     targetImage: makeFile("target.png", "image/png"),
     overlayVideo: makeFile("overlay.mp4", "video/mp4"),
   });
 
   assert.equal(result.title, "Neon Rift");
   assert.equal(result.artistName, "Everie Studio");
-  assert.equal(result.description, "Spatial flower study");
 });
 
 test("rejects unsupported artwork and video mime types", () => {
   const result = artworkCreateFormSchema.safeParse({
     title: "Neon Rift",
     artistName: "Everie Studio",
-    description: "",
     targetImage: makeFile("target.gif", "image/gif"),
     overlayVideo: makeFile("overlay.mov", "video/quicktime"),
   });
@@ -45,7 +42,6 @@ test("rejects files larger than the MVP upload limit", () => {
   const result = artworkCreateFormSchema.safeParse({
     title: "Neon Rift",
     artistName: "Everie Studio",
-    description: "",
     targetImage: makeFile(
       "target.png",
       "image/png",

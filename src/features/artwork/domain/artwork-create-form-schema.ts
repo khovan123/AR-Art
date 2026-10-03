@@ -33,10 +33,6 @@ export const artworkCreateFormSchema = z.object({
     .trim()
     .min(1, "Artist / creator is required.")
     .max(120, "Artist / creator must be 120 characters or fewer."),
-  description: z
-    .string()
-    .trim()
-    .max(1200, "Description must be 1200 characters or fewer."),
   targetImage: fileSchema({
     missingMessage: "Tracking artwork is required.",
     typeMessage: "Target image must be JPG, PNG, or WebP.",

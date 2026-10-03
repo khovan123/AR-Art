@@ -11,9 +11,12 @@ export class PublishArtwork {
     private readonly storage: ArtworkStorage,
   ) {}
 
-  async execute(id: string): Promise<PublishedArtwork> {
+  async execute(id: string, ownerId: string): Promise<PublishedArtwork> {
     const artwork = await this.repository.findById(id);
     if (!artwork) throw new Error("Artwork draft was not found.");
+    if (artwork.ownerId !== ownerId) {
+      throw new Error("You do not have permission to publish this artwork.");
+    }
 
     if (artwork.status !== "published") {
       const publishedCount = await this.repository.countPublished();

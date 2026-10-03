@@ -8,6 +8,7 @@ export interface ArtworkRepository {
   findById(id: string): Promise<Artwork | null>;
   findPublishedBySlug(slug: string): Promise<Artwork | null>;
   listPublished(): Promise<Artwork[]>;
+  listForOwner(ownerId: string): Promise<Artwork[]>;
   countPublished(): Promise<number>;
   markPublished(id: string): Promise<Artwork>;
 }

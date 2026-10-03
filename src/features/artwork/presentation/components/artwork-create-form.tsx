@@ -22,8 +22,8 @@ import { Badge } from "@/components/atoms/badge";
 import { Button } from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
-import { Textarea } from "@/components/atoms/textarea";
 import type { ArtworkUploadSession } from "@/features/artwork/domain/artwork";
+import { getSupabaseBrowserClient } from "@/features/artwork/infrastructure/supabase/supabase-clients";
 import {
   ARTWORK_UPLOAD_MAX_FILE_SIZE,
   artworkCreateFormSchema,
@@ -112,30 +112,41 @@ export function ArtworkCreateForm() {
     defaultValues: {
       title: "",
       artistName: "",
-      description: "",
     },
   });
 
   const title = useWatch({ control, name: "title" });
   const artistName = useWatch({ control, name: "artistName" });
-  const description = useWatch({ control, name: "description" });
   const targetImage = useWatch({ control, name: "targetImage" });
   const overlayVideo = useWatch({ control, name: "overlayVideo" });
 
   const detailsReady = Boolean(title?.trim() && artistName?.trim());
   const canPublish = isValid && !isSubmitting;
 
+  async function getAuthHeaders() {
+    const supabase = getSupabaseBrowserClient();
+    const { data, error } = await supabase.auth.getSession();
+    if (error || !data.session) {
+      throw new Error("Your session has expired. Please sign in again.");
+    }
+
+    return {
+      authorization: `Bearer ${data.session.access_token}`,
+    };
+  }
+
   async function createSession(
     values: ArtworkCreateFormValues,
     aspectRatio: number,
   ) {
+    const authHeaders = await getAuthHeaders();
     const response = await fetch("/api/artworks/drafts", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...authHeaders },
       body: JSON.stringify({
         title: values.title,
         artistName: values.artistName,
-        description: values.description,
+        description: "",
         targetImageExtension: fileExtension(values.targetImage),
         overlayExtension: fileExtension(values.overlayVideo),
         overlayAspectRatio: aspectRatio,
@@ -152,8 +163,10 @@ export function ArtworkCreateForm() {
   }
 
   async function publishArtwork(session: ArtworkUploadSession) {
+    const authHeaders = await getAuthHeaders();
     const response = await fetch(`/api/artworks/${session.artworkId}/publish`, {
       method: "POST",
+      headers: authHeaders,
     });
     const data = (await response.json()) as {
       sharePath?: string;
@@ -180,12 +193,12 @@ export function ArtworkCreateForm() {
     dispatch({ type: "start" });
 
     try {
-      dispatch({ type: "message", message: "Reading AR video…" });
+      dispatch({ type: "message", message: "Checking your video…" });
       const aspectRatio = await readVideoAspectRatio(values.overlayVideo);
 
       dispatch({
         type: "message",
-        message: "Building image-tracking data in your browser…",
+        message: "Preparing your artwork…",
       });
       const targetMind = await compileMindTarget(
         values.targetImage,
@@ -200,11 +213,11 @@ export function ArtworkCreateForm() {
 
       dispatch({
         type: "message",
-        message: "Preparing secure upload slots…",
+        message: "Getting things ready…",
       });
       const session = await createSession(values, aspectRatio);
 
-      dispatch({ type: "message", message: "Uploading artwork assets…" });
+      dispatch({ type: "message", message: "Uploading your files…" });
       await uploadArtworkAssets(
         session,
         {
@@ -217,7 +230,7 @@ export function ArtworkCreateForm() {
 
       dispatch({
         type: "message",
-        message: "Publishing and generating QR code…",
+        message: "Finishing up…",
       });
       const published = await publishArtwork(session);
       dispatch({ type: "success", result: published });
@@ -249,13 +262,13 @@ export function ArtworkCreateForm() {
         <div className="creator-ambient-orb creator-ambient-orb-a" />
         <div className="creator-ambient-orb creator-ambient-orb-b" />
         <div className="relative z-10 mx-auto w-full max-w-5xl">
-          <Link href="/" className="inline-flex">
+          <Link href="/studio/products" className="inline-flex">
             <Button
               variant="outline"
               className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              Home
+              Products
             </Button>
           </Link>
 
@@ -263,19 +276,18 @@ export function ArtworkCreateForm() {
             <div>
               <Badge className="border-emerald-400/20 bg-emerald-400/10 text-emerald-200">
                 <Check className="mr-1 size-3" aria-hidden="true" />
-                Published
+                Live
               </Badge>
               <h1 className="mt-5 text-4xl font-semibold tracking-tight">
-                Your artwork is ready to scan.
+                Your artwork is live.
               </h1>
               <p className="mt-4 max-w-xl text-sm leading-6 text-white/60">
-                Print or display this QR beside the physical artwork. Visitors open the
-                artwork page first, then launch the AR camera from there.
+                Place this QR next to your artwork.
               </p>
 
               <div className="mt-7 rounded-2xl border border-white/10 bg-black/20 p-4">
                 <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/40">
-                  Share URL
+                  Artwork link
                 </p>
                 <p className="mt-2 break-all text-sm text-white/80">
                   {workflow.result.shareUrl}
@@ -347,27 +359,22 @@ export function ArtworkCreateForm() {
               className="text-white/60 hover:bg-white/[0.06] hover:text-white"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              Home
+              Studio
             </Button>
           </Link>
           <Badge className="border-white/10 bg-white/[0.04] text-white/55">
-            CREATOR STUDIO
+            NEW AR ARTWORK
           </Badge>
         </div>
 
         <section className="mx-auto mt-12 max-w-6xl">
           <div className="creator-enter max-w-2xl">
             <p className="text-xs font-medium uppercase tracking-[0.28em] text-violet-300/65">
-              Build a spatial artwork
+              New artwork
             </p>
             <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-[-0.05em] text-white sm:text-6xl">
-              Upload once. Put the QR beside the artwork.
+              Add your artwork. Bring it to life with AR.
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-white/45">
-              The tracking file is generated automatically in your browser. Your original
-              artwork image, tracking data, and AR video are then uploaded directly to
-              storage using short-lived signed upload tokens.
-            </p>
           </div>
 
           <form
@@ -413,32 +420,6 @@ export function ArtworkCreateForm() {
                   )}
                 </div>
 
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    maxLength={1200}
-                    aria-invalid={Boolean(errors.description)}
-                    aria-describedby={
-                      errors.description ? "description-error" : undefined
-                    }
-                    placeholder="What should visitors know about this piece?"
-                    {...register("description")}
-                  />
-                  <div className="flex items-start justify-between gap-3">
-                    {errors.description?.message ? (
-                      <p id="description-error" className="text-xs text-rose-300">
-                        {errors.description.message}
-                      </p>
-                    ) : (
-                      <span />
-                    )}
-                    <p className="text-right text-xs text-white/40">
-                      {(description ?? "").length}/1200
-                    </p>
-                  </div>
-                </div>
-
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Controller
                     name="targetImage"
@@ -454,7 +435,7 @@ export function ArtworkCreateForm() {
                             <ImagePlus className="size-5" aria-hidden="true" />
                           </span>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium">Tracking artwork</p>
+                            <p className="text-sm font-medium">Artwork image</p>
                             <p className="truncate text-xs text-white/40">
                               {targetImage
                                 ? `${targetImage.name} · ${formatMb(targetImage.size)}`
@@ -497,7 +478,7 @@ export function ArtworkCreateForm() {
                             <Video className="size-5" aria-hidden="true" />
                           </span>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium">AR animation</p>
+                            <p className="text-sm font-medium">AR video</p>
                             <p className="truncate text-xs text-white/40">
                               {overlayVideo
                                 ? `${overlayVideo.name} · ${formatMb(overlayVideo.size)}`
@@ -543,7 +524,7 @@ export function ArtworkCreateForm() {
                   ) : (
                     <Upload className="size-4" aria-hidden="true" />
                   )}
-                  {isSubmitting ? "Publishing…" : "Publish & generate QR"}
+                  {isSubmitting ? "Publishing…" : "Publish and get QR"}
                 </Button>
 
                 <div className="creator-readiness flex items-center justify-between gap-3 text-xs">
