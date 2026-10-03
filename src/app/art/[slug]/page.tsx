@@ -102,7 +102,7 @@ export default async function ArtworkPage({
                   Collection
                 </p>
                 <p className="mt-2 text-sm text-white/68">
-                  Unlock by recognizing the physical product
+                  Saved to your Everie account after recognition
                 </p>
               </div>
             </div>
@@ -128,18 +128,21 @@ export default async function ArtworkPage({
                   Collection
                 </Button>
               </Link>
+            </div>
 
+            <div className="mt-3">
               <ShareArtworkButton
                 title={artwork.title}
                 text={
                   artwork.description ||
                   `Khám phá nội dung AR của ${artwork.title} trong Everie.`
                 }
+                imageUrl={artwork.targetImageUrl}
               />
             </div>
 
             <p className="mt-4 max-w-lg text-xs leading-5 text-white/32">
-              Khi hệ thống nhận diện đúng sản phẩm trong AR, item tương ứng sẽ được mở khóa trong Collection trên thiết bị này.
+              Bạn cần đăng nhập tài khoản Everie trước khi quét. Khi hệ thống nhận diện đúng sản phẩm, item tương ứng được ghi nhận ngay vào Collection trên cloud của tài khoản.
             </p>
           </div>
         </section>

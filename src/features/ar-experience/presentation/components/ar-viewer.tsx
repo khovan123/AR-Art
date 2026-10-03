@@ -1,18 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, RotateCcw, Settings, TriangleAlert, X } from "lucide-react";
 
 import { Button } from "@/components/atoms/button";
 import type { ArExperienceConfig } from "@/features/ar-experience/domain/ar-experience";
 import { useArExperience } from "@/features/ar-experience/presentation/hooks/use-ar-experience";
-import { markArtworkCollected } from "@/features/collection/presentation/lib/collection-storage";
+import {
+  collectArtwork,
+  getCurrentCollectionUser,
+} from "@/features/collection/infrastructure/supabase/collection-repository";
 
 interface ArViewerProps {
   config: ArExperienceConfig;
   backHref?: string;
   artwork?: {
+    id: string;
     slug: string;
     title: string;
     artistName: string;
@@ -24,8 +29,11 @@ export function ArViewer({
   backHref = "/",
   artwork,
 }: ArViewerProps) {
+  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const autoStartedRef = useRef(false);
+  const collectionSavedRef = useRef(false);
+  const [collectionSaveError, setCollectionSaveError] = useState<string | null>(null);
 
   const stableConfig = useMemo(
     () => ({
@@ -46,22 +54,58 @@ export function ArViewer({
   } = useArExperience(stableConfig);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container || autoStartedRef.current) return;
+    if (autoStartedRef.current) return;
 
-    autoStartedRef.current = true;
-    void start(container);
+    let active = true;
+
+    async function beginAr() {
+      if (artwork) {
+        const user = await getCurrentCollectionUser();
+        if (!active) return;
+
+        if (!user) {
+          const nextPath = `${window.location.pathname}${window.location.search}`;
+          router.replace(`/login?next=${encodeURIComponent(nextPath)}`);
+          return;
+        }
+      }
+
+      const arContainer = containerRef.current;
+      if (!active || !arContainer) return;
+
+      autoStartedRef.current = true;
+      await start(arContainer);
+    }
+
+    void beginAr();
 
     return () => {
+      active = false;
       void stop();
     };
-  }, [start, stop]);
+  }, [artwork, router, start, stop]);
 
   useEffect(() => {
-    if (status === "found" && artwork?.slug) {
-      markArtworkCollected(artwork.slug);
+    if (
+      status !== "found" ||
+      !artwork?.id ||
+      collectionSavedRef.current
+    ) {
+      return;
     }
-  }, [artwork?.slug, status]);
+
+    collectionSavedRef.current = true;
+    setCollectionSaveError(null);
+
+    void collectArtwork(artwork.id).catch((cause) => {
+      collectionSavedRef.current = false;
+      setCollectionSaveError(
+        cause instanceof Error
+          ? cause.message
+          : "Đã nhận diện sản phẩm nhưng chưa thể lưu vào Collection.",
+      );
+    });
+  }, [artwork?.id, status]);
 
   const retry = () => {
     const container = containerRef.current;
@@ -168,6 +212,12 @@ export function ArViewer({
               Try again
             </button>
           </div>
+        </div>
+      )}
+
+      {collectionSaveError && (
+        <div className="absolute inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto max-w-md rounded-2xl border border-amber-300/15 bg-black/75 px-4 py-3 text-xs leading-5 text-amber-100/75 backdrop-blur-xl">
+          {collectionSaveError}
         </div>
       )}
     </main>

@@ -28,14 +28,15 @@ export function getSupabaseBrowserClient() {
 
   if (!url || !publishableKey) {
     throw new Error(
-      "Supabase browser uploads are not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.",
+      "Supabase browser client is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.",
     );
   }
 
   browserClient = createClient(url, publishableKey, {
     auth: {
-      autoRefreshToken: false,
-      persistSession: false,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
     },
   });
 

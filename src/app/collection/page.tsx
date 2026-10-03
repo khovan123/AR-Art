@@ -44,10 +44,10 @@ export default async function CollectionPage() {
               Bộ sưu tập Everie của bạn.
             </h1>
             <p className="mt-5 max-w-2xl text-sm leading-7 text-white/45 sm:text-base">
-              Mỗi sản phẩm Everie có một nội dung số riêng. Hãy quét sản phẩm để mở khóa và lưu item tương ứng vào bộ sưu tập.
+              Mỗi sản phẩm Everie có một nội dung số riêng. Khi AR nhận diện đúng sản phẩm, item tương ứng được ghi nhận ngay vào Collection của tài khoản.
             </p>
             <p className="mt-3 text-xs leading-5 text-white/30">
-              Bản MVP hiện lưu trạng thái sưu tầm trên trình duyệt của thiết bị này. Cơ chế tài khoản/đồng bộ nhiều thiết bị sẽ được chốt ở bước tiếp theo.
+              Collection được lưu trong database cloud theo tài khoản Everie, vì vậy bạn có thể đăng nhập lại trên thiết bị khác để xem bộ sưu tập đã mở khóa.
             </p>
           </div>
         </section>

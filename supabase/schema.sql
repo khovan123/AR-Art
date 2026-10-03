@@ -1,5 +1,5 @@
--- AR Art MVP persistence.
--- Run this once in the Supabase SQL editor.
+-- AR Art / Everie MVP persistence.
+-- Keep this schema aligned with the migrations applied to the Supabase project.
 
 create table if not exists public.artworks (
   id uuid primary key,
@@ -19,8 +19,38 @@ create table if not exists public.artworks (
 
 alter table public.artworks enable row level security;
 
--- Application reads/writes metadata through the server-side service-role client,
--- so no anonymous table policies are required for the MVP.
+-- Artwork metadata is still managed by the server-side service-role client.
+-- No anonymous artwork table policies are required for this MVP.
+
+create table if not exists public.user_collection (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  artwork_id uuid not null references public.artworks(id) on delete cascade,
+  collected_at timestamptz not null default now(),
+  primary key (user_id, artwork_id)
+);
+
+create index if not exists user_collection_artwork_id_idx
+  on public.user_collection (artwork_id);
+
+alter table public.user_collection enable row level security;
+
+revoke all privileges on table public.user_collection from anon;
+revoke all privileges on table public.user_collection from authenticated;
+grant select, insert on table public.user_collection to authenticated;
+
+drop policy if exists "Users can view their own collection" on public.user_collection;
+create policy "Users can view their own collection"
+on public.user_collection
+for select
+to authenticated
+using ((select auth.uid()) = user_id);
+
+drop policy if exists "Users can collect items for themselves" on public.user_collection;
+create policy "Users can collect items for themselves"
+on public.user_collection
+for insert
+to authenticated
+with check ((select auth.uid()) = user_id);
 
 insert into storage.buckets (
   id,
