@@ -1,3 +1,5 @@
+export const EVERIE_MVP_MAX_PRODUCTS = 10;
+
 export type ArtworkStatus = "draft" | "published";
 
 export interface Artwork {

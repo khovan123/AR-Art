@@ -29,6 +29,7 @@ export default async function PublishedArPage({
         },
       }}
       artwork={{
+        slug: artwork.slug,
         title: artwork.title,
         artistName: artwork.artistName,
       }}

@@ -1,8 +1,9 @@
 import type { ArtworkRepository } from "@/features/artwork/application/ports/artwork-repository";
 import type { ArtworkStorage } from "@/features/artwork/application/ports/artwork-storage";
-import type { PublishedArtwork } from "@/features/artwork/domain/artwork";
-
-const MAX_PUBLISHED_ARTWORKS = 10;
+import {
+  EVERIE_MVP_MAX_PRODUCTS,
+  type PublishedArtwork,
+} from "@/features/artwork/domain/artwork";
 
 export class PublishArtwork {
   constructor(
@@ -16,9 +17,9 @@ export class PublishArtwork {
 
     if (artwork.status !== "published") {
       const publishedCount = await this.repository.countPublished();
-      if (publishedCount >= MAX_PUBLISHED_ARTWORKS) {
+      if (publishedCount >= EVERIE_MVP_MAX_PRODUCTS) {
         throw new Error(
-          `The current Everie MVP supports up to ${MAX_PUBLISHED_ARTWORKS} published products.`,
+          `The current Everie MVP supports up to ${EVERIE_MVP_MAX_PRODUCTS} published products.`,
         );
       }
     }

@@ -1,7 +1,8 @@
 import type { ArtworkRepository } from "@/features/artwork/application/ports/artwork-repository";
-import type {
-  Artwork,
-  CreateArtworkDraftInput,
+import {
+  EVERIE_MVP_MAX_PRODUCTS,
+  type Artwork,
+  type CreateArtworkDraftInput,
 } from "@/features/artwork/domain/artwork";
 import { getSupabaseServerClient } from "@/features/artwork/infrastructure/supabase/supabase-clients";
 
@@ -96,6 +97,7 @@ export class SupabaseArtworkRepository implements ArtworkRepository {
       .select("*")
       .eq("status", "published")
       .order("published_at", { ascending: true })
+      .limit(EVERIE_MVP_MAX_PRODUCTS)
       .returns<ArtworkRow[]>();
 
     if (error) throw new Error(`Unable to load published artworks: ${error.message}`);

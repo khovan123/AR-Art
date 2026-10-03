@@ -2,8 +2,9 @@
 
 const STORAGE_KEY = "everie.collection.v1";
 const COLLECTION_EVENT = "everie:collection-updated";
+export const EVERIE_COLLECTION_MAX_ITEMS = 10;
 
-function normalizeSlugs(value: unknown) {
+export function normalizeCollectedSlugs(value: unknown) {
   if (!Array.isArray(value)) return [] as string[];
 
   return Array.from(
@@ -12,7 +13,7 @@ function normalizeSlugs(value: unknown) {
         (item): item is string => typeof item === "string" && item.trim().length > 0,
       ),
     ),
-  );
+  ).slice(0, EVERIE_COLLECTION_MAX_ITEMS);
 }
 
 export function getCollectedSlugs() {
@@ -21,7 +22,7 @@ export function getCollectedSlugs() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    return normalizeSlugs(JSON.parse(raw));
+    return normalizeCollectedSlugs(JSON.parse(raw));
   } catch {
     return [];
   }
@@ -31,7 +32,7 @@ export function markArtworkCollected(slug: string) {
   if (typeof window === "undefined" || !slug.trim()) return;
 
   const current = getCollectedSlugs();
-  if (current.includes(slug)) return;
+  if (current.includes(slug) || current.length >= EVERIE_COLLECTION_MAX_ITEMS) return;
 
   const next = [...current, slug];
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
