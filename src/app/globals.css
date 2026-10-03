@@ -859,3 +859,270 @@ a {
     transition-duration: 120ms;
   }
 }
+
+
+/* Everie authentication experience */
+.auth-page {
+  isolation: isolate;
+}
+
+.auth-orb {
+  will-change: transform, opacity;
+}
+
+.auth-orb-a {
+  left: 50%;
+  top: -12rem;
+  width: min(52rem, 82vw);
+  height: 34rem;
+  transform: translateX(-50%);
+  animation: auth-orb-a 11s ease-in-out infinite;
+}
+
+.auth-orb-b {
+  right: -10rem;
+  bottom: -10rem;
+  width: min(34rem, 58vw);
+  aspect-ratio: 1;
+  animation: auth-orb-b 13s ease-in-out infinite;
+}
+
+.auth-home-enter,
+.auth-copy-item,
+.auth-card {
+  opacity: 0;
+  animation: auth-enter 760ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.auth-home-enter {
+  animation-delay: 40ms;
+}
+
+.auth-copy-eyebrow {
+  animation-delay: 120ms;
+}
+
+.auth-copy-title {
+  animation-delay: 200ms;
+}
+
+.auth-copy-description {
+  animation-delay: 300ms;
+}
+
+.auth-card {
+  animation-name: auth-card-enter;
+  animation-delay: 220ms;
+  transform-origin: 50% 55%;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.045),
+    0 28px 90px rgba(0,0,0,0.42),
+    0 0 0 rgba(124,58,237,0);
+  transition:
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 320ms ease,
+    box-shadow 320ms ease;
+}
+
+.auth-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(196,181,253,0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.055),
+    0 36px 105px rgba(0,0,0,0.5),
+    0 0 70px rgba(124,58,237,0.07);
+}
+
+.auth-card-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: -35%;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 25% 20%, rgba(139,92,246,0.16), transparent 28%),
+    radial-gradient(circle at 78% 82%, rgba(34,211,238,0.09), transparent 30%);
+  animation: auth-card-glow 8s ease-in-out infinite;
+}
+
+.auth-mode-switch {
+  overflow: hidden;
+}
+
+.auth-mode-indicator {
+  position: absolute;
+  left: 0.25rem;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  width: calc(50% - 0.25rem);
+  border-radius: 999px;
+  background: linear-gradient(120deg, #ffffff, #f5f3ff 58%, #ecfeff);
+  box-shadow:
+    0 8px 24px rgba(255,255,255,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+  transform: translateX(0);
+  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-mode-indicator.is-signup {
+  transform: translateX(100%);
+}
+
+.auth-field {
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-field:focus-within {
+  transform: translateY(-2px);
+}
+
+.auth-field input {
+  transition:
+    border-color 220ms ease,
+    background 220ms ease,
+    box-shadow 280ms ease,
+    transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-field:focus-within input {
+  background: rgba(255,255,255,0.052);
+  box-shadow:
+    0 0 0 3px rgba(139,92,246,0.075),
+    0 12px 30px rgba(0,0,0,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.045);
+}
+
+.auth-error,
+.auth-message {
+  animation: auth-message-enter 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.auth-submit-button {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 280ms ease,
+    background 280ms ease;
+}
+
+.auth-submit-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform: translateX(-135%) skewX(-18deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+  opacity: 0.48;
+}
+
+.auth-submit-button:not(:disabled):hover {
+  transform: translateY(-2px) scale(1.008);
+  box-shadow: 0 16px 38px rgba(124,58,237,0.12);
+}
+
+.auth-submit-button:not(:disabled):hover::after {
+  animation: auth-button-shine 850ms ease-out;
+}
+
+.auth-submit-button:not(:disabled):active {
+  transform: translateY(0) scale(0.985);
+}
+
+.auth-submit-button.is-loading {
+  cursor: wait;
+  box-shadow: 0 0 34px rgba(196,181,253,0.1);
+}
+
+.auth-footnote {
+  animation: auth-footnote-enter 720ms cubic-bezier(0.16, 1, 0.3, 1) 520ms both;
+}
+
+@keyframes auth-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes auth-card-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(32px, 20px, 0) scale(0.975);
+    filter: blur(9px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes auth-message-enter {
+  from { opacity: 0; transform: translateY(-5px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes auth-footnote-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes auth-button-shine {
+  from { transform: translateX(-135%) skewX(-18deg); }
+  to { transform: translateX(145%) skewX(-18deg); }
+}
+
+@keyframes auth-orb-a {
+  0%, 100% { transform: translate3d(-50%, 0, 0) scale(1); opacity: 0.8; }
+  50% { transform: translate3d(-46%, 5vh, 0) scale(1.08); opacity: 1; }
+}
+
+@keyframes auth-orb-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(0.92); opacity: 0.6; }
+  50% { transform: translate3d(-4vw, -5vh, 0) scale(1.08); opacity: 0.92; }
+}
+
+@keyframes auth-card-glow {
+  0%, 100% { transform: translate3d(0,0,0) rotate(0deg); opacity: 0.7; }
+  50% { transform: translate3d(2%, -2%, 0) rotate(3deg); opacity: 1; }
+}
+
+@media (max-width: 1023px) {
+  .auth-card {
+    animation-delay: 320ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-orb,
+  .auth-home-enter,
+  .auth-copy-item,
+  .auth-card,
+  .auth-card-glow,
+  .auth-error,
+  .auth-message,
+  .auth-footnote,
+  .auth-submit-button::after {
+    animation: none !important;
+  }
+
+  .auth-home-enter,
+  .auth-copy-item,
+  .auth-card {
+    opacity: 1;
+  }
+
+  .auth-card,
+  .auth-mode-indicator,
+  .auth-field,
+  .auth-field input,
+  .auth-submit-button {
+    transition-duration: 120ms;
+  }
+}

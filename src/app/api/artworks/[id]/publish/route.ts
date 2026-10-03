@@ -1,15 +1,21 @@
 import { NextResponse } from "next/server";
 
 import { createArtworkServices } from "@/features/artwork/infrastructure/supabase/artwork-services";
+import { getRequestUser } from "@/features/auth/infrastructure/supabase/request-user";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
   try {
+    const user = await getRequestUser(request);
+    if (!user) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
+
     const { id } = await context.params;
     const { publishArtwork } = createArtworkServices();
-    const artwork = await publishArtwork.execute(id);
+    const artwork = await publishArtwork.execute(id, user.id);
 
     return NextResponse.json({
       artwork,

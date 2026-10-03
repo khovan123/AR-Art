@@ -3,6 +3,7 @@ import type { ArtworkStorage } from "@/features/artwork/application/ports/artwor
 import type { ArtworkUploadSession } from "@/features/artwork/domain/artwork";
 
 export interface CreateUploadSessionInput {
+  ownerId: string;
   title: string;
   artistName: string;
   description: string;
@@ -40,6 +41,7 @@ export class CreateArtworkUploadSession {
 
     await this.repository.createDraft({
       id,
+      ownerId: input.ownerId,
       slug,
       title: input.title,
       artistName: input.artistName,

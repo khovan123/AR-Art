@@ -1,7 +1,9 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useReducer } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import QRCode from "qrcode";
 import {
   ArrowLeft,
@@ -17,25 +19,73 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/atoms/badge";
-import { CreatorSpatialScene } from "@/features/artwork/presentation/components/creator-spatial-scene";
 import { Button } from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
-import { Textarea } from "@/components/atoms/textarea";
 import type { ArtworkUploadSession } from "@/features/artwork/domain/artwork";
+import { getSupabaseBrowserClient } from "@/features/artwork/infrastructure/supabase/supabase-clients";
+import {
+  ARTWORK_UPLOAD_MAX_FILE_SIZE,
+  artworkCreateFormSchema,
+  type ArtworkCreateFormValues,
+} from "@/features/artwork/domain/artwork-create-form-schema";
+import { CreatorSpatialScene } from "@/features/artwork/presentation/components/creator-spatial-scene";
 import { compileMindTarget } from "@/features/artwork/presentation/lib/compile-mind-target";
 import { readVideoAspectRatio } from "@/features/artwork/presentation/lib/read-video-aspect-ratio";
 import { uploadArtworkAssets } from "@/features/artwork/presentation/lib/upload-artwork-assets";
-
-const MAX_FILE_SIZE = 6 * 1024 * 1024;
-const imageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const videoTypes = new Set(["video/mp4", "video/webm"]);
 
 type PublishResult = {
   shareUrl: string;
   arUrl: string;
   qrDataUrl: string;
 };
+
+type WorkflowState = {
+  compilerProgress: number;
+  uploadStep: number;
+  message: string | null;
+  result: PublishResult | null;
+  copied: boolean;
+};
+
+type WorkflowAction =
+  | { type: "start" }
+  | { type: "message"; message: string }
+  | { type: "compiler-progress"; value: number }
+  | { type: "upload-step"; value: number }
+  | { type: "success"; result: PublishResult }
+  | { type: "error"; message: string }
+  | { type: "copied"; value: boolean };
+
+const initialWorkflowState: WorkflowState = {
+  compilerProgress: 0,
+  uploadStep: 0,
+  message: null,
+  result: null,
+  copied: false,
+};
+
+function workflowReducer(
+  state: WorkflowState,
+  action: WorkflowAction,
+): WorkflowState {
+  switch (action.type) {
+    case "start":
+      return initialWorkflowState;
+    case "message":
+      return { ...state, message: action.message };
+    case "compiler-progress":
+      return { ...state, compilerProgress: action.value };
+    case "upload-step":
+      return { ...state, uploadStep: action.value };
+    case "success":
+      return { ...state, message: null, result: action.result };
+    case "error":
+      return { ...state, message: action.message };
+    case "copied":
+      return { ...state, copied: action.value };
+  }
+}
 
 function fileExtension(file: File) {
   return file.name.split(".").pop()?.toLowerCase() ?? "";
@@ -46,62 +96,77 @@ function formatMb(bytes: number) {
 }
 
 export function ArtworkCreateForm() {
-  const [title, setTitle] = useState("");
-  const [artistName, setArtistName] = useState("");
-  const [description, setDescription] = useState("");
-  const [targetImage, setTargetImage] = useState<File | null>(null);
-  const [overlayVideo, setOverlayVideo] = useState<File | null>(null);
-  const [status, setStatus] = useState<"idle" | "working" | "done">("idle");
-  const [compilerProgress, setCompilerProgress] = useState(0);
-  const [uploadStep, setUploadStep] = useState(0);
-  const [message, setMessage] = useState<string | null>(null);
-  const [result, setResult] = useState<PublishResult | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  const canPublish = useMemo(
-    () =>
-      title.trim().length > 0 &&
-      artistName.trim().length > 0 &&
-      targetImage !== null &&
-      overlayVideo !== null &&
-      status !== "working",
-    [artistName, overlayVideo, status, targetImage, title],
+  const [workflow, dispatch] = useReducer(
+    workflowReducer,
+    initialWorkflowState,
   );
 
-  function validateFiles(image: File, video: File) {
-    if (!imageTypes.has(image.type)) {
-      throw new Error("Target image must be JPG, PNG, or WebP.");
+  const {
+    control,
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<ArtworkCreateFormValues>({
+    resolver: zodResolver(artworkCreateFormSchema),
+    mode: "onChange",
+    defaultValues: {
+      title: "",
+      artistName: "",
+    },
+  });
+
+  const title = useWatch({ control, name: "title" });
+  const artistName = useWatch({ control, name: "artistName" });
+  const targetImage = useWatch({ control, name: "targetImage" });
+  const overlayVideo = useWatch({ control, name: "overlayVideo" });
+
+  const detailsReady = Boolean(title?.trim() && artistName?.trim());
+  const canPublish = isValid && !isSubmitting;
+
+  async function getAuthHeaders() {
+    const supabase = getSupabaseBrowserClient();
+    const { data, error } = await supabase.auth.getSession();
+    if (error || !data.session) {
+      throw new Error("Your session has expired. Please sign in again.");
     }
-    if (!videoTypes.has(video.type)) {
-      throw new Error("AR overlay must be MP4 or WebM.");
-    }
-    if (image.size > MAX_FILE_SIZE || video.size > MAX_FILE_SIZE) {
-      throw new Error("Each uploaded file must be 6 MB or smaller for this MVP.");
-    }
+
+    return {
+      authorization: `Bearer ${data.session.access_token}`,
+    };
   }
 
-  async function createSession(aspectRatio: number) {
+  async function createSession(
+    values: ArtworkCreateFormValues,
+    aspectRatio: number,
+  ) {
+    const authHeaders = await getAuthHeaders();
     const response = await fetch("/api/artworks/drafts", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...authHeaders },
       body: JSON.stringify({
-        title,
-        artistName,
-        description,
-        targetImageExtension: fileExtension(targetImage!),
-        overlayExtension: fileExtension(overlayVideo!),
+        title: values.title,
+        artistName: values.artistName,
+        description: "",
+        targetImageExtension: fileExtension(values.targetImage),
+        overlayExtension: fileExtension(values.overlayVideo),
         overlayAspectRatio: aspectRatio,
       }),
     });
 
-    const data = (await response.json()) as ArtworkUploadSession & { error?: string };
-    if (!response.ok) throw new Error(data.error ?? "Unable to prepare uploads.");
+    const data = (await response.json()) as ArtworkUploadSession & {
+      error?: string;
+    };
+    if (!response.ok) {
+      throw new Error(data.error ?? "Unable to prepare uploads.");
+    }
     return data;
   }
 
   async function publishArtwork(session: ArtworkUploadSession) {
+    const authHeaders = await getAuthHeaders();
     const response = await fetch(`/api/artworks/${session.artworkId}/publish`, {
       method: "POST",
+      headers: authHeaders,
     });
     const data = (await response.json()) as {
       sharePath?: string;
@@ -124,70 +189,86 @@ export function ArtworkCreateForm() {
     return { shareUrl, arUrl, qrDataUrl };
   }
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!targetImage || !overlayVideo) return;
-
-    setMessage(null);
-    setResult(null);
-    setStatus("working");
-    setCompilerProgress(0);
-    setUploadStep(0);
+  const submit = handleSubmit(async (values) => {
+    dispatch({ type: "start" });
 
     try {
-      validateFiles(targetImage, overlayVideo);
-      setMessage("Reading AR video…");
-      const aspectRatio = await readVideoAspectRatio(overlayVideo);
+      dispatch({ type: "message", message: "Checking your video…" });
+      const aspectRatio = await readVideoAspectRatio(values.overlayVideo);
 
-      setMessage("Building image-tracking data in your browser…");
-      const targetMind = await compileMindTarget(targetImage, setCompilerProgress);
-
-      if (targetMind.size > MAX_FILE_SIZE) {
-        throw new Error("The compiled tracking file is larger than the 6 MB MVP limit.");
-      }
-
-      setMessage("Preparing secure upload slots…");
-      const session = await createSession(aspectRatio);
-
-      setMessage("Uploading artwork assets…");
-      await uploadArtworkAssets(
-        session,
-        { targetImage, targetMind, overlay: overlayVideo },
-        setUploadStep,
+      dispatch({
+        type: "message",
+        message: "Preparing your artwork…",
+      });
+      const targetMind = await compileMindTarget(
+        values.targetImage,
+        (value) => dispatch({ type: "compiler-progress", value }),
       );
 
-      setMessage("Publishing and generating QR code…");
+      if (targetMind.size > ARTWORK_UPLOAD_MAX_FILE_SIZE) {
+        throw new Error(
+          "The compiled tracking file is larger than the 6 MB MVP limit.",
+        );
+      }
+
+      dispatch({
+        type: "message",
+        message: "Getting things ready…",
+      });
+      const session = await createSession(values, aspectRatio);
+
+      dispatch({ type: "message", message: "Uploading your files…" });
+      await uploadArtworkAssets(
+        session,
+        {
+          targetImage: values.targetImage,
+          targetMind,
+          overlay: values.overlayVideo,
+        },
+        (value) => dispatch({ type: "upload-step", value }),
+      );
+
+      dispatch({
+        type: "message",
+        message: "Finishing up…",
+      });
       const published = await publishArtwork(session);
-      setResult(published);
-      setStatus("done");
-      setMessage(null);
+      dispatch({ type: "success", result: published });
     } catch (cause) {
-      setStatus("idle");
-      setMessage(cause instanceof Error ? cause.message : "Unable to publish artwork.");
+      dispatch({
+        type: "error",
+        message:
+          cause instanceof Error
+            ? cause.message
+            : "Unable to publish artwork.",
+      });
     }
-  }
+  });
 
   async function copyShareUrl() {
-    if (!result) return;
-    await navigator.clipboard.writeText(result.shareUrl);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
+    if (!workflow.result) return;
+    await navigator.clipboard.writeText(workflow.result.shareUrl);
+    dispatch({ type: "copied", value: true });
+    window.setTimeout(
+      () => dispatch({ type: "copied", value: false }),
+      1600,
+    );
   }
 
-  if (result) {
+  if (workflow.result) {
     return (
       <main className="creator-studio creator-studio-immersive relative min-h-screen overflow-hidden px-5 py-6 text-white sm:px-8">
         <CreatorSpatialScene />
         <div className="creator-ambient-orb creator-ambient-orb-a" />
         <div className="creator-ambient-orb creator-ambient-orb-b" />
         <div className="relative z-10 mx-auto w-full max-w-5xl">
-          <Link href="/" className="inline-flex">
+          <Link href="/studio/products" className="inline-flex">
             <Button
               variant="outline"
               className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              Home
+              Products
             </Button>
           </Link>
 
@@ -195,21 +276,22 @@ export function ArtworkCreateForm() {
             <div>
               <Badge className="border-emerald-400/20 bg-emerald-400/10 text-emerald-200">
                 <Check className="mr-1 size-3" aria-hidden="true" />
-                Published
+                Live
               </Badge>
               <h1 className="mt-5 text-4xl font-semibold tracking-tight">
-                Your artwork is ready to scan.
+                Your artwork is live.
               </h1>
               <p className="mt-4 max-w-xl text-sm leading-6 text-white/60">
-                Print or display this QR beside the physical artwork. Visitors open the
-                artwork page first, then launch the AR camera from there.
+                Place this QR next to your artwork.
               </p>
 
               <div className="mt-7 rounded-2xl border border-white/10 bg-black/20 p-4">
                 <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/40">
-                  Share URL
+                  Artwork link
                 </p>
-                <p className="mt-2 break-all text-sm text-white/80">{result.shareUrl}</p>
+                <p className="mt-2 break-all text-sm text-white/80">
+                  {workflow.result.shareUrl}
+                </p>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -217,10 +299,14 @@ export function ArtworkCreateForm() {
                   className="bg-white text-black hover:bg-white/90"
                   onClick={copyShareUrl}
                 >
-                  {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-                  {copied ? "Copied" : "Copy link"}
+                  {workflow.copied ? (
+                    <Check className="size-4" />
+                  ) : (
+                    <Copy className="size-4" />
+                  )}
+                  {workflow.copied ? "Copied" : "Copy link"}
                 </Button>
-                <a href={result.qrDataUrl} download="ar-art-qr.png">
+                <a href={workflow.result.qrDataUrl} download="ar-art-qr.png">
                   <Button
                     variant="outline"
                     className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
@@ -229,7 +315,11 @@ export function ArtworkCreateForm() {
                     Download QR
                   </Button>
                 </a>
-                <a href={result.shareUrl} target="_blank" rel="noreferrer">
+                <a
+                  href={workflow.result.shareUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   <Button
                     variant="outline"
                     className="border-white/15 bg-white/5 text-white hover:bg-white/10 hover:text-white"
@@ -244,7 +334,7 @@ export function ArtworkCreateForm() {
               {/* Generated data URL is intentionally rendered without next/image. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={result.qrDataUrl}
+                src={workflow.result.qrDataUrl}
                 alt="QR code for the published AR artwork"
                 className="relative z-10 aspect-square w-full max-w-64 rounded-2xl bg-white p-3 shadow-2xl"
               />
@@ -264,29 +354,32 @@ export function ArtworkCreateForm() {
       <div className="relative z-10 mx-auto w-full max-w-[90rem] px-5 py-6 lg:px-10">
         <div className="flex items-center justify-between">
           <Link href="/">
-            <Button variant="ghost" className="text-white/60 hover:bg-white/[0.06] hover:text-white">
+            <Button
+              variant="ghost"
+              className="text-white/60 hover:bg-white/[0.06] hover:text-white"
+            >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              Home
+              Studio
             </Button>
           </Link>
-          <Badge className="border-white/10 bg-white/[0.04] text-white/55">CREATOR STUDIO</Badge>
+          <Badge className="border-white/10 bg-white/[0.04] text-white/55">
+            NEW AR ARTWORK
+          </Badge>
         </div>
 
         <section className="mx-auto mt-12 max-w-6xl">
           <div className="creator-enter max-w-2xl">
-            <p className="text-xs font-medium uppercase tracking-[0.28em] text-violet-300/65">Build a spatial artwork</p>
-            <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-[-0.05em] text-white sm:text-6xl">
-              Upload once. Put the QR beside the artwork.
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-white/45">
-              The tracking file is generated automatically in your browser. Your original
-              artwork image, tracking data, and AR video are then uploaded directly to
-              storage using short-lived signed upload tokens.
+            <p className="text-xs font-medium uppercase tracking-[0.28em] text-violet-300/65">
+              New artwork
             </p>
+            <h1 className="mt-3 max-w-3xl text-4xl font-semibold tracking-[-0.05em] text-white sm:text-6xl">
+              Add your artwork. Bring it to life with AR.
+            </h1>
           </div>
 
           <form
-            onSubmit={handleSubmit}
+            onSubmit={submit}
+            noValidate
             className="mt-12 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]"
           >
             <div className="creator-panel creator-panel-3d creator-enter creator-enter-delay-1 rounded-[2rem] p-5 sm:p-7">
@@ -295,106 +388,147 @@ export function ArtworkCreateForm() {
                   <Label htmlFor="title">Artwork title</Label>
                   <Input
                     id="title"
-                    value={title}
                     maxLength={120}
-                    onChange={(event) => setTitle(event.target.value)}
+                    aria-invalid={Boolean(errors.title)}
+                    aria-describedby={errors.title ? "title-error" : undefined}
                     placeholder="e.g. Neon Saigon"
-                    required
+                    {...register("title")}
                   />
+                  {errors.title?.message && (
+                    <p id="title-error" className="text-xs text-rose-300">
+                      {errors.title.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="artist">Artist / creator</Label>
+                  <Label htmlFor="artistName">Artist / creator</Label>
                   <Input
-                    id="artist"
-                    value={artistName}
+                    id="artistName"
                     maxLength={120}
-                    onChange={(event) => setArtistName(event.target.value)}
+                    aria-invalid={Boolean(errors.artistName)}
+                    aria-describedby={
+                      errors.artistName ? "artist-name-error" : undefined
+                    }
                     placeholder="Artist name"
-                    required
+                    {...register("artistName")}
                   />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={description}
-                    maxLength={1200}
-                    onChange={(event) => setDescription(event.target.value)}
-                    placeholder="What should visitors know about this piece?"
-                  />
-                  <p className="text-right text-xs text-white/40">
-                    {description.length}/1200
-                  </p>
+                  {errors.artistName?.message && (
+                    <p id="artist-name-error" className="text-xs text-rose-300">
+                      {errors.artistName.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <label
-                    className={`creator-file-card group cursor-pointer rounded-2xl border border-dashed p-4 transition ${targetImage ? "is-ready" : ""}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.055] text-white/70">
-                        <ImagePlus className="size-5" aria-hidden="true" />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">Tracking artwork</p>
-                        <p className="truncate text-xs text-white/40">
-                          {targetImage
-                            ? `${targetImage.name} · ${formatMb(targetImage.size)}`
-                            : "JPG, PNG or WebP · max 6 MB"}
-                        </p>
-                      </div>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="sr-only"
-                      onChange={(event) => setTargetImage(event.target.files?.[0] ?? null)}
-                    />
-                  </label>
+                  <Controller
+                    name="targetImage"
+                    control={control}
+                    render={({ field: { onChange, onBlur, name, ref } }) => (
+                      <label
+                        className={`creator-file-card group cursor-pointer rounded-2xl border border-dashed p-4 transition ${
+                          targetImage ? "is-ready" : ""
+                        } ${errors.targetImage ? "border-rose-300/40" : ""}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.055] text-white/70">
+                            <ImagePlus className="size-5" aria-hidden="true" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium">Artwork image</p>
+                            <p className="truncate text-xs text-white/40">
+                              {targetImage
+                                ? `${targetImage.name} · ${formatMb(targetImage.size)}`
+                                : "JPG, PNG or WebP · max 6 MB"}
+                            </p>
+                          </div>
+                        </div>
+                        <input
+                          ref={ref}
+                          name={name}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="sr-only"
+                          aria-invalid={Boolean(errors.targetImage)}
+                          onBlur={onBlur}
+                          onChange={(event) =>
+                            onChange(event.target.files?.[0] ?? undefined)
+                          }
+                        />
+                        {errors.targetImage?.message && (
+                          <p className="mt-2 text-xs text-rose-300">
+                            {errors.targetImage.message}
+                          </p>
+                        )}
+                      </label>
+                    )}
+                  />
 
-                  <label
-                    className={`creator-file-card group cursor-pointer rounded-2xl border border-dashed p-4 transition ${overlayVideo ? "is-ready" : ""}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.055] text-white/70">
-                        <Video className="size-5" aria-hidden="true" />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">AR animation</p>
-                        <p className="truncate text-xs text-white/40">
-                          {overlayVideo
-                            ? `${overlayVideo.name} · ${formatMb(overlayVideo.size)}`
-                            : "MP4 or WebM · max 6 MB"}
-                        </p>
-                      </div>
-                    </div>
-                    <input
-                      type="file"
-                      accept="video/mp4,video/webm"
-                      className="sr-only"
-                      onChange={(event) => setOverlayVideo(event.target.files?.[0] ?? null)}
-                    />
-                  </label>
+                  <Controller
+                    name="overlayVideo"
+                    control={control}
+                    render={({ field: { onChange, onBlur, name, ref } }) => (
+                      <label
+                        className={`creator-file-card group cursor-pointer rounded-2xl border border-dashed p-4 transition ${
+                          overlayVideo ? "is-ready" : ""
+                        } ${errors.overlayVideo ? "border-rose-300/40" : ""}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.055] text-white/70">
+                            <Video className="size-5" aria-hidden="true" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium">AR video</p>
+                            <p className="truncate text-xs text-white/40">
+                              {overlayVideo
+                                ? `${overlayVideo.name} · ${formatMb(overlayVideo.size)}`
+                                : "MP4 or WebM · max 6 MB"}
+                            </p>
+                          </div>
+                        </div>
+                        <input
+                          ref={ref}
+                          name={name}
+                          type="file"
+                          accept="video/mp4,video/webm"
+                          className="sr-only"
+                          aria-invalid={Boolean(errors.overlayVideo)}
+                          onBlur={onBlur}
+                          onChange={(event) =>
+                            onChange(event.target.files?.[0] ?? undefined)
+                          }
+                        />
+                        {errors.overlayVideo?.message && (
+                          <p className="mt-2 text-xs text-rose-300">
+                            {errors.overlayVideo.message}
+                          </p>
+                        )}
+                      </label>
+                    )}
+                  />
                 </div>
 
                 <Button
                   type="submit"
                   size="lg"
                   disabled={!canPublish}
-                  className={`creator-publish-button w-full ${canPublish ? "is-ready" : ""}`}
+                  className={`creator-publish-button w-full ${
+                    canPublish ? "is-ready" : ""
+                  }`}
                 >
-                  {status === "working" ? (
-                    <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+                  {isSubmitting ? (
+                    <LoaderCircle
+                      className="size-4 animate-spin"
+                      aria-hidden="true"
+                    />
                   ) : (
                     <Upload className="size-4" aria-hidden="true" />
                   )}
-                  {status === "working" ? "Publishing…" : "Publish & generate QR"}
+                  {isSubmitting ? "Publishing…" : "Publish and get QR"}
                 </Button>
 
                 <div className="creator-readiness flex items-center justify-between gap-3 text-xs">
-                  <span className={title.trim() && artistName.trim() ? "is-ready" : ""}>
+                  <span className={detailsReady ? "is-ready" : ""}>
                     <Check className="size-3.5" aria-hidden="true" />
                     Details
                   </span>
@@ -408,16 +542,16 @@ export function ArtworkCreateForm() {
                   </span>
                 </div>
 
-                {message && (
+                {workflow.message && (
                   <p
                     className={
-                      status === "working"
+                      isSubmitting
                         ? "text-sm text-white/40"
                         : "text-sm text-rose-300"
                     }
                     role="status"
                   >
-                    {message}
+                    {workflow.message}
                   </p>
                 )}
               </div>
@@ -425,21 +559,37 @@ export function ArtworkCreateForm() {
 
             <aside className="creator-stage creator-panel-3d creator-enter creator-enter-delay-2 rounded-[2rem] p-5 text-white sm:p-7">
               <div className="flex items-center gap-2">
-                <Sparkles className="size-4 text-amber-300" aria-hidden="true" />
-                <p className="relative z-10 text-sm font-medium">Publishing sequence</p>
+                <Sparkles
+                  className="size-4 text-amber-300"
+                  aria-hidden="true"
+                />
+                <p className="relative z-10 text-sm font-medium">
+                  Publishing sequence
+                </p>
               </div>
 
               <ol className="relative z-10 mt-8 grid gap-5">
                 {[
                   ["Compile target", "Your artwork becomes a MindAR image target."],
-                  ["Upload assets", "Image, tracking file, and video go to object storage."],
-                  ["Publish page", "A shareable artwork page and AR route are created."],
-                  ["Generate QR", "The QR opens the public artwork page on any phone."],
+                  [
+                    "Upload assets",
+                    "Image, tracking file, and video go to object storage.",
+                  ],
+                  [
+                    "Publish page",
+                    "A shareable artwork page and AR route are created.",
+                  ],
+                  [
+                    "Generate QR",
+                    "The QR opens the public artwork page on any phone.",
+                  ],
                 ].map(([name, detail], index) => {
                   const completed =
-                    compilerProgress === 100 && index === 0
+                    workflow.compilerProgress === 100 && index === 0
                       ? true
-                      : uploadStep >= index && index > 0 && uploadStep > 0;
+                      : workflow.uploadStep >= index &&
+                        index > 0 &&
+                        workflow.uploadStep > 0;
 
                   return (
                     <li key={name} className="flex gap-3">
@@ -450,31 +600,39 @@ export function ArtworkCreateForm() {
                             : "flex size-7 shrink-0 items-center justify-center rounded-full border border-white/15 text-xs text-white/60"
                         }
                       >
-                        {completed ? <Check className="size-4" /> : index + 1}
+                        {completed ? (
+                          <Check className="size-4" />
+                        ) : (
+                          index + 1
+                        )}
                       </span>
                       <div>
                         <p className="text-sm font-medium">{name}</p>
-                        <p className="mt-1 text-xs leading-5 text-white/50">{detail}</p>
+                        <p className="mt-1 text-xs leading-5 text-white/50">
+                          {detail}
+                        </p>
                       </div>
                     </li>
                   );
                 })}
               </ol>
 
-              {status === "working" && compilerProgress > 0 && compilerProgress < 100 && (
-                <div className="mt-7">
-                  <div className="flex justify-between text-xs text-white/50">
-                    <span>Tracking compiler</span>
-                    <span>{compilerProgress}%</span>
+              {isSubmitting &&
+                workflow.compilerProgress > 0 &&
+                workflow.compilerProgress < 100 && (
+                  <div className="mt-7">
+                    <div className="flex justify-between text-xs text-white/50">
+                      <span>Tracking compiler</span>
+                      <span>{workflow.compilerProgress}%</span>
+                    </div>
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-white transition-[width]"
+                        style={{ width: `${workflow.compilerProgress}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
-                    <div
-                      className="h-full rounded-full bg-white transition-[width]"
-                      style={{ width: `${compilerProgress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
+                )}
 
               <div className="relative z-10 mt-8 rounded-2xl border border-white/10 bg-black/20 p-4 backdrop-blur">
                 <div className="flex items-center gap-2 text-sm">

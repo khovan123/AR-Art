@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, ScanLine } from "lucide-react";
+import { Plus, ScanLine, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/atoms/button";
 
@@ -18,7 +18,7 @@ export function SiteHeader() {
       </Link>
 
       <nav className="flex items-center gap-1 rounded-full border border-white/10 bg-black/20 p-1 backdrop-blur-xl">
-        <Link href="/demo-target" className="hidden md:block">
+        <Link href="/demo-target" className="hidden lg:block">
           <Button
             variant="ghost"
             size="sm"
@@ -27,7 +27,17 @@ export function SiteHeader() {
             Demo
           </Button>
         </Link>
-        <Link href="/ar" className="hidden sm:block">
+        <Link href="/collection" className="hidden sm:block">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white/55 hover:bg-white/[0.07] hover:text-white"
+          >
+            <Sparkles className="size-3.5" aria-hidden="true" />
+            Collection
+          </Button>
+        </Link>
+        <Link href="/ar" className="hidden md:block">
           <Button
             variant="ghost"
             size="sm"

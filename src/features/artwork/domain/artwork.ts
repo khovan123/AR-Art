@@ -1,7 +1,10 @@
+export const EVERIE_MVP_MAX_PRODUCTS = 10;
+
 export type ArtworkStatus = "draft" | "published";
 
 export interface Artwork {
   id: string;
+  ownerId: string | null;
   slug: string;
   title: string;
   artistName: string;
@@ -26,6 +29,7 @@ export interface PublishedArtwork extends Artwork, ArtworkAssetUrls {}
 
 export interface CreateArtworkDraftInput {
   id: string;
+  ownerId: string;
   slug: string;
   title: string;
   artistName: string;

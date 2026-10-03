@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { Badge } from "@/components/atoms/badge";
 import { Button } from "@/components/atoms/button";
+import { ShareArtworkButton } from "@/features/artwork/presentation/components/share-artwork-button";
 import { createArtworkServices } from "@/features/artwork/infrastructure/supabase/artwork-services";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ export default async function ArtworkPage({
           </Link>
 
           <Badge className="border-white/10 bg-white/[0.04] text-white/55">
-            DIGITAL EXHIBITION
+            EVERIE DIGITAL ITEM
           </Badge>
         </div>
 
@@ -63,16 +64,16 @@ export default async function ArtworkPage({
             <div className="flex flex-wrap items-center gap-2">
               <Badge className="border-white/10 bg-white/[0.04] text-white/55">
                 <ScanLine className="mr-1 size-3" aria-hidden="true" />
-                AR artwork
+                2D AR
               </Badge>
               <Badge className="border-violet-300/15 bg-violet-300/[0.07] text-violet-200/70">
                 <Sparkles className="mr-1 size-3" aria-hidden="true" />
-                Spatial layer
+                Digital collectible
               </Badge>
             </div>
 
             <p className="mt-8 text-xs uppercase tracking-[0.28em] text-white/25">
-              Featured piece
+              Everie product
             </p>
             <h1 className="mt-3 max-w-2xl text-5xl font-semibold leading-[0.95] tracking-[-0.055em] text-white sm:text-6xl">
               {artwork.title}
@@ -93,15 +94,15 @@ export default async function ArtworkPage({
                   Experience
                 </p>
                 <p className="mt-2 text-sm text-white/68">
-                  Camera-tracked digital layer
+                  Image-tracked 2D digital layer
                 </p>
               </div>
               <div className="bg-[#09090c] p-4">
                 <p className="text-[10px] uppercase tracking-[0.22em] text-white/25">
-                  Viewing
+                  Collection
                 </p>
                 <p className="mt-2 text-sm text-white/68">
-                  Keep the full artwork in frame
+                  Saved to your Everie account after recognition
                 </p>
               </div>
             </div>
@@ -113,13 +114,36 @@ export default async function ArtworkPage({
                   className="border border-white/10 bg-white text-black shadow-[0_18px_55px_rgba(255,255,255,0.12)] hover:bg-white/90"
                 >
                   <Camera className="size-4" aria-hidden="true" />
-                  Enter AR layer
+                  Open AR
                 </Button>
               </Link>
-              <p className="max-w-xs text-xs leading-5 text-white/32">
-                Allow camera access, then point your phone at the physical artwork.
-              </p>
+
+              <Link href="/collection">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white/12 bg-white/[0.04] text-white/75 hover:bg-white/[0.08] hover:text-white"
+                >
+                  <Sparkles className="size-4" aria-hidden="true" />
+                  Collection
+                </Button>
+              </Link>
             </div>
+
+            <div className="mt-3">
+              <ShareArtworkButton
+                title={artwork.title}
+                text={
+                  artwork.description ||
+                  `Khám phá nội dung AR của ${artwork.title} trong Everie.`
+                }
+                imageUrl={artwork.targetImageUrl}
+              />
+            </div>
+
+            <p className="mt-4 max-w-lg text-xs leading-5 text-white/32">
+              Bạn cần đăng nhập tài khoản Everie trước khi quét. Khi hệ thống nhận diện đúng sản phẩm, item tương ứng được ghi nhận ngay vào Collection trên cloud của tài khoản.
+            </p>
           </div>
         </section>
       </div>
