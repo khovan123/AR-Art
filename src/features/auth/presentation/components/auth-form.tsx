@@ -1,13 +1,27 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useReducer } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LoaderCircle, LogIn, UserPlus } from "lucide-react";
+import {
+  LoaderCircle,
+  LogIn,
+  Mail,
+  RefreshCw,
+  TriangleAlert,
+  UserPlus,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/atoms/button";
 import { getSupabaseBrowserClient } from "@/features/artwork/infrastructure/supabase/supabase-clients";
+import {
+  buildAuthRedirectUrl,
+  parseAuthCallbackHash,
+  PENDING_SIGNUP_EMAIL_KEY,
+  PENDING_SIGNUP_NEXT_PATH_KEY,
+  sanitizeNextPath,
+} from "@/features/auth/domain/auth-confirmation";
 import {
   authFormSchema,
   type AuthFormValues,
@@ -17,16 +31,39 @@ interface AuthFormProps {
   nextPath?: string;
 }
 
-function sanitizeNextPath(value?: string) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "/collection";
-  }
-  return value;
+type ConfirmationRecoveryState = {
+  status: "idle" | "expired" | "error" | "resending" | "resent";
+  message: string | null;
+};
+
+function confirmationRecoveryReducer(
+  _state: ConfirmationRecoveryState,
+  nextState: ConfirmationRecoveryState,
+): ConfirmationRecoveryState {
+  return nextState;
+}
+
+function clearAuthHash() {
+  if (!window.location.hash) return;
+
+  window.history.replaceState(
+    null,
+    "",
+    `${window.location.pathname}${window.location.search}`,
+  );
+}
+
+function getAppUrl() {
+  return process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
 }
 
 export function AuthForm({ nextPath }: AuthFormProps) {
   const router = useRouter();
   const redirectPath = sanitizeNextPath(nextPath);
+  const [confirmationRecovery, dispatchConfirmationRecovery] = useReducer(
+    confirmationRecoveryReducer,
+    { status: "idle", message: null },
+  );
   const {
     control,
     register,
@@ -34,6 +71,8 @@ export function AuthForm({ nextPath }: AuthFormProps) {
     setValue,
     setError,
     clearErrors,
+    getValues,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<AuthFormValues>({
     resolver: zodResolver(authFormSchema),
@@ -50,10 +89,76 @@ export function AuthForm({ nextPath }: AuthFormProps) {
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
-    void supabase.auth.getUser().then(({ data }) => {
-      if (data.user) router.replace(redirectPath);
+    const pendingEmail = window.localStorage.getItem(PENDING_SIGNUP_EMAIL_KEY);
+    const callback = parseAuthCallbackHash(window.location.hash);
+    let active = true;
+    let redirected = false;
+
+    if (pendingEmail) {
+      setValue("email", pendingEmail, {
+        shouldDirty: false,
+        shouldTouch: false,
+        shouldValidate: false,
+      });
+    }
+
+    if (callback.kind === "expired") {
+      dispatchConfirmationRecovery({
+        status: "expired",
+        message:
+          "Link xác nhận email đã hết hạn hoặc không còn hợp lệ. Hãy gửi một link mới và chỉ sử dụng email xác nhận mới nhất.",
+      });
+      clearAuthHash();
+    } else if (callback.kind === "error") {
+      dispatchConfirmationRecovery({
+        status: "error",
+        message:
+          "Không thể xác nhận email bằng link này. Bạn có thể gửi lại email xác nhận để nhận một link mới.",
+      });
+      clearAuthHash();
+    }
+
+    function finishAuthenticatedSession() {
+      if (!active || redirected) return;
+      redirected = true;
+      window.localStorage.removeItem(PENDING_SIGNUP_EMAIL_KEY);
+      window.localStorage.removeItem(PENDING_SIGNUP_NEXT_PATH_KEY);
+      clearAuthHash();
+      router.replace(redirectPath);
+      router.refresh();
+    }
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) finishAuthenticatedSession();
     });
-  }, [redirectPath, router]);
+
+    if (callback.kind !== "expired" && callback.kind !== "error") {
+      void supabase.auth.getSession().then(({ data, error }) => {
+        if (!active) return;
+
+        if (data.session?.user) {
+          finishAuthenticatedSession();
+          return;
+        }
+
+        if (error && callback.kind === "success") {
+          dispatchConfirmationRecovery({
+            status: "error",
+            message:
+              "Email đã được mở nhưng phiên đăng nhập không thể được tạo. Hãy gửi lại email xác nhận và thử với link mới nhất.",
+          });
+          clearAuthHash();
+        }
+      });
+    }
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, [redirectPath, router, setValue]);
 
   function changeMode(nextMode: AuthFormValues["mode"]) {
     setValue("mode", nextMode, {
@@ -62,6 +167,47 @@ export function AuthForm({ nextPath }: AuthFormProps) {
       shouldValidate: false,
     });
     clearErrors();
+  }
+
+  async function resendConfirmation() {
+    clearErrors("root");
+
+    const emailIsValid = await trigger("email");
+    if (!emailIsValid) return;
+
+    const email = getValues("email").trim();
+    dispatchConfirmationRecovery({
+      status: "resending",
+      message: "Đang gửi email xác nhận mới…",
+    });
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const emailRedirectTo = buildAuthRedirectUrl(getAppUrl(), redirectPath);
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo },
+      });
+
+      if (error) throw error;
+
+      window.localStorage.setItem(PENDING_SIGNUP_EMAIL_KEY, email);
+      window.localStorage.setItem(PENDING_SIGNUP_NEXT_PATH_KEY, redirectPath);
+      dispatchConfirmationRecovery({
+        status: "resent",
+        message:
+          "Đã gửi email xác nhận mới. Hãy mở email mới nhất; các link xác nhận cũ có thể không còn hợp lệ.",
+      });
+    } catch (cause) {
+      dispatchConfirmationRecovery({
+        status: "error",
+        message:
+          cause instanceof Error
+            ? cause.message
+            : "Không thể gửi lại email xác nhận. Vui lòng thử lại.",
+      });
+    }
   }
 
   const submit = handleSubmit(async ({ email, password, mode: submitMode }) => {
@@ -74,12 +220,14 @@ export function AuthForm({ nextPath }: AuthFormProps) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
 
+        window.localStorage.removeItem(PENDING_SIGNUP_EMAIL_KEY);
+        window.localStorage.removeItem(PENDING_SIGNUP_NEXT_PATH_KEY);
         router.replace(redirectPath);
         router.refresh();
         return;
       }
 
-      const emailRedirectTo = `${window.location.origin}/login?next=${encodeURIComponent(redirectPath)}`;
+      const emailRedirectTo = buildAuthRedirectUrl(getAppUrl(), redirectPath);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -88,15 +236,20 @@ export function AuthForm({ nextPath }: AuthFormProps) {
       if (error) throw error;
 
       if (data.session) {
+        window.localStorage.removeItem(PENDING_SIGNUP_EMAIL_KEY);
+        window.localStorage.removeItem(PENDING_SIGNUP_NEXT_PATH_KEY);
         router.replace(redirectPath);
         router.refresh();
         return;
       }
 
+      window.localStorage.setItem(PENDING_SIGNUP_EMAIL_KEY, email);
+      window.localStorage.setItem(PENDING_SIGNUP_NEXT_PATH_KEY, redirectPath);
+      dispatchConfirmationRecovery({ status: "idle", message: null });
       setError("root.success", {
         type: "success",
         message:
-          "Tài khoản đã được tạo. Hãy kiểm tra email để xác nhận, sau đó quay lại đăng nhập.",
+          "Tài khoản đã được tạo. Hãy kiểm tra email và mở link xác nhận mới nhất để hoàn tất đăng ký.",
       });
     } catch (cause) {
       setError("root.server", {
@@ -106,6 +259,10 @@ export function AuthForm({ nextPath }: AuthFormProps) {
       });
     }
   });
+
+  const showRecovery = confirmationRecovery.status !== "idle";
+  const recoverySucceeded = confirmationRecovery.status === "resent";
+  const recoveryPending = confirmationRecovery.status === "resending";
 
   return (
     <div className="auth-card relative w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.045] p-6 shadow-2xl backdrop-blur-xl sm:p-8">
@@ -162,6 +319,55 @@ export function AuthForm({ nextPath }: AuthFormProps) {
             </p>
           )}
         </label>
+
+        {showRecovery && (
+          <div
+            className={`auth-message rounded-xl border px-4 py-4 text-sm leading-6 ${
+              recoverySucceeded
+                ? "border-emerald-300/15 bg-emerald-300/[0.06] text-emerald-100/80"
+                : "border-amber-300/15 bg-amber-300/[0.06] text-amber-100/80"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              {recoverySucceeded ? (
+                <Mail className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              ) : recoveryPending ? (
+                <LoaderCircle className="mt-0.5 size-4 shrink-0 animate-spin" aria-hidden="true" />
+              ) : (
+                <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">
+                  {recoverySucceeded
+                    ? "Email xác nhận mới đã được gửi"
+                    : recoveryPending
+                      ? "Đang gửi lại email"
+                      : "Link xác nhận không còn hợp lệ"}
+                </p>
+                {confirmationRecovery.message && (
+                  <p className="mt-1 text-xs leading-5 opacity-75">
+                    {confirmationRecovery.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {!recoverySucceeded && (
+              <button
+                type="button"
+                disabled={recoveryPending}
+                onClick={() => void resendConfirmation()}
+                className="mt-3 inline-flex items-center gap-2 text-xs font-medium underline underline-offset-4 disabled:cursor-wait disabled:opacity-50"
+              >
+                <RefreshCw
+                  className={`size-3.5 ${recoveryPending ? "animate-spin" : ""}`}
+                  aria-hidden="true"
+                />
+                {recoveryPending ? "Đang gửi…" : "Gửi lại email xác nhận"}
+              </button>
+            )}
+          </div>
+        )}
 
         <label className="auth-field block">
           <span className="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">Mật khẩu</span>

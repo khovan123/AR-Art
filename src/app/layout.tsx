@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 
+import { AuthCallbackForwarder } from "@/features/auth/presentation/components/auth-callback-forwarder";
+
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
@@ -20,7 +22,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${geist.variable} font-sans antialiased`}>{children}</body>
+      <body className={`${geist.variable} font-sans antialiased`}>
+        <AuthCallbackForwarder />
+        {children}
+      </body>
     </html>
   );
 }
