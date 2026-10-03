@@ -1,5 +1,5 @@
-import { ArtworkCreateForm } from "@/features/artwork/presentation/components/artwork-create-form";
+import { ProtectedCreatePage } from "@/features/auth/presentation/components/protected-create-page";
 
 export default function CreateArtworkPage() {
-  return <ArtworkCreateForm />;
+  return <ProtectedCreatePage />;
 }
