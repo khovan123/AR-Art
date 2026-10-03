@@ -89,6 +89,30 @@ export class SupabaseArtworkRepository implements ArtworkRepository {
     return data ? mapArtwork(data) : null;
   }
 
+  async listPublished() {
+    const supabase = getSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("artworks")
+      .select("*")
+      .eq("status", "published")
+      .order("published_at", { ascending: true })
+      .returns<ArtworkRow[]>();
+
+    if (error) throw new Error(`Unable to load published artworks: ${error.message}`);
+    return (data ?? []).map(mapArtwork);
+  }
+
+  async countPublished() {
+    const supabase = getSupabaseServerClient();
+    const { count, error } = await supabase
+      .from("artworks")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "published");
+
+    if (error) throw new Error(`Unable to count published artworks: ${error.message}`);
+    return count ?? 0;
+  }
+
   async markPublished(id: string) {
     const supabase = getSupabaseServerClient();
     const { data, error } = await supabase
