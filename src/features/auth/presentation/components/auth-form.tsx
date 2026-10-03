@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LogIn, UserPlus } from "lucide-react";
+import { LoaderCircle, LogIn, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 
@@ -108,14 +108,20 @@ export function AuthForm({ nextPath }: AuthFormProps) {
   });
 
   return (
-    <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-white/[0.045] p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-      <div className="flex rounded-full border border-white/10 bg-black/20 p-1">
+    <div className="auth-card relative w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.045] p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+      <div className="auth-card-glow" aria-hidden="true" />
+
+      <div className="auth-mode-switch relative flex rounded-full border border-white/10 bg-black/20 p-1">
+        <span
+          aria-hidden="true"
+          className={`auth-mode-indicator ${mode === "signup" ? "is-signup" : ""}`}
+        />
         <button
           type="button"
           onClick={() => changeMode("signin")}
           aria-pressed={mode === "signin"}
-          className={`flex-1 rounded-full px-4 py-2 text-sm transition ${
-            mode === "signin" ? "bg-white text-black" : "text-white/55 hover:text-white"
+          className={`relative z-10 flex-1 rounded-full px-4 py-2 text-sm transition-colors duration-300 ${
+            mode === "signin" ? "text-black" : "text-white/55 hover:text-white"
           }`}
         >
           Đăng nhập
@@ -124,8 +130,8 @@ export function AuthForm({ nextPath }: AuthFormProps) {
           type="button"
           onClick={() => changeMode("signup")}
           aria-pressed={mode === "signup"}
-          className={`flex-1 rounded-full px-4 py-2 text-sm transition ${
-            mode === "signup" ? "bg-white text-black" : "text-white/55 hover:text-white"
+          className={`relative z-10 flex-1 rounded-full px-4 py-2 text-sm transition-colors duration-300 ${
+            mode === "signup" ? "text-black" : "text-white/55 hover:text-white"
           }`}
         >
           Tạo tài khoản
@@ -135,7 +141,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
       <form className="mt-6 space-y-4" onSubmit={submit} noValidate>
         <input type="hidden" {...register("mode")} />
 
-        <label className="block">
+        <label className="auth-field block">
           <span className="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">Email</span>
           <input
             type="email"
@@ -151,13 +157,13 @@ export function AuthForm({ nextPath }: AuthFormProps) {
             placeholder="you@example.com"
           />
           {errors.email?.message && (
-            <p id="auth-email-error" className="mt-2 text-xs text-red-200/75">
+            <p id="auth-email-error" className="auth-error mt-2 text-xs text-red-200/75">
               {errors.email.message}
             </p>
           )}
         </label>
 
-        <label className="block">
+        <label className="auth-field block">
           <span className="mb-2 block text-xs uppercase tracking-[0.18em] text-white/35">Mật khẩu</span>
           <input
             type="password"
@@ -173,20 +179,20 @@ export function AuthForm({ nextPath }: AuthFormProps) {
             placeholder="Tối thiểu 6 ký tự"
           />
           {errors.password?.message && (
-            <p id="auth-password-error" className="mt-2 text-xs text-red-200/75">
+            <p id="auth-password-error" className="auth-error mt-2 text-xs text-red-200/75">
               {errors.password.message}
             </p>
           )}
         </label>
 
         {serverMessage && (
-          <p className="rounded-xl border border-red-300/15 bg-red-300/[0.06] px-4 py-3 text-sm leading-6 text-red-100/75">
+          <p className="auth-message rounded-xl border border-red-300/15 bg-red-300/[0.06] px-4 py-3 text-sm leading-6 text-red-100/75">
             {serverMessage}
           </p>
         )}
 
         {successMessage && (
-          <p className="rounded-xl border border-emerald-300/15 bg-emerald-300/[0.06] px-4 py-3 text-sm leading-6 text-emerald-100/75">
+          <p className="auth-message rounded-xl border border-emerald-300/15 bg-emerald-300/[0.06] px-4 py-3 text-sm leading-6 text-emerald-100/75">
             {successMessage}
           </p>
         )}
@@ -194,9 +200,13 @@ export function AuthForm({ nextPath }: AuthFormProps) {
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="h-12 w-full bg-white text-black hover:bg-white/90"
+          className={`auth-submit-button h-12 w-full bg-white text-black hover:bg-white/90 ${
+            isSubmitting ? "is-loading" : ""
+          }`}
         >
-          {mode === "signin" ? (
+          {isSubmitting ? (
+            <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+          ) : mode === "signin" ? (
             <LogIn className="size-4" aria-hidden="true" />
           ) : (
             <UserPlus className="size-4" aria-hidden="true" />
@@ -209,7 +219,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
         </Button>
       </form>
 
-      <p className="mt-5 text-xs leading-5 text-white/32">
+      <p className="auth-footnote mt-5 text-xs leading-5 text-white/32">
         Collection được lưu theo tài khoản Everie trên cloud và có thể truy cập lại khi đăng nhập trên thiết bị khác.
       </p>
     </div>
