@@ -11,6 +11,7 @@ export interface ArtworkRepository {
   listPublished(): Promise<Artwork[]>;
   listForOwner(ownerId: string): Promise<Artwork[]>;
   updateForOwner(id: string, ownerId: string, input: UpdateArtworkInput): Promise<Artwork | null>;
+  deleteForOwner(id: string, ownerId: string): Promise<Artwork | null>;
   countPublished(): Promise<number>;
   markPublished(id: string): Promise<Artwork>;
 }

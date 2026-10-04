@@ -1,4 +1,5 @@
 import { CreateArtworkUploadSession } from "@/features/artwork/application/use-cases/create-artwork-upload-session";
+import { DeleteStudioArtwork } from "@/features/artwork/application/use-cases/delete-studio-artwork";
 import { GetPublishedArtwork } from "@/features/artwork/application/use-cases/get-published-artwork";
 import { ListPublishedArtworks } from "@/features/artwork/application/use-cases/list-published-artworks";
 import { ListStudioArtworks } from "@/features/artwork/application/use-cases/list-studio-artworks";
@@ -23,5 +24,6 @@ export function createArtworkServices() {
     listPublishedArtworks: new ListPublishedArtworks(repository, storage),
     listStudioArtworks: new ListStudioArtworks(repository, storage),
     updateStudioArtwork: new UpdateStudioArtwork(repository, storage),
+    deleteStudioArtwork: new DeleteStudioArtwork(repository, storage),
   };
 }

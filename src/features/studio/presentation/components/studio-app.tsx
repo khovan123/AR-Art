@@ -42,6 +42,7 @@ import {
   updateCreatorCollection,
   type CreatorCollection,
 } from "@/features/studio/infrastructure/supabase/studio-collection-repository";
+import { ProductManagerModal } from "@/features/studio/presentation/components/product-manager-modal";
 
 type StudioView = "overview" | "products" | "collections";
 type CollectionEditor =
@@ -55,6 +56,7 @@ type StudioState = {
   collections: CreatorCollection[];
   error: string | null;
   editor: CollectionEditor;
+  productEditorId: string | null;
 };
 
 type StudioAction =
@@ -62,6 +64,10 @@ type StudioAction =
   | { type: "ready"; products: PublishedArtwork[]; collections: CreatorCollection[] }
   | { type: "collection-saved"; collection: CreatorCollection }
   | { type: "collection-deleted"; collectionId: string }
+  | { type: "product-saved"; product: PublishedArtwork }
+  | { type: "product-deleted"; productId: string }
+  | { type: "open-product"; productId: string }
+  | { type: "close-product" }
   | { type: "open-create" }
   | { type: "open-edit"; collectionId: string }
   | { type: "close-editor" }
@@ -73,6 +79,7 @@ const initialState: StudioState = {
   collections: [],
   error: null,
   editor: null,
+  productEditorId: null,
 };
 
 function reducer(state: StudioState, action: StudioAction): StudioState {
@@ -86,6 +93,7 @@ function reducer(state: StudioState, action: StudioAction): StudioState {
         collections: action.collections,
         error: null,
         editor: state.editor,
+        productEditorId: state.productEditorId,
       };
     case "collection-saved": {
       const exists = state.collections.some((collection) => collection.id === action.collection.id);
@@ -107,6 +115,28 @@ function reducer(state: StudioState, action: StudioAction): StudioState {
         ),
         editor: null,
       };
+    case "product-saved":
+      return {
+        ...state,
+        products: state.products.map((product) =>
+          product.id === action.product.id ? action.product : product,
+        ),
+        productEditorId: action.product.id,
+      };
+    case "product-deleted":
+      return {
+        ...state,
+        products: state.products.filter((product) => product.id !== action.productId),
+        collections: state.collections.map((collection) => ({
+          ...collection,
+          artworkIds: collection.artworkIds.filter((id) => id !== action.productId),
+        })),
+        productEditorId: null,
+      };
+    case "open-product":
+      return { ...state, productEditorId: action.productId };
+    case "close-product":
+      return { ...state, productEditorId: null };
     case "open-create":
       return { ...state, editor: { mode: "create" } };
     case "open-edit":
@@ -130,7 +160,15 @@ function statusLabel(status: CreatorCollection["status"]) {
   return status === "published" ? "Live" : "Private";
 }
 
-function ProductCard({ product }: { product: PublishedArtwork }) {
+function ProductCard({
+  product,
+  collectionCount,
+  onManage,
+}: {
+  product: PublishedArtwork;
+  collectionCount: number;
+  onManage: () => void;
+}) {
   return (
     <article className="group relative border-t border-white/18 pt-3 transition duration-500 hover:border-white/45">
       <div className="relative aspect-[4/5] overflow-hidden bg-black/60">
@@ -147,20 +185,34 @@ function ProductCard({ product }: { product: PublishedArtwork }) {
       </div>
       <div className="border-b border-white/12 pb-4 pt-4">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-base font-medium text-white">{product.title}</h3>
-            <p className="mt-1 text-xs text-white/38">by {product.artistName}</p>
+          <div className="min-w-0">
+            <h3 className="truncate text-base font-medium text-white">{product.title}</h3>
+            <p className="mt-1 truncate text-xs text-white/38">by {product.artistName}</p>
           </div>
-          {product.status === "published" && (
-            <Link
-              href={`/art/${product.slug}`}
-              className="flex size-9 shrink-0 items-center justify-center border border-white/18 text-white/50 transition hover:border-white/45 hover:text-white"
-              aria-label={`Open ${product.title}`}
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={onManage}
+              className="inline-flex h-9 items-center gap-2 border border-white/18 px-3 text-[0.62rem] uppercase tracking-[0.13em] text-white/50 transition hover:border-white/45 hover:text-white"
             >
-              <ArrowUpRight className="size-4" />
-            </Link>
-          )}
+              <Pencil className="size-3.5" />
+              Manage
+            </button>
+            {product.status === "published" ? (
+              <Link
+                href={`/art/${product.slug}`}
+                className="flex size-9 items-center justify-center border border-white/18 text-white/50 transition hover:border-white/45 hover:text-white"
+                aria-label={`Open ${product.title}`}
+              >
+                <ArrowUpRight className="size-4" />
+              </Link>
+            ) : null}
+          </div>
         </div>
+        <p className="mt-3 text-[0.62rem] uppercase tracking-[0.13em] text-white/24">
+          {collectionCount} collection{collectionCount === 1 ? "" : "s"}
+          {product.status === "draft" ? " · Ready to continue" : " · QR ready"}
+        </p>
       </div>
     </article>
   );
@@ -601,6 +653,11 @@ export function StudioApp({ view }: { view: StudioView }) {
   const selectedCollection = selectedCollectionId
     ? state.collections.find((collection) => collection.id === selectedCollectionId) ?? null
     : null;
+  const selectedProduct = state.productEditorId
+    ? state.products.find((product) => product.id === state.productEditorId) ?? null
+    : null;
+  const productCollectionCount = (productId: string) =>
+    state.collections.filter((collection) => collection.artworkIds.includes(productId)).length;
 
   return (
     <main className="creator-studio creator-studio-immersive relative min-h-screen overflow-hidden bg-[#050507] text-white">
@@ -689,7 +746,16 @@ export function StudioApp({ view }: { view: StudioView }) {
                       <Link href="/studio/products" className="text-xs text-white/50 hover:text-white">View all →</Link>
                     </div>
                     <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                      {state.products.slice(0, 4).map((product) => <ProductCard key={product.id} product={product} />)}
+                      {state.products.slice(0, 4).map((product) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          collectionCount={productCollectionCount(product.id)}
+                          onManage={() =>
+                            dispatch({ type: "open-product", productId: product.id })
+                          }
+                        />
+                      ))}
                       {state.products.length === 0 && <p className="col-span-2 border-y border-dashed border-white/10 p-8 text-center text-sm text-white/35">No products yet. Add your first AR product.</p>}
                     </div>
                   </div>
@@ -733,7 +799,16 @@ export function StudioApp({ view }: { view: StudioView }) {
                   <Link href="/create"><Button className="rounded-none bg-white px-5 text-black hover:bg-violet-100"><Plus className="size-4" />New product</Button></Link>
                 </div>
                 <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {state.products.map((product) => <ProductCard key={product.id} product={product} />)}
+                  {state.products.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      collectionCount={productCollectionCount(product.id)}
+                      onManage={() =>
+                        dispatch({ type: "open-product", productId: product.id })
+                      }
+                    />
+                  ))}
                   {state.products.length === 0 && <div className="sm:col-span-2 lg:col-span-3 border-y border-dashed border-white/15 p-12 text-center text-white/35"><ImageIcon className="mx-auto size-6" /><p className="mt-3 text-sm">No products yet.</p></div>}
                 </div>
               </section>
@@ -796,6 +871,16 @@ export function StudioApp({ view }: { view: StudioView }) {
               onClose={closeEditor}
               onSaved={(collection) => dispatch({ type: "collection-saved", collection })}
               onDeleted={(collectionId) => dispatch({ type: "collection-deleted", collectionId })}
+            />
+            <ProductManagerModal
+              key={selectedProduct?.id ?? "no-product"}
+              product={selectedProduct}
+              collectionCount={
+                selectedProduct ? productCollectionCount(selectedProduct.id) : 0
+              }
+              onClose={() => dispatch({ type: "close-product" })}
+              onSaved={(product) => dispatch({ type: "product-saved", product })}
+              onDeleted={(productId) => dispatch({ type: "product-deleted", productId })}
             />
           </>
         )}

@@ -31,9 +31,11 @@ import { readVideoAspectRatio } from "@/features/artwork/presentation/lib/read-v
 import { uploadArtworkAssets } from "@/features/artwork/presentation/lib/upload-artwork-assets";
 
 type PublishResult = {
-  shareUrl: string;
-  arUrl: string;
-  qrDataUrl: string;
+  status: "draft" | "published";
+  productId: string;
+  shareUrl: string | null;
+  arUrl: string | null;
+  qrDataUrl: string | null;
 };
 
 type WorkflowState = {
@@ -182,10 +184,19 @@ export function ArtworkCreateForm() {
       errorCorrectionLevel: "M",
     });
 
-    return { shareUrl, arUrl, qrDataUrl };
+    return {
+      status: "published" as const,
+      productId: session.artworkId,
+      shareUrl,
+      arUrl,
+      qrDataUrl,
+    };
   }
 
-  const submit = handleSubmit(async (values) => {
+  async function runWorkflow(
+    values: ArtworkCreateFormValues,
+    intent: "draft" | "publish",
+  ) {
     dispatch({ type: "start" });
 
     try {
@@ -224,12 +235,22 @@ export function ArtworkCreateForm() {
         (value) => dispatch({ type: "upload-step", value }),
       );
 
-      dispatch({
-        type: "message",
-        message: "Finishing up…",
-      });
-      const published = await publishArtwork(session);
-      dispatch({ type: "success", result: published });
+      if (intent === "draft") {
+        dispatch({
+          type: "success",
+          result: {
+            status: "draft",
+            productId: session.artworkId,
+            shareUrl: null,
+            arUrl: null,
+            qrDataUrl: null,
+          },
+        });
+        return;
+      }
+
+      dispatch({ type: "message", message: "Finishing up…" });
+      dispatch({ type: "success", result: await publishArtwork(session) });
     } catch (cause) {
       dispatch({
         type: "error",
@@ -239,10 +260,13 @@ export function ArtworkCreateForm() {
             : "Unable to publish artwork.",
       });
     }
-  });
+  }
+
+  const publish = handleSubmit((values) => runWorkflow(values, "publish"));
+  const saveDraft = handleSubmit((values) => runWorkflow(values, "draft"));
 
   async function copyShareUrl() {
-    if (!workflow.result) return;
+    if (!workflow.result?.shareUrl) return;
     await navigator.clipboard.writeText(workflow.result.shareUrl);
     dispatch({ type: "copied", value: true });
     window.setTimeout(
@@ -260,44 +284,83 @@ export function ArtworkCreateForm() {
             <ArrowLeft className="size-3.5" /> Products
           </Link>
           <span className="text-lg font-semibold tracking-[-0.045em]">EVERIE</span>
-          <span className="text-[0.62rem] uppercase tracking-[0.18em] text-cyan-100/45">Published</span>
+          <span className="text-[0.62rem] uppercase tracking-[0.18em] text-cyan-100/45">
+            {workflow.result.status === "published" ? "Published" : "Draft saved"}
+          </span>
         </header>
 
         <section className="relative mx-auto grid min-h-[calc(100svh-4.8rem)] w-full max-w-[94rem] items-center gap-12 px-5 py-14 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:px-12 lg:py-20">
           <div>
-            <p className="text-[0.68rem] uppercase tracking-[0.24em] text-violet-200/45">Work is live</p>
+            <p className="text-[0.68rem] uppercase tracking-[0.24em] text-violet-200/45">
+              {workflow.result.status === "published" ? "Work is live" : "Saved privately"}
+            </p>
             <h1 className="mt-6 max-w-3xl font-serif text-6xl leading-[0.88] tracking-[-0.055em] sm:text-8xl">
-              Ready for<br /><span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">the wall.</span>
+              {workflow.result.status === "published" ? (
+                <>
+                  Ready for<br />
+                  <span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">the wall.</span>
+                </>
+              ) : (
+                <>
+                  Ready when<br />
+                  <span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">you are.</span>
+                </>
+              )}
             </h1>
 
-            <div className="mt-10 border-y border-white/12 py-4">
-              <p className="text-[0.62rem] uppercase tracking-[0.16em] text-white/28">Artwork link</p>
-              <p className="mt-2 break-all text-sm text-white/58">{workflow.result.shareUrl}</p>
-            </div>
+            {workflow.result.shareUrl ? (
+              <div className="mt-10 border-y border-white/12 py-4">
+                <p className="text-[0.62rem] uppercase tracking-[0.16em] text-white/28">Artwork link</p>
+                <p className="mt-2 break-all text-sm text-white/58">{workflow.result.shareUrl}</p>
+              </div>
+            ) : (
+              <p className="mt-8 max-w-xl text-sm leading-6 text-white/45">
+                Your artwork and AR layer are uploaded and kept private. Open the product in Studio whenever you are ready to publish it.
+              </p>
+            )}
 
             <div className="mt-6 flex flex-wrap gap-2">
-              <button type="button" onClick={copyShareUrl} className="inline-flex h-12 items-center gap-2 bg-white px-5 text-xs font-medium uppercase tracking-[0.12em] text-black transition hover:bg-violet-100">
-                {workflow.copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-                {workflow.copied ? "Copied" : "Copy link"}
-              </button>
-              <a href={workflow.result.qrDataUrl} download="everie-qr.png" className="inline-flex h-12 items-center gap-2 border border-white/18 px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/58 transition hover:border-white/45 hover:text-white">
-                <Download className="size-4" /> Download QR
-              </a>
-              <a href={workflow.result.shareUrl} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center border border-white/18 px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/58 transition hover:border-white/45 hover:text-white">
-                Open work
-              </a>
+              {workflow.result.shareUrl ? (
+                <>
+                  <button type="button" onClick={copyShareUrl} className="inline-flex h-12 items-center gap-2 bg-white px-5 text-xs font-medium uppercase tracking-[0.12em] text-black transition hover:bg-violet-100">
+                    {workflow.copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+                    {workflow.copied ? "Copied" : "Copy link"}
+                  </button>
+                  {workflow.result.qrDataUrl ? (
+                    <a href={workflow.result.qrDataUrl} download="everie-qr.png" className="inline-flex h-12 items-center gap-2 border border-white/18 px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/58 transition hover:border-white/45 hover:text-white">
+                      <Download className="size-4" /> Download QR
+                    </a>
+                  ) : null}
+                  <a href={workflow.result.shareUrl} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center border border-white/18 px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/58 transition hover:border-white/45 hover:text-white">
+                    Open work
+                  </a>
+                </>
+              ) : (
+                <Link href="/studio/products" className="inline-flex h-12 items-center bg-white px-5 text-xs font-medium uppercase tracking-[0.12em] text-black transition hover:bg-violet-100">
+                  Manage draft
+                </Link>
+              )}
             </div>
           </div>
 
           <div className="border border-white/10 bg-[#09090d] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.35)] sm:p-12">
-            <div className="mx-auto max-w-sm border border-white/12 p-7">
-              {/* Generated data URL is intentionally rendered without next/image. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={workflow.result.qrDataUrl} alt="QR code for the published AR artwork" className="aspect-square w-full bg-white p-3" />
-              <div className="mt-5 flex items-center justify-between border-t border-white/15 pt-4 text-[0.62rem] uppercase tracking-[0.16em] text-white/45">
-                <span>Everie</span><span>Scan to enter</span>
+            {workflow.result.qrDataUrl ? (
+              <div className="mx-auto max-w-sm border border-white/12 p-7">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={workflow.result.qrDataUrl} alt="QR code for the published AR artwork" className="aspect-square w-full bg-white p-3" />
+                <div className="mt-5 flex items-center justify-between border-t border-white/15 pt-4 text-[0.62rem] uppercase tracking-[0.16em] text-white/45">
+                  <span>Everie</span><span>Scan to enter</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex min-h-[24rem] flex-col items-center justify-center border border-white/12 px-8 text-center">
+                <Check className="size-7 text-cyan-100/65" />
+                <p className="mt-5 font-serif text-3xl">Saved privately.</p>
+                <p className="mt-3 max-w-xs text-sm leading-6 text-white/35">
+                  QR and public sharing become available when you publish this product from Studio.
+                </p>
+              </div>
+            )}
           </div>
         </section>
       </main>
@@ -325,7 +388,7 @@ export function ArtworkCreateForm() {
           </div>
         </div>
 
-        <form onSubmit={submit} noValidate className="mt-16 grid gap-10 border-t border-white/12 pt-8 lg:grid-cols-[1.05fr_0.95fr]">
+        <form onSubmit={publish} noValidate className="mt-16 grid gap-10 border-t border-white/12 pt-8 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-9">
             <div className="grid gap-8 sm:grid-cols-2">
               <label className="block">
@@ -371,10 +434,22 @@ export function ArtworkCreateForm() {
                 <span className={targetImage ? "text-white" : ""}>Artwork</span>
                 <span className={overlayVideo ? "text-white" : ""}>AR layer</span>
               </div>
-              <Button type="submit" disabled={!canPublish} className="h-12 rounded-none bg-white px-6 text-xs font-medium uppercase tracking-[0.12em] text-black hover:bg-violet-100 disabled:bg-white/10 disabled:text-white/25">
-                {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Upload className="size-4" />}
-                {isSubmitting ? "Publishing…" : "Publish and get QR"}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!canPublish}
+                  onClick={() => void saveDraft()}
+                  className="h-12 rounded-none border-white/15 bg-transparent px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/55 hover:bg-white/[0.05] hover:text-white disabled:opacity-30"
+                >
+                  {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Check className="size-4" />}
+                  Save draft
+                </Button>
+                <Button type="submit" disabled={!canPublish} className="h-12 rounded-none bg-white px-6 text-xs font-medium uppercase tracking-[0.12em] text-black hover:bg-violet-100 disabled:bg-white/10 disabled:text-white/25">
+                  {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                  {isSubmitting ? "Working…" : "Publish and get QR"}
+                </Button>
+              </div>
             </div>
 
             {workflow.message ? <p className={`text-sm ${isSubmitting ? "text-white/40" : "text-rose-200/80"}`} role="status">{workflow.message}</p> : null}

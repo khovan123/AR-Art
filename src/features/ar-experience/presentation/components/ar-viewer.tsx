@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, RotateCcw, Settings, TriangleAlert, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, RotateCcw, Settings, TriangleAlert, X } from "lucide-react";
 
 import { Button } from "@/components/atoms/button";
 import type { ArExperienceConfig } from "@/features/ar-experience/domain/ar-experience";
@@ -33,6 +33,7 @@ export function ArViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   const autoStartedRef = useRef(false);
   const collectionSavedRef = useRef(false);
+  const [collectionSaved, setCollectionSaved] = useState(false);
   const [collectionSaveError, setCollectionSaveError] = useState<string | null>(null);
 
   const stableConfig = useMemo(
@@ -97,14 +98,18 @@ export function ArViewer({
     collectionSavedRef.current = true;
     setCollectionSaveError(null);
 
-    void collectArtwork(artwork.id).catch((cause) => {
-      collectionSavedRef.current = false;
-      setCollectionSaveError(
-        cause instanceof Error
-          ? cause.message
-          : "Đã nhận diện sản phẩm nhưng chưa thể lưu vào Collection.",
-      );
-    });
+    void collectArtwork(artwork.id)
+      .then((result) => {
+        if (result.collected) setCollectionSaved(true);
+      })
+      .catch((cause) => {
+        collectionSavedRef.current = false;
+        setCollectionSaveError(
+          cause instanceof Error
+            ? cause.message
+            : "Đã nhận diện sản phẩm nhưng chưa thể lưu vào Collection.",
+        );
+      });
   }, [artwork?.id, status]);
 
   const retry = () => {
@@ -218,6 +223,22 @@ export function ArViewer({
       {collectionSaveError && (
         <div className="absolute inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto max-w-md border border-amber-300/15 bg-black/75 px-4 py-3 text-xs leading-5 text-amber-100/75 backdrop-blur-xl">
           {collectionSaveError}
+        </div>
+      )}
+
+      {collectionSaved && !collectionSaveError && (
+        <div className="absolute inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md items-center gap-3 border border-cyan-100/18 bg-black/78 p-4 backdrop-blur-xl">
+          <CheckCircle2 className="size-5 shrink-0 text-cyan-100" aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-white">Artwork unlocked</p>
+            <p className="mt-0.5 text-xs text-white/48">Added to your collection.</p>
+          </div>
+          <Link
+            href="/collection"
+            className="shrink-0 text-xs font-medium text-white underline underline-offset-4"
+          >
+            View collection
+          </Link>
         </div>
       )}
     </main>

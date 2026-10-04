@@ -124,6 +124,16 @@ export class SupabaseArtworkRepository implements ArtworkRepository {
 
   async updateForOwner(id: string, ownerId: string, input: UpdateArtworkInput) {
     const supabase = getSupabaseServerClient();
+    const { data: current, error: currentError } = await supabase
+      .from("artworks")
+      .select("published_at")
+      .eq("id", id)
+      .eq("owner_id", ownerId)
+      .maybeSingle<{ published_at: string | null }>();
+
+    if (currentError) throw new Error(`Unable to update artwork: ${currentError.message}`);
+    if (!current) return null;
+
     const { data, error } = await supabase
       .from("artworks")
       .update({
@@ -131,7 +141,10 @@ export class SupabaseArtworkRepository implements ArtworkRepository {
         artist_name: input.artistName.trim(),
         description: input.description.trim(),
         status: input.status,
-        published_at: input.status === "published" ? new Date().toISOString() : null,
+        published_at:
+          input.status === "published"
+            ? current.published_at ?? new Date().toISOString()
+            : null,
       })
       .eq("id", id)
       .eq("owner_id", ownerId)
@@ -139,6 +152,20 @@ export class SupabaseArtworkRepository implements ArtworkRepository {
       .maybeSingle<ArtworkRow>();
 
     if (error) throw new Error(`Unable to update artwork: ${error.message}`);
+    return data ? mapArtwork(data) : null;
+  }
+
+  async deleteForOwner(id: string, ownerId: string) {
+    const supabase = getSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("artworks")
+      .delete()
+      .eq("id", id)
+      .eq("owner_id", ownerId)
+      .select("*")
+      .maybeSingle<ArtworkRow>();
+
+    if (error) throw new Error(`Unable to delete artwork: ${error.message}`);
     return data ? mapArtwork(data) : null;
   }
 

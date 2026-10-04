@@ -43,6 +43,18 @@ export class SupabaseArtworkStorage implements ArtworkStorage {
     }
   }
 
+  async removeAssets(artwork: Artwork) {
+    const supabase = getSupabaseServerClient();
+    const bucket = getArtworkBucketName();
+    const { error } = await supabase.storage.from(bucket).remove([
+      artwork.targetImagePath,
+      artwork.targetFilePath,
+      artwork.overlayPath,
+    ]);
+
+    if (error) throw new Error(`Unable to remove artwork assets: ${error.message}`);
+  }
+
   getPublicUrls(artwork: Artwork) {
     const supabase = getSupabaseServerClient();
     const bucket = getArtworkBucketName();

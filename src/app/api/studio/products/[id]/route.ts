@@ -36,3 +36,27 @@ export async function PATCH(
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  try {
+    const user = await getRequestUser(request);
+    if (!user) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+    const { deleteStudioArtwork } = createArtworkServices();
+    const deleted = await deleteStudioArtwork.execute(id, user.id);
+    if (!deleted) {
+      return NextResponse.json({ error: "Product not found." }, { status: 404 });
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch (cause) {
+    const message = cause instanceof Error ? cause.message : "Unable to delete product.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
