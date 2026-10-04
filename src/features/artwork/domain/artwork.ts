@@ -40,6 +40,13 @@ export interface CreateArtworkDraftInput {
   overlayAspectRatio: number;
 }
 
+export interface UpdateArtworkInput {
+  title: string;
+  artistName: string;
+  description: string;
+  status: ArtworkStatus;
+}
+
 export interface SignedUploadSlot {
   path: string;
   token: string;

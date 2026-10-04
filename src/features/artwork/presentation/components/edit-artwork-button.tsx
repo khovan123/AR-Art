@@ -1,0 +1,222 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, LoaderCircle, Pencil } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+
+import { Button } from "@/components/atoms/button";
+import { Input } from "@/components/atoms/input";
+import { Label } from "@/components/atoms/label";
+import { Textarea } from "@/components/atoms/textarea";
+import { Modal } from "@/components/molecules/modal";
+import type { ArtworkStatus } from "@/features/artwork/domain/artwork";
+import { getSupabaseBrowserClient } from "@/features/artwork/infrastructure/supabase/supabase-clients";
+import { getCurrentCollectionUser } from "@/features/collection/infrastructure/supabase/collection-repository";
+import {
+  studioProductSchema,
+  type StudioProductFormValues,
+} from "@/features/studio/domain/studio-product-schema";
+
+interface EditArtworkButtonProps {
+  id: string;
+  ownerId: string | null;
+  title: string;
+  artistName: string;
+  description: string;
+  status: ArtworkStatus;
+}
+
+export function EditArtworkButton({
+  id,
+  ownerId,
+  title,
+  artistName,
+  description,
+  status,
+}: EditArtworkButtonProps) {
+  const router = useRouter();
+  const [canEdit, setCanEdit] = useState(false);
+  const [open, setOpen] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    setError,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<StudioProductFormValues>({
+    resolver: zodResolver(studioProductSchema),
+    mode: "onChange",
+    defaultValues: { title, artistName, description, status },
+  });
+
+  useEffect(() => {
+    let active = true;
+    void getCurrentCollectionUser().then((user) => {
+      if (active) setCanEdit(Boolean(ownerId && user?.id === ownerId));
+    });
+    return () => {
+      active = false;
+    };
+  }, [ownerId]);
+
+  useEffect(() => {
+    if (!open) return;
+    reset({ title, artistName, description, status });
+  }, [artistName, description, open, reset, status, title]);
+
+  const currentStatus = useWatch({ control, name: "status" });
+
+  const submit = handleSubmit(async (values) => {
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        setError("root", { message: "Please sign in again to edit this product." });
+        return;
+      }
+
+      const response = await fetch(`/api/studio/products/${id}`, {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${data.session.access_token}`,
+        },
+        body: JSON.stringify(values),
+      });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(payload.error ?? "Unable to update product.");
+
+      setOpen(false);
+      if (values.status === "draft") {
+        router.push("/studio/products");
+        return;
+      }
+      router.refresh();
+    } catch (cause) {
+      setError("root", {
+        message: cause instanceof Error ? cause.message : "Unable to update product.",
+      });
+    }
+  });
+
+  if (!canEdit) return null;
+
+  return (
+    <>
+      <Button
+        type="button"
+        size="lg"
+        variant="outline"
+        onClick={() => setOpen(true)}
+        className="h-12 rounded-none border-black/25 bg-transparent px-5 text-xs font-medium uppercase tracking-[0.12em] text-black/60 hover:border-black hover:bg-transparent hover:text-black"
+      >
+        <Pencil className="size-4" aria-hidden="true" />
+        Edit
+      </Button>
+
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        eyebrow="Manage product"
+        title={title}
+        icon={<Pencil className="size-4" />}
+        maxWidthClassName="max-w-2xl"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              className="border-white/10 bg-transparent text-white/55 hover:bg-white/[0.06] hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="product-editor-form"
+              disabled={!isValid || isSubmitting}
+              className="bg-white text-black hover:bg-white/90"
+            >
+              {isSubmitting ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : (
+                <Check className="size-4" />
+              )}
+              Save changes
+            </Button>
+          </div>
+        }
+      >
+        <form id="product-editor-form" onSubmit={submit} className="space-y-5">
+          <div className="grid gap-2">
+            <Label htmlFor="edit-product-title" className="text-white/68">Product name</Label>
+            <Input
+              id="edit-product-title"
+              className="h-11 border-white/10 bg-white/[0.045] text-white"
+              {...register("title")}
+            />
+            {errors.title ? <p className="text-xs text-rose-300">{errors.title.message}</p> : null}
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="edit-product-artist" className="text-white/68">Creator</Label>
+            <Input
+              id="edit-product-artist"
+              className="h-11 border-white/10 bg-white/[0.045] text-white"
+              {...register("artistName")}
+            />
+            {errors.artistName ? <p className="text-xs text-rose-300">{errors.artistName.message}</p> : null}
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="edit-product-description" className="text-white/68">Description</Label>
+            <Textarea
+              id="edit-product-description"
+              className="border-white/10 bg-white/[0.045] text-white"
+              {...register("description")}
+            />
+            {errors.description ? <p className="text-xs text-rose-300">{errors.description.message}</p> : null}
+          </div>
+
+          <div>
+            <Label className="text-white/68">Visibility</Label>
+            <div className="mt-2 grid grid-cols-2 gap-2 rounded-2xl border border-white/8 bg-white/[0.025] p-1.5">
+              <button
+                type="button"
+                onClick={() => setValue("status", "draft", { shouldValidate: true, shouldDirty: true })}
+                className={`rounded-xl px-4 py-2.5 text-sm transition ${
+                  currentStatus === "draft"
+                    ? "bg-white text-black"
+                    : "text-white/45 hover:bg-white/[0.05] hover:text-white"
+                }`}
+              >
+                Draft
+              </button>
+              <button
+                type="button"
+                onClick={() => setValue("status", "published", { shouldValidate: true, shouldDirty: true })}
+                className={`rounded-xl px-4 py-2.5 text-sm transition ${
+                  currentStatus === "published"
+                    ? "bg-white text-black"
+                    : "text-white/45 hover:bg-white/[0.05] hover:text-white"
+                }`}
+              >
+                Live
+              </button>
+            </div>
+          </div>
+
+          {errors.root?.message ? (
+            <p className="rounded-xl border border-rose-300/15 bg-rose-400/8 px-3 py-2.5 text-sm text-rose-200">
+              {errors.root.message}
+            </p>
+          ) : null}
+        </form>
+      </Modal>
+    </>
+  );
+}

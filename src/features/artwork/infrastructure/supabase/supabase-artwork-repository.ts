@@ -3,6 +3,7 @@ import {
   EVERIE_MVP_MAX_PRODUCTS,
   type Artwork,
   type CreateArtworkDraftInput,
+  type UpdateArtworkInput,
 } from "@/features/artwork/domain/artwork";
 import { getSupabaseServerClient } from "@/features/artwork/infrastructure/supabase/supabase-clients";
 
@@ -119,6 +120,26 @@ export class SupabaseArtworkRepository implements ArtworkRepository {
 
     if (error) throw new Error(`Unable to load studio artworks: ${error.message}`);
     return (data ?? []).map(mapArtwork);
+  }
+
+  async updateForOwner(id: string, ownerId: string, input: UpdateArtworkInput) {
+    const supabase = getSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("artworks")
+      .update({
+        title: input.title.trim(),
+        artist_name: input.artistName.trim(),
+        description: input.description.trim(),
+        status: input.status,
+        published_at: input.status === "published" ? new Date().toISOString() : null,
+      })
+      .eq("id", id)
+      .eq("owner_id", ownerId)
+      .select("*")
+      .maybeSingle<ArtworkRow>();
+
+    if (error) throw new Error(`Unable to update artwork: ${error.message}`);
+    return data ? mapArtwork(data) : null;
   }
 
   async countPublished() {

@@ -119,10 +119,10 @@ function reducer(state: StudioState, action: StudioAction): StudioState {
 }
 
 function navClass(active: boolean) {
-  return `rounded-full px-4 py-2 text-xs font-medium tracking-[0.12em] transition ${
+  return `border-b py-2 text-[0.65rem] font-medium uppercase tracking-[0.15em] transition ${
     active
-      ? "bg-white text-black shadow-[0_8px_30px_rgba(255,255,255,0.13)]"
-      : "border border-white/10 bg-black/20 text-white/55 hover:border-white/20 hover:bg-white/[0.06] hover:text-white"
+      ? "border-white text-white"
+      : "border-transparent text-white/42 hover:text-white/78"
   }`;
 }
 
@@ -132,8 +132,8 @@ function statusLabel(status: CreatorCollection["status"]) {
 
 function ProductCard({ product }: { product: PublishedArtwork }) {
   return (
-    <article className="group relative overflow-hidden rounded-[1.8rem] border border-white/10 bg-black/35 p-3 backdrop-blur-xl transition duration-500 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.055]">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-[1.3rem] border border-white/8 bg-black/60">
+    <article className="group relative border-t border-white/18 pt-3 transition duration-500 hover:border-white/45">
+      <div className="relative aspect-[4/5] overflow-hidden bg-black/60">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={product.targetImageUrl}
@@ -141,11 +141,11 @@ function ProductCard({ product }: { product: PublishedArtwork }) {
           className="h-full w-full object-cover opacity-80 transition duration-700 group-hover:scale-[1.035] group-hover:opacity-100"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-        <span className="absolute left-3 top-3 rounded-full border border-white/12 bg-black/45 px-2.5 py-1 text-[0.62rem] uppercase tracking-[0.16em] text-white/65 backdrop-blur">
+        <span className="absolute left-3 top-3 border border-white/25 bg-black/45 px-2 py-1 text-[0.58rem] uppercase tracking-[0.16em] text-white/70">
           {product.status === "published" ? "Live" : "Draft"}
         </span>
       </div>
-      <div className="px-2 pb-2 pt-4">
+      <div className="border-b border-white/12 pb-4 pt-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-base font-medium text-white">{product.title}</h3>
@@ -154,7 +154,7 @@ function ProductCard({ product }: { product: PublishedArtwork }) {
           {product.status === "published" && (
             <Link
               href={`/art/${product.slug}`}
-              className="flex size-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/55 transition hover:bg-white/10 hover:text-white"
+              className="flex size-9 shrink-0 items-center justify-center border border-white/18 text-white/50 transition hover:border-white/45 hover:text-white"
               aria-label={`Open ${product.title}`}
             >
               <ArrowUpRight className="size-4" />
@@ -185,9 +185,9 @@ function CollectionCard({
     <button
       type="button"
       onClick={onOpen}
-      className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/34 text-left backdrop-blur-xl transition duration-500 hover:-translate-y-1 hover:border-white/22 hover:bg-white/[0.055]"
+      className="group relative overflow-hidden border-t border-white/18 bg-black/20 text-left transition duration-500 hover:border-white/45"
     >
-      <div className="relative aspect-[16/8.7] overflow-hidden border-b border-white/8 bg-[radial-gradient(circle_at_70%_30%,rgba(124,58,237,0.2),transparent_34%),radial-gradient(circle_at_25%_75%,rgba(34,211,238,0.12),transparent_36%),#08080d]">
+      <div className="relative aspect-[16/10] overflow-hidden border-b border-white/12 bg-[#08080d]">
         {cover ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -200,7 +200,7 @@ function CollectionCard({
           </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex size-20 items-center justify-center rounded-[1.8rem] border border-white/10 bg-white/[0.035] text-white/25 shadow-[0_20px_80px_rgba(124,58,237,0.2)]">
+            <div className="flex size-20 items-center justify-center border border-white/15 text-white/25">
               <Layers3 className="size-8" />
             </div>
           </div>
@@ -208,7 +208,7 @@ function CollectionCard({
 
         <div className="absolute left-4 top-4 flex items-center gap-2">
           <span
-            className={`rounded-full border px-2.5 py-1 text-[0.62rem] uppercase tracking-[0.16em] backdrop-blur-xl ${
+            className={`border px-2 py-1 text-[0.58rem] uppercase tracking-[0.16em] ${
               collection.status === "published"
                 ? "border-emerald-300/18 bg-emerald-300/10 text-emerald-100/75"
                 : "border-white/10 bg-black/38 text-white/52"
@@ -223,7 +223,7 @@ function CollectionCard({
             {secondary.map((product, index) => (
               <div
                 key={product.id}
-                className="size-11 overflow-hidden rounded-xl border border-white/18 bg-black shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+                className="size-11 overflow-hidden border border-white/18 bg-black"
                 style={{ transform: `rotate(${index === 0 ? -5 : 5}deg)` }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -244,7 +244,7 @@ function CollectionCard({
             {collection.artworkIds.length} product{collection.artworkIds.length === 1 ? "" : "s"}
           </p>
         </div>
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/45 transition group-hover:bg-white/10 group-hover:text-white">
+        <span className="flex size-10 shrink-0 items-center justify-center border border-white/15 text-white/42 transition group-hover:border-white/40 group-hover:text-white">
           <Pencil className="size-4" />
         </span>
       </div>
@@ -603,32 +603,30 @@ export function StudioApp({ view }: { view: StudioView }) {
     : null;
 
   return (
-    <main className="creator-studio creator-studio-immersive relative min-h-screen overflow-hidden text-white">
-      <CreatorSpatialScene />
-      <div className="creator-ambient-orb creator-ambient-orb-a" />
-      <div className="creator-ambient-orb creator-ambient-orb-b" />
-      <div className="pointer-events-none fixed inset-0 z-[1] bg-[radial-gradient(circle_at_15%_25%,rgba(139,92,246,0.08),transparent_28%),radial-gradient(circle_at_80%_75%,rgba(34,211,238,0.07),transparent_30%)]" />
+    <main className="creator-studio creator-studio-immersive relative min-h-screen overflow-hidden bg-[#0b0b0a] text-white">
+      <div className="pointer-events-none fixed inset-0 opacity-45"><CreatorSpatialScene /></div>
+      <div className="pointer-events-none fixed inset-0 z-[1] bg-black/62" />
 
-      <div className="relative z-10 mx-auto min-h-screen w-full max-w-7xl px-5 py-5 sm:px-8 sm:py-7">
-        <header className="flex flex-wrap items-center justify-between gap-4 rounded-full border border-white/10 bg-black/25 px-3 py-2 backdrop-blur-xl">
+      <div className="relative z-10 mx-auto min-h-screen w-full max-w-[94rem] px-5 py-5 sm:px-8 lg:px-12">
+        <header className="flex flex-wrap items-center justify-between gap-5 border-b border-white/18 py-3">
           <div className="flex items-center gap-2">
-            <Link href="/" className="flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/60 transition hover:bg-white/10 hover:text-white" aria-label="Home">
+            <Link href="/" className="flex size-9 items-center justify-center border border-white/15 text-white/52 transition hover:border-white/40 hover:text-white" aria-label="Home">
               <ArrowLeft className="size-4" />
             </Link>
-            <Link href="/studio" className="hidden items-center gap-2 px-2 text-xs font-semibold tracking-[0.18em] text-white/75 sm:flex">
-              <Orbit className="size-4 text-violet-200" />
+            <Link href="/studio" className="hidden items-center gap-2 text-xs font-semibold tracking-[0.18em] text-white/75 sm:flex">
+              <Orbit className="size-4 text-white/45" />
               EVERIE STUDIO
             </Link>
           </div>
 
-          <nav className="order-3 flex w-full items-center justify-center gap-1 sm:order-none sm:w-auto">
+          <nav className="order-3 flex w-full items-center justify-center gap-6 sm:order-none sm:w-auto">
             <Link href="/studio" className={navClass(view === "overview")}>OVERVIEW</Link>
             <Link href="/studio/products" className={navClass(view === "products")}>PRODUCTS</Link>
             <Link href="/studio/collections" className={navClass(view === "collections")}>COLLECTIONS</Link>
           </nav>
 
           <Link href="/create">
-            <Button className="rounded-full bg-white text-black hover:bg-white/90">
+            <Button className="rounded-none bg-white px-5 text-black hover:bg-white/88">
               <Plus className="size-4" />
               Add product
             </Button>
@@ -638,7 +636,7 @@ export function StudioApp({ view }: { view: StudioView }) {
         {state.phase !== "ready" ? (
           <section className="flex min-h-[70vh] items-center justify-center">
             {state.phase === "error" ? (
-              <div className="max-w-md rounded-[2rem] border border-rose-300/15 bg-black/55 p-6 text-center backdrop-blur-xl">
+              <div className="max-w-md border border-rose-300/20 bg-black/65 p-6 text-center">
                 <p className="text-sm text-rose-200">{state.error}</p>
                 <Button onClick={() => void load()} className="mt-4 bg-white text-black">Try again</Button>
               </div>
@@ -655,10 +653,10 @@ export function StudioApp({ view }: { view: StudioView }) {
               <section className="pb-16 pt-16 sm:pt-24">
                 <div className="grid items-end gap-10 lg:grid-cols-[1.1fr_0.9fr]">
                   <div>
-                    <p className="flex items-center gap-2 text-xs uppercase tracking-[0.28em] text-violet-200/55">
+                    <p className="flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.24em] text-white/42">
                       <Sparkles className="size-4" /> Your studio
                     </p>
-                    <h1 className="mt-5 max-w-4xl text-5xl font-semibold leading-[0.92] tracking-[-0.055em] sm:text-7xl">
+                    <h1 className="mt-6 max-w-4xl font-serif text-6xl font-normal leading-[0.86] tracking-[-0.055em] sm:text-8xl">
                       Everything you create,<br />in one place.
                     </h1>
                   </div>
@@ -671,7 +669,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                     ].map(([value, label, Icon]) => {
                       const MetricIcon = Icon as typeof Boxes;
                       return (
-                        <div key={String(label)} className="rounded-[1.6rem] border border-white/10 bg-black/35 p-4 backdrop-blur-xl">
+                        <div key={String(label)} className="border-t border-white/18 py-4">
                           <MetricIcon className="size-4 text-white/35" />
                           <p className="mt-8 text-3xl font-semibold tracking-tight">{String(value)}</p>
                           <p className="mt-1 text-[0.65rem] uppercase tracking-[0.16em] text-white/30">{String(label)}</p>
@@ -681,8 +679,8 @@ export function StudioApp({ view }: { view: StudioView }) {
                   </div>
                 </div>
 
-                <div className="mt-14 grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
-                  <div className="rounded-[2rem] border border-white/10 bg-black/28 p-5 backdrop-blur-xl sm:p-6">
+                <div className="mt-16 grid gap-10 border-t border-white/18 pt-8 lg:grid-cols-[1.35fr_0.65fr]">
+                  <div className="border-b border-white/15 pb-7">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs uppercase tracking-[0.18em] text-white/30">Recent products</p>
@@ -696,7 +694,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                     </div>
                   </div>
 
-                  <div className="rounded-[2rem] border border-white/10 bg-black/28 p-5 backdrop-blur-xl sm:p-6">
+                  <div className="border-b border-white/15 pb-7">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs uppercase tracking-[0.18em] text-white/30">Collections</p>
@@ -709,7 +707,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                         <Link
                           key={collection.id}
                           href="/studio/collections"
-                          className="flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-white/[0.025] p-4 transition hover:bg-white/[0.05]"
+                          className="flex items-center justify-between gap-3 border-t border-white/12 py-4 transition hover:border-white/35"
                         >
                           <div className="min-w-0">
                             <p className="truncate font-medium text-white/80">{collection.name}</p>
@@ -718,7 +716,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                           <span className="text-[0.62rem] uppercase tracking-[0.14em] text-white/25">{collection.artworkIds.length} items</span>
                         </Link>
                       ))}
-                      {state.collections.length === 0 && <p className="rounded-2xl border border-dashed border-white/10 p-7 text-center text-sm text-white/35">No collections yet.</p>}
+                      {state.collections.length === 0 && <p className="border-y border-dashed border-white/15 p-7 text-center text-sm text-white/35">No collections yet.</p>}
                     </div>
                   </div>
                 </div>
@@ -730,13 +728,13 @@ export function StudioApp({ view }: { view: StudioView }) {
                 <div className="flex flex-wrap items-end justify-between gap-5">
                   <div>
                     <p className="text-xs uppercase tracking-[0.24em] text-cyan-200/45">Your products</p>
-                    <h1 className="mt-3 text-4xl font-semibold tracking-[-0.045em] sm:text-6xl">Products</h1>
+                    <h1 className="mt-4 font-serif text-6xl font-normal leading-none tracking-[-0.05em] sm:text-8xl">Products</h1>
                   </div>
-                  <Link href="/create"><Button className="rounded-full bg-white text-black"><Plus className="size-4" />New product</Button></Link>
+                  <Link href="/create"><Button className="rounded-none bg-white px-5 text-black hover:bg-white/88"><Plus className="size-4" />New product</Button></Link>
                 </div>
                 <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {state.products.map((product) => <ProductCard key={product.id} product={product} />)}
-                  {state.products.length === 0 && <div className="sm:col-span-2 lg:col-span-3 rounded-[2rem] border border-dashed border-white/10 bg-black/25 p-12 text-center text-white/35 backdrop-blur-xl"><ImageIcon className="mx-auto size-6" /><p className="mt-3 text-sm">No products yet.</p></div>}
+                  {state.products.length === 0 && <div className="sm:col-span-2 lg:col-span-3 border-y border-dashed border-white/15 p-12 text-center text-white/35"><ImageIcon className="mx-auto size-6" /><p className="mt-3 text-sm">No products yet.</p></div>}
                 </div>
               </section>
             )}
@@ -746,7 +744,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                 <div className="flex flex-wrap items-end justify-between gap-5">
                   <div>
                     <p className="text-xs uppercase tracking-[0.24em] text-violet-200/45">Your collections</p>
-                    <h1 className="mt-3 text-4xl font-semibold tracking-[-0.045em] sm:text-6xl">Collections</h1>
+                    <h1 className="mt-4 font-serif text-6xl font-normal leading-none tracking-[-0.05em] sm:text-8xl">Collections</h1>
                     <p className="mt-3 text-sm text-white/35">
                       {state.collections.length} collection{state.collections.length === 1 ? "" : "s"}
                     </p>
@@ -754,7 +752,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                   <Button
                     type="button"
                     onClick={() => dispatch({ type: "open-create" })}
-                    className="rounded-full bg-white text-black hover:bg-white/90"
+                    className="rounded-none bg-white px-5 text-black hover:bg-white/88"
                   >
                     <Plus className="size-4" />
                     New collection
@@ -773,15 +771,15 @@ export function StudioApp({ view }: { view: StudioView }) {
                     ))}
                   </div>
                 ) : (
-                  <div className="mt-10 flex min-h-[20rem] flex-col items-center justify-center rounded-[2.3rem] border border-dashed border-white/10 bg-black/24 px-6 text-center backdrop-blur-xl">
-                    <div className="flex size-16 items-center justify-center rounded-[1.6rem] border border-violet-200/12 bg-violet-300/8 text-violet-100/45">
+                  <div className="mt-10 flex min-h-[20rem] flex-col items-center justify-center border-y border-dashed border-white/15 px-6 text-center">
+                    <div className="flex size-16 items-center justify-center border border-white/15 text-white/35">
                       <Layers3 className="size-6" />
                     </div>
                     <h2 className="mt-5 text-xl font-medium">Create your first collection</h2>
                     <Button
                       type="button"
                       onClick={() => dispatch({ type: "open-create" })}
-                      className="mt-5 rounded-full bg-white text-black hover:bg-white/90"
+                      className="mt-5 rounded-none bg-white px-5 text-black hover:bg-white/88"
                     >
                       <Plus className="size-4" />
                       New collection

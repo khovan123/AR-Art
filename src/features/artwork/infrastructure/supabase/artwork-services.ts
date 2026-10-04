@@ -3,6 +3,7 @@ import { GetPublishedArtwork } from "@/features/artwork/application/use-cases/ge
 import { ListPublishedArtworks } from "@/features/artwork/application/use-cases/list-published-artworks";
 import { ListStudioArtworks } from "@/features/artwork/application/use-cases/list-studio-artworks";
 import { PublishArtwork } from "@/features/artwork/application/use-cases/publish-artwork";
+import { UpdateStudioArtwork } from "@/features/artwork/application/use-cases/update-studio-artwork";
 import { SupabaseArtworkRepository } from "@/features/artwork/infrastructure/supabase/supabase-artwork-repository";
 import { SupabaseArtworkStorage } from "@/features/artwork/infrastructure/supabase/supabase-artwork-storage";
 import { getArtworkBucketName } from "@/features/artwork/infrastructure/supabase/supabase-clients";
@@ -21,5 +22,6 @@ export function createArtworkServices() {
     getPublishedArtwork: new GetPublishedArtwork(repository, storage),
     listPublishedArtworks: new ListPublishedArtworks(repository, storage),
     listStudioArtworks: new ListStudioArtworks(repository, storage),
+    updateStudioArtwork: new UpdateStudioArtwork(repository, storage),
   };
 }
