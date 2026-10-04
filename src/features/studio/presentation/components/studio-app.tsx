@@ -15,14 +15,18 @@ import {
   ImageIcon,
   Layers3,
   LoaderCircle,
+  LockKeyhole,
   Orbit,
+  Pencil,
   Plus,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
+import { Modal } from "@/components/molecules/modal";
 import type { PublishedArtwork } from "@/features/artwork/domain/artwork";
 import { getSupabaseBrowserClient } from "@/features/artwork/infrastructure/supabase/supabase-clients";
 import { CreatorSpatialScene } from "@/features/artwork/presentation/components/creator-spatial-scene";
@@ -33,23 +37,34 @@ import {
 } from "@/features/studio/domain/studio-collection-schema";
 import {
   createCreatorCollection,
+  deleteCreatorCollection,
   listCreatorCollections,
+  updateCreatorCollection,
   type CreatorCollection,
 } from "@/features/studio/infrastructure/supabase/studio-collection-repository";
 
 type StudioView = "overview" | "products" | "collections";
+type CollectionEditor =
+  | { mode: "create" }
+  | { mode: "edit"; collectionId: string }
+  | null;
 
 type StudioState = {
   phase: "checking" | "loading" | "ready" | "error";
   products: PublishedArtwork[];
   collections: CreatorCollection[];
   error: string | null;
+  editor: CollectionEditor;
 };
 
 type StudioAction =
   | { type: "loading" }
   | { type: "ready"; products: PublishedArtwork[]; collections: CreatorCollection[] }
-  | { type: "collection-added"; collection: CreatorCollection }
+  | { type: "collection-saved"; collection: CreatorCollection }
+  | { type: "collection-deleted"; collectionId: string }
+  | { type: "open-create" }
+  | { type: "open-edit"; collectionId: string }
+  | { type: "close-editor" }
   | { type: "error"; message: string };
 
 const initialState: StudioState = {
@@ -57,6 +72,7 @@ const initialState: StudioState = {
   products: [],
   collections: [],
   error: null,
+  editor: null,
 };
 
 function reducer(state: StudioState, action: StudioAction): StudioState {
@@ -69,12 +85,34 @@ function reducer(state: StudioState, action: StudioAction): StudioState {
         products: action.products,
         collections: action.collections,
         error: null,
+        editor: state.editor,
       };
-    case "collection-added":
+    case "collection-saved": {
+      const exists = state.collections.some((collection) => collection.id === action.collection.id);
       return {
         ...state,
-        collections: [action.collection, ...state.collections],
+        collections: exists
+          ? state.collections.map((collection) =>
+              collection.id === action.collection.id ? action.collection : collection,
+            )
+          : [action.collection, ...state.collections],
+        editor: null,
       };
+    }
+    case "collection-deleted":
+      return {
+        ...state,
+        collections: state.collections.filter(
+          (collection) => collection.id !== action.collectionId,
+        ),
+        editor: null,
+      };
+    case "open-create":
+      return { ...state, editor: { mode: "create" } };
+    case "open-edit":
+      return { ...state, editor: { mode: "edit", collectionId: action.collectionId } };
+    case "close-editor":
+      return { ...state, editor: null };
     case "error":
       return { ...state, phase: "error", error: action.message };
   }
@@ -86,6 +124,10 @@ function navClass(active: boolean) {
       ? "bg-white text-black shadow-[0_8px_30px_rgba(255,255,255,0.13)]"
       : "border border-white/10 bg-black/20 text-white/55 hover:border-white/20 hover:bg-white/[0.06] hover:text-white"
   }`;
+}
+
+function statusLabel(status: CreatorCollection["status"]) {
+  return status === "published" ? "Live" : "Private";
 }
 
 function ProductCard({ product }: { product: PublishedArtwork }) {
@@ -100,7 +142,7 @@ function ProductCard({ product }: { product: PublishedArtwork }) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
         <span className="absolute left-3 top-3 rounded-full border border-white/12 bg-black/45 px-2.5 py-1 text-[0.62rem] uppercase tracking-[0.16em] text-white/65 backdrop-blur">
-          {product.status}
+          {product.status === "published" ? "Live" : "Draft"}
         </span>
       </div>
       <div className="px-2 pb-2 pt-4">
@@ -124,76 +166,333 @@ function ProductCard({ product }: { product: PublishedArtwork }) {
   );
 }
 
-function CollectionCreatePanel({
+function CollectionCard({
+  collection,
   products,
-  onCreated,
+  onOpen,
 }: {
+  collection: CreatorCollection;
   products: PublishedArtwork[];
-  onCreated: (collection: CreatorCollection) => void;
+  onOpen: () => void;
 }) {
+  const collectionProducts = collection.artworkIds
+    .map((id) => products.find((product) => product.id === id))
+    .filter((product): product is PublishedArtwork => Boolean(product));
+  const cover = collectionProducts[0];
+  const secondary = collectionProducts.slice(1, 3);
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/34 text-left backdrop-blur-xl transition duration-500 hover:-translate-y-1 hover:border-white/22 hover:bg-white/[0.055]"
+    >
+      <div className="relative aspect-[16/8.7] overflow-hidden border-b border-white/8 bg-[radial-gradient(circle_at_70%_30%,rgba(124,58,237,0.2),transparent_34%),radial-gradient(circle_at_25%_75%,rgba(34,211,238,0.12),transparent_36%),#08080d]">
+        {cover ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={cover.targetImageUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-55 transition duration-700 group-hover:scale-[1.035] group-hover:opacity-68"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#09090f] via-black/15 to-black/20" />
+          </>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex size-20 items-center justify-center rounded-[1.8rem] border border-white/10 bg-white/[0.035] text-white/25 shadow-[0_20px_80px_rgba(124,58,237,0.2)]">
+              <Layers3 className="size-8" />
+            </div>
+          </div>
+        )}
+
+        <div className="absolute left-4 top-4 flex items-center gap-2">
+          <span
+            className={`rounded-full border px-2.5 py-1 text-[0.62rem] uppercase tracking-[0.16em] backdrop-blur-xl ${
+              collection.status === "published"
+                ? "border-emerald-300/18 bg-emerald-300/10 text-emerald-100/75"
+                : "border-white/10 bg-black/38 text-white/52"
+            }`}
+          >
+            {statusLabel(collection.status)}
+          </span>
+        </div>
+
+        {secondary.length > 0 ? (
+          <div className="absolute bottom-4 right-4 flex -space-x-3">
+            {secondary.map((product, index) => (
+              <div
+                key={product.id}
+                className="size-11 overflow-hidden rounded-xl border border-white/18 bg-black shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+                style={{ transform: `rotate(${index === 0 ? -5 : 5}deg)` }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={product.targetImageUrl} alt="" className="h-full w-full object-cover" />
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="flex items-end justify-between gap-4 p-5">
+        <div className="min-w-0">
+          <h2 className="truncate text-xl font-medium tracking-tight text-white">
+            {collection.name}
+          </h2>
+          <p className="mt-2 flex items-center gap-2 text-xs text-white/35">
+            <Boxes className="size-3.5" />
+            {collection.artworkIds.length} product{collection.artworkIds.length === 1 ? "" : "s"}
+          </p>
+        </div>
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.035] text-white/45 transition group-hover:bg-white/10 group-hover:text-white">
+          <Pencil className="size-4" />
+        </span>
+      </div>
+    </button>
+  );
+}
+
+type EditorUiState = {
+  confirmDelete: boolean;
+  deleting: boolean;
+};
+
+type EditorUiAction =
+  | { type: "ask-delete" }
+  | { type: "cancel-delete" }
+  | { type: "deleting" }
+  | { type: "reset" };
+
+function editorUiReducer(state: EditorUiState, action: EditorUiAction): EditorUiState {
+  switch (action.type) {
+    case "ask-delete":
+      return { ...state, confirmDelete: true };
+    case "cancel-delete":
+      return { ...state, confirmDelete: false };
+    case "deleting":
+      return { confirmDelete: true, deleting: true };
+    case "reset":
+      return { confirmDelete: false, deleting: false };
+  }
+}
+
+function CollectionEditorModal({
+  open,
+  collection,
+  products,
+  onClose,
+  onSaved,
+  onDeleted,
+}: {
+  open: boolean;
+  collection: CreatorCollection | null;
+  products: PublishedArtwork[];
+  onClose: () => void;
+  onSaved: (collection: CreatorCollection) => void;
+  onDeleted: (collectionId: string) => void;
+}) {
+  const [ui, dispatchUi] = useReducer(editorUiReducer, {
+    confirmDelete: false,
+    deleting: false,
+  });
   const {
     register,
     control,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting, isValid },
   } = useForm<StudioCollectionFormValues>({
     resolver: zodResolver(studioCollectionSchema),
     mode: "onChange",
-    defaultValues: { name: "", productIds: [] },
+    defaultValues: {
+      name: collection?.name ?? "",
+      productIds: collection?.artworkIds ?? [],
+      status: collection?.status ?? "draft",
+    },
   });
+
+  useEffect(() => {
+    if (!open) return;
+    reset({
+      name: collection?.name ?? "",
+      productIds: collection?.artworkIds ?? [],
+      status: collection?.status ?? "draft",
+    });
+    dispatchUi({ type: "reset" });
+  }, [collection, open, reset]);
 
   const submit = handleSubmit(async (values) => {
-    const collection = await createCreatorCollection(values);
-    onCreated(collection);
-    reset();
+    try {
+      const saved = collection
+        ? await updateCreatorCollection({ id: collection.id, ...values })
+        : await createCreatorCollection(values);
+      onSaved(saved);
+    } catch (cause) {
+      setError("root", {
+        message: cause instanceof Error ? cause.message : "Unable to save collection.",
+      });
+    }
   });
 
-  return (
-    <form
-      onSubmit={submit}
-      className="rounded-[2rem] border border-white/12 bg-[#0a0a10]/72 p-5 shadow-[0_35px_100px_rgba(0,0,0,0.36)] backdrop-blur-2xl sm:p-6"
-    >
-      <div className="flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-2xl border border-violet-300/15 bg-violet-300/10 text-violet-200">
-          <FolderPlus className="size-4" />
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-white/35">New collection</p>
-          <h2 className="mt-1 text-lg font-medium">Create collection</h2>
-        </div>
-      </div>
+  async function removeCollection() {
+    if (!collection) return;
+    if (!ui.confirmDelete) {
+      dispatchUi({ type: "ask-delete" });
+      return;
+    }
 
-      <div className="mt-6 space-y-4">
-        <div>
-          <Label htmlFor="collection-name" className="text-white/70">Collection name</Label>
+    dispatchUi({ type: "deleting" });
+    try {
+      await deleteCreatorCollection(collection.id);
+      onDeleted(collection.id);
+    } catch (cause) {
+      dispatchUi({ type: "reset" });
+      setError("root", {
+        message: cause instanceof Error ? cause.message : "Unable to delete collection.",
+      });
+    }
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      eyebrow={collection ? "Manage collection" : "New collection"}
+      title={collection ? collection.name : "Create collection"}
+      icon={collection ? <Layers3 className="size-4" /> : <FolderPlus className="size-4" />}
+      maxWidthClassName="max-w-3xl"
+      footer={
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            {collection ? (
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={ui.deleting || isSubmitting}
+                  onClick={() => void removeCollection()}
+                  className={
+                    ui.confirmDelete
+                      ? "border-rose-300/25 bg-rose-400/10 text-rose-200 hover:bg-rose-400/15 hover:text-rose-100"
+                      : "border-white/10 bg-transparent text-white/42 hover:bg-white/[0.05] hover:text-rose-200"
+                  }
+                >
+                  {ui.deleting ? (
+                    <LoaderCircle className="size-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="size-4" />
+                  )}
+                  {ui.confirmDelete ? "Confirm delete" : "Delete"}
+                </Button>
+                {ui.confirmDelete && !ui.deleting ? (
+                  <button
+                    type="button"
+                    onClick={() => dispatchUi({ type: "cancel-delete" })}
+                    className="text-xs text-white/40 transition hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="border-white/10 bg-transparent text-white/55 hover:bg-white/[0.06] hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="collection-editor-form"
+              disabled={!isValid || isSubmitting || ui.deleting}
+              className="bg-white text-black hover:bg-white/90"
+            >
+              {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Check className="size-4" />}
+              {collection ? "Save changes" : "Create collection"}
+            </Button>
+          </div>
+        </div>
+      }
+    >
+      <form id="collection-editor-form" onSubmit={submit} className="space-y-6">
+        <div className="grid gap-2">
+          <Label htmlFor="collection-name" className="text-white/68">Collection name</Label>
           <Input
             id="collection-name"
             placeholder="e.g. Neon Series"
-            className="mt-2 border-white/10 bg-white/[0.045] text-white"
+            className="h-11 border-white/10 bg-white/[0.045] text-white"
             {...register("name")}
           />
-          {errors.name && <p className="mt-1 text-xs text-rose-300">{errors.name.message}</p>}
+          {errors.name ? <p className="text-xs text-rose-300">{errors.name.message}</p> : null}
         </div>
 
-        <div>
-          <p className="text-sm font-medium text-white/70">Products</p>
-          <Controller
-            control={control}
-            name="productIds"
-            render={({ field }) => (
-              <div className="mt-2 max-h-52 space-y-2 overflow-y-auto pr-1">
-                {products.length === 0 ? (
-                  <p className="rounded-xl border border-dashed border-white/10 p-4 text-xs text-white/35">
-                    Add a product first.
-                  </p>
-                ) : (
-                  products.map((product) => {
+        <Controller
+          control={control}
+          name="status"
+          render={({ field }) => (
+            <div>
+              <Label className="text-white/68">Visibility</Label>
+              <div className="mt-2 grid grid-cols-2 gap-2 rounded-2xl border border-white/8 bg-white/[0.025] p-1.5">
+                <button
+                  type="button"
+                  onClick={() => field.onChange("draft")}
+                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm transition ${
+                    field.value === "draft"
+                      ? "bg-white text-black"
+                      : "text-white/45 hover:bg-white/[0.05] hover:text-white"
+                  }`}
+                >
+                  <LockKeyhole className="size-4" />
+                  Private
+                </button>
+                <button
+                  type="button"
+                  onClick={() => field.onChange("published")}
+                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm transition ${
+                    field.value === "published"
+                      ? "bg-white text-black"
+                      : "text-white/45 hover:bg-white/[0.05] hover:text-white"
+                  }`}
+                >
+                  <CircleDot className="size-4" />
+                  Live
+                </button>
+              </div>
+            </div>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="productIds"
+          render={({ field }) => (
+            <div>
+              <div className="flex items-center justify-between gap-3">
+                <Label className="text-white/68">Products</Label>
+                <span className="text-xs text-white/28">{field.value.length}/10 selected</span>
+              </div>
+
+              {products.length === 0 ? (
+                <div className="mt-2 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-7 text-center">
+                  <ImageIcon className="mx-auto size-5 text-white/25" />
+                  <p className="mt-2 text-sm text-white/38">Add a product first.</p>
+                </div>
+              ) : (
+                <div className="mt-2 grid max-h-[42vh] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+                  {products.map((product) => {
                     const selected = field.value.includes(product.id);
+                    const maxReached = field.value.length >= 10 && !selected;
                     return (
                       <button
                         key={product.id}
                         type="button"
+                        disabled={maxReached}
                         onClick={() =>
                           field.onChange(
                             selected
@@ -201,38 +500,50 @@ function CollectionCreatePanel({
                               : [...field.value, product.id],
                           )
                         }
-                        className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${
+                        className={`group flex min-w-0 items-center gap-3 rounded-2xl border p-2.5 text-left transition ${
                           selected
-                            ? "border-cyan-300/25 bg-cyan-300/10"
-                            : "border-white/8 bg-white/[0.025] hover:bg-white/[0.05]"
-                        }`}
+                            ? "border-cyan-200/25 bg-cyan-200/9"
+                            : "border-white/8 bg-white/[0.025] hover:border-white/14 hover:bg-white/[0.05]"
+                        } disabled:cursor-not-allowed disabled:opacity-35`}
                       >
-                        <span className={`flex size-6 items-center justify-center rounded-full border ${selected ? "border-cyan-200/40 bg-cyan-200 text-black" : "border-white/15 text-transparent"}`}>
+                        <div className="size-12 shrink-0 overflow-hidden rounded-xl bg-black/55">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={product.targetImageUrl} alt="" className="h-full w-full object-cover" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-white/78">{product.title}</p>
+                          <p className="mt-0.5 text-[0.62rem] uppercase tracking-[0.14em] text-white/28">
+                            {product.status === "published" ? "Live" : "Draft"}
+                          </p>
+                        </div>
+                        <span
+                          className={`flex size-6 shrink-0 items-center justify-center rounded-full border transition ${
+                            selected
+                              ? "border-cyan-100/40 bg-cyan-100 text-black"
+                              : "border-white/14 text-transparent"
+                          }`}
+                        >
                           <Check className="size-3.5" />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm text-white/80">{product.title}</span>
-                          <span className="text-[0.68rem] uppercase tracking-[0.14em] text-white/30">{product.status}</span>
                         </span>
                       </button>
                     );
-                  })
-                )}
-              </div>
-            )}
-          />
-        </div>
-      </div>
+                  })}
+                </div>
+              )}
+              {errors.productIds ? (
+                <p className="mt-2 text-xs text-rose-300">{errors.productIds.message}</p>
+              ) : null}
+            </div>
+          )}
+        />
 
-      <Button
-        type="submit"
-        disabled={!isValid || isSubmitting}
-        className="mt-6 w-full bg-white text-black hover:bg-white/90"
-      >
-        {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Plus className="size-4" />}
-        Create collection
-      </Button>
-    </form>
+        {errors.root?.message ? (
+          <p className="rounded-xl border border-rose-300/15 bg-rose-400/8 px-3 py-2.5 text-sm text-rose-200">
+            {errors.root.message}
+          </p>
+        ) : null}
+      </form>
+    </Modal>
   );
 }
 
@@ -283,7 +594,13 @@ export function StudioApp({ view }: { view: StudioView }) {
     });
   }, [load]);
 
+  const closeEditor = useCallback(() => dispatch({ type: "close-editor" }), []);
   const published = state.products.filter((product) => product.status === "published").length;
+  const selectedCollectionId =
+    state.editor?.mode === "edit" ? state.editor.collectionId : null;
+  const selectedCollection = selectedCollectionId
+    ? state.collections.find((collection) => collection.id === selectedCollectionId) ?? null
+    : null;
 
   return (
     <main className="creator-studio creator-studio-immersive relative min-h-screen overflow-hidden text-white">
@@ -385,18 +702,23 @@ export function StudioApp({ view }: { view: StudioView }) {
                         <p className="text-xs uppercase tracking-[0.18em] text-white/30">Collections</p>
                         <h2 className="mt-1 text-xl font-medium">Collections</h2>
                       </div>
-                      <Link href="/studio/collections" className="text-xs text-white/50 hover:text-white">Manage →</Link>
+                      <Link href="/studio/collections" className="text-xs text-white/50 hover:text-white">View all →</Link>
                     </div>
                     <div className="mt-5 space-y-3">
                       {state.collections.slice(0, 4).map((collection) => (
-                        <div key={collection.id} className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="font-medium text-white/80">{collection.name}</p>
-                            <span className="text-[0.62rem] uppercase tracking-[0.14em] text-white/25">{collection.artworkIds.length} items</span>
+                        <Link
+                          key={collection.id}
+                          href="/studio/collections"
+                          className="flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-white/[0.025] p-4 transition hover:bg-white/[0.05]"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-white/80">{collection.name}</p>
+                            <p className="mt-1 text-xs text-white/28">{statusLabel(collection.status)}</p>
                           </div>
-                                                  </div>
+                          <span className="text-[0.62rem] uppercase tracking-[0.14em] text-white/25">{collection.artworkIds.length} items</span>
+                        </Link>
                       ))}
-                      {state.collections.length === 0 && <p className="rounded-2xl border border-dashed border-white/10 p-7 text-center text-sm text-white/35">No creator collections yet.</p>}
+                      {state.collections.length === 0 && <p className="rounded-2xl border border-dashed border-white/10 p-7 text-center text-sm text-white/35">No collections yet.</p>}
                     </div>
                   </div>
                 </div>
@@ -421,40 +743,62 @@ export function StudioApp({ view }: { view: StudioView }) {
 
             {view === "collections" && (
               <section className="pb-16 pt-14 sm:pt-20">
-                <div className="max-w-3xl">
-                  <p className="text-xs uppercase tracking-[0.24em] text-violet-200/45">Your collections</p>
-                  <h1 className="mt-3 text-4xl font-semibold tracking-[-0.045em] sm:text-6xl">Collections</h1>
-                </div>
-
-                <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_0.8fr]">
-                  <div className="space-y-4">
-                    {state.collections.map((collection) => (
-                      <article key={collection.id} className="rounded-[2rem] border border-white/10 bg-black/32 p-5 backdrop-blur-xl sm:p-6">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <p className="text-[0.64rem] uppercase tracking-[0.16em] text-violet-200/45">{collection.status}</p>
-                            <h2 className="mt-2 text-2xl font-medium tracking-tight">{collection.name}</h2>
-                          </div>
-                          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.035]">
-                            <Layers3 className="size-5 text-white/45" />
-                          </div>
-                        </div>
-                        <div className="mt-5 flex items-center gap-2 text-xs text-white/30">
-                          <Boxes className="size-3.5" />
-                          {collection.artworkIds.length} product{collection.artworkIds.length === 1 ? "" : "s"}
-                        </div>
-                      </article>
-                    ))}
-                    {state.collections.length === 0 && <div className="rounded-[2rem] border border-dashed border-white/10 bg-black/22 p-12 text-center text-white/35 backdrop-blur-xl"><Layers3 className="mx-auto size-6" /><p className="mt-3 text-sm">Create your first collection.</p></div>}
+                <div className="flex flex-wrap items-end justify-between gap-5">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.24em] text-violet-200/45">Your collections</p>
+                    <h1 className="mt-3 text-4xl font-semibold tracking-[-0.045em] sm:text-6xl">Collections</h1>
+                    <p className="mt-3 text-sm text-white/35">
+                      {state.collections.length} collection{state.collections.length === 1 ? "" : "s"}
+                    </p>
                   </div>
-
-                  <CollectionCreatePanel
-                    products={state.products}
-                    onCreated={(collection) => dispatch({ type: "collection-added", collection })}
-                  />
+                  <Button
+                    type="button"
+                    onClick={() => dispatch({ type: "open-create" })}
+                    className="rounded-full bg-white text-black hover:bg-white/90"
+                  >
+                    <Plus className="size-4" />
+                    New collection
+                  </Button>
                 </div>
+
+                {state.collections.length > 0 ? (
+                  <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {state.collections.map((collection) => (
+                      <CollectionCard
+                        key={collection.id}
+                        collection={collection}
+                        products={state.products}
+                        onOpen={() => dispatch({ type: "open-edit", collectionId: collection.id })}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-10 flex min-h-[20rem] flex-col items-center justify-center rounded-[2.3rem] border border-dashed border-white/10 bg-black/24 px-6 text-center backdrop-blur-xl">
+                    <div className="flex size-16 items-center justify-center rounded-[1.6rem] border border-violet-200/12 bg-violet-300/8 text-violet-100/45">
+                      <Layers3 className="size-6" />
+                    </div>
+                    <h2 className="mt-5 text-xl font-medium">Create your first collection</h2>
+                    <Button
+                      type="button"
+                      onClick={() => dispatch({ type: "open-create" })}
+                      className="mt-5 rounded-full bg-white text-black hover:bg-white/90"
+                    >
+                      <Plus className="size-4" />
+                      New collection
+                    </Button>
+                  </div>
+                )}
               </section>
             )}
+
+            <CollectionEditorModal
+              open={state.editor !== null}
+              collection={selectedCollection}
+              products={state.products}
+              onClose={closeEditor}
+              onSaved={(collection) => dispatch({ type: "collection-saved", collection })}
+              onDeleted={(collectionId) => dispatch({ type: "collection-deleted", collectionId })}
+            />
           </>
         )}
       </div>
