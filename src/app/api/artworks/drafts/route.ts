@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createArtworkServices } from "@/features/artwork/infrastructure/supabase/artwork-services";
+import { getRequestUser } from "@/features/auth/infrastructure/supabase/request-user";
 
 const imageExtensions = new Set(["jpg", "jpeg", "png", "webp"]);
 const videoExtensions = new Set(["mp4", "webm"]);
@@ -11,6 +12,11 @@ function clean(value: unknown, max: number) {
 
 export async function POST(request: Request) {
   try {
+    const user = await getRequestUser(request);
+    if (!user) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
+
     const body = (await request.json()) as Record<string, unknown>;
     const title = clean(body.title, 120);
     const artistName = clean(body.artistName, 120);
@@ -40,6 +46,7 @@ export async function POST(request: Request) {
 
     const { createUploadSession } = createArtworkServices();
     const session = await createUploadSession.execute({
+      ownerId: user.id,
       title,
       artistName,
       description,

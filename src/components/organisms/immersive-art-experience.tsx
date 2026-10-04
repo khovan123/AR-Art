@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Plus, ScanLine } from "lucide-react";
+import { ArrowUpRight, LayoutDashboard, LogIn, Plus, ScanLine } from "lucide-react";
 import * as THREE from "three";
+
+import { getCurrentCollectionUser } from "@/features/collection/infrastructure/supabase/collection-repository";
 
 type ArtworkPalette = {
   a: string;
@@ -142,13 +144,34 @@ function addArtworkFrame(
 export function ImmersiveArtExperience() {
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
+  const [authState, setAuthState] = useState<
+    "checking" | "authenticated" | "anonymous"
+  >("checking");
   const canvasHostRef = useRef<HTMLDivElement>(null);
   const scrollRootRef = useRef<HTMLElement>(null);
   const endCtaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     router.prefetch("/create");
+    router.prefetch("/login?next=%2Fcreate");
   }, [router]);
+
+  useEffect(() => {
+    let active = true;
+
+    void getCurrentCollectionUser()
+      .then((user) => {
+        if (!active) return;
+        setAuthState(user ? "authenticated" : "anonymous");
+      })
+      .catch(() => {
+        if (active) setAuthState("anonymous");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const host = canvasHostRef.current;
@@ -430,7 +453,7 @@ export function ImmersiveArtExperience() {
       const endCta = endCtaRef.current;
       if (endCta) {
         endCta.style.opacity = String(endProgress);
-        endCta.style.transform = `translate(-50%, -50%) scale(${0.88 + endProgress * 0.12})`;
+        endCta.style.transform = `scale(${0.88 + endProgress * 0.12})`;
         endCta.style.pointerEvents = endProgress > 0.72 ? "auto" : "none";
         endCta.setAttribute("aria-hidden", endProgress > 0.72 ? "false" : "true");
       }
@@ -570,13 +593,21 @@ export function ImmersiveArtExperience() {
     };
   }, []);
 
-  const navigateToCreate = (event: React.MouseEvent<HTMLAnchorElement>) => {
+  const navigateToCreate = async (
+    event: React.MouseEvent<HTMLAnchorElement>,
+  ) => {
     event.preventDefault();
     if (isNavigating) return;
 
     setIsNavigating(true);
+
+    const user =
+      authState === "authenticated" ? true : Boolean(await getCurrentCollectionUser());
+    setAuthState(user ? "authenticated" : "anonymous");
+
+    const destination = user ? "/create" : "/login?next=%2Fcreate";
     window.setTimeout(() => {
-      router.push("/create");
+      router.push(destination);
     }, 680);
   };
 
@@ -602,8 +633,34 @@ export function ImmersiveArtExperience() {
           >
             <ScanLine className="size-4 transition group-hover:scale-110" />
           </Link>
+
+          {authState === "anonymous" && (
+            <Link
+              href="/login?next=%2Fcreate"
+              className="group flex h-11 items-center gap-2 rounded-full border border-white/12 bg-black/35 px-4 text-xs font-medium tracking-[0.12em] text-white/80 backdrop-blur-xl transition duration-300 hover:border-white/28 hover:bg-white/[0.08] hover:text-white"
+            >
+              <LogIn className="size-4" aria-hidden="true" />
+              LOGIN
+            </Link>
+          )}
+
+          {authState === "authenticated" && (
+            <Link
+              href="/studio"
+              className="group flex h-11 items-center gap-2 rounded-full border border-white/12 bg-black/35 px-4 text-xs font-medium tracking-[0.12em] text-white/80 backdrop-blur-xl transition duration-300 hover:border-white/28 hover:bg-white/[0.08] hover:text-white"
+            >
+              <LayoutDashboard className="size-4" aria-hidden="true" />
+              STUDIO
+            </Link>
+          )}
+
           <Link
-            href="/create"
+            href={
+              authState === "authenticated"
+                ? "/create"
+                : "/login?next=%2Fcreate"
+            }
+            onClick={navigateToCreate}
             aria-label="Create AR artwork"
             className="group flex size-11 items-center justify-center rounded-full border border-white/12 bg-white text-black shadow-[0_10px_40px_rgba(255,255,255,0.14)] transition duration-300 hover:scale-105 hover:bg-white/90"
           >
@@ -624,10 +681,14 @@ export function ImmersiveArtExperience() {
         <div
           ref={endCtaRef}
           aria-hidden="true"
-          className="immersive-end-cta absolute left-1/2 top-1/2 z-30 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center opacity-0"
+          className="immersive-end-cta absolute inset-0 z-30 flex items-center justify-center opacity-0"
         >
           <Link
-            href="/create"
+            href={
+              authState === "authenticated"
+                ? "/create"
+                : "/login?next=%2Fcreate"
+            }
             onClick={navigateToCreate}
             aria-label="Create an AR artwork"
             className="immersive-create-button group relative flex h-16 min-w-48 items-center justify-center gap-4 overflow-hidden rounded-full border border-white/18 bg-white px-7 text-black shadow-[0_0_80px_rgba(196,181,253,0.28)] transition duration-500 hover:scale-[1.04] hover:shadow-[0_0_110px_rgba(103,232,249,0.34)] sm:h-20 sm:min-w-56"

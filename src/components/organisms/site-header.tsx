@@ -1,49 +1,61 @@
-import Link from "next/link";
-import { Plus, ScanLine } from "lucide-react";
+"use client";
 
-import { Button } from "@/components/atoms/button";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+import { useEffect, useState } from "react";
+
+import { getCurrentCollectionUser } from "@/features/collection/infrastructure/supabase/collection-repository";
 
 export function SiteHeader() {
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void getCurrentCollectionUser()
+      .then((user) => {
+        if (active) setAuthenticated(Boolean(user));
+      })
+      .catch(() => {
+        if (active) setAuthenticated(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
-    <header className="relative z-30 mx-auto flex w-full max-w-[90rem] items-center justify-between px-5 py-5 text-white lg:px-10">
-      <Link
-        href="/"
-        className="group flex items-center gap-3 text-sm font-medium tracking-[0.02em]"
-      >
-        <span className="relative flex size-9 items-center justify-center overflow-hidden rounded-full border border-white/12 bg-white/[0.055]">
-          <span className="absolute inset-0 bg-gradient-to-br from-violet-400/20 to-cyan-300/10 opacity-0 transition group-hover:opacity-100" />
-          <ScanLine className="relative size-4 text-white/85" aria-hidden="true" />
+    <header className="relative z-20 mx-auto flex w-full max-w-[94rem] items-center justify-between border-b border-white/10 px-5 py-5 text-white sm:px-8 lg:px-12">
+      <Link href="/" className="flex items-baseline gap-3">
+        <span className="text-xl font-semibold tracking-[-0.05em]">EVERIE</span>
+        <span className="hidden text-[0.62rem] uppercase tracking-[0.22em] text-white/35 sm:inline">
+          Art in another layer
         </span>
-        <span>AR/ART</span>
       </Link>
 
-      <nav className="flex items-center gap-1 rounded-full border border-white/10 bg-black/20 p-1 backdrop-blur-xl">
-        <Link href="/demo-target" className="hidden md:block">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white/55 hover:bg-white/[0.07] hover:text-white"
-          >
-            Demo
-          </Button>
+      <nav className="flex items-center gap-5 text-xs font-medium uppercase tracking-[0.12em] sm:gap-7">
+        <Link href="/#works" className="hidden text-white/50 transition hover:text-white sm:inline">
+          Works
         </Link>
-        <Link href="/ar" className="hidden sm:block">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white/55 hover:bg-white/[0.07] hover:text-white"
-          >
-            Scan
-          </Button>
+        <Link href="/#artists" className="hidden text-white/50 transition hover:text-white md:inline">
+          Artists
         </Link>
-        <Link href="/create">
-          <Button
-            size="sm"
-            className="bg-white text-black hover:bg-white/88"
-          >
-            <Plus className="size-3.5" aria-hidden="true" />
-            Create
-          </Button>
+        <Link href="/collection" className="text-white/50 transition hover:text-white">
+          Collection
+        </Link>
+        {authenticated === true ? (
+          <Link href="/studio" className="text-white/50 transition hover:text-white">
+            Studio
+          </Link>
+        ) : authenticated === false ? (
+          <Link href="/login" className="text-white/50 transition hover:text-white">
+            Sign in
+          </Link>
+        ) : null}
+        <Link
+          href={authenticated === false ? "/login?next=%2Fcreate" : "/create"}
+          className="inline-flex items-center gap-2 border-b border-white/75 pb-1 text-white transition hover:border-cyan-200"
+        >
+          Publish <ArrowUpRight className="size-3.5" />
         </Link>
       </nav>
     </header>

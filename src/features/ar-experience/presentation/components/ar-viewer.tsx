@@ -1,17 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef } from "react";
-import { ArrowLeft, RotateCcw, Settings, TriangleAlert, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, CheckCircle2, RotateCcw, Settings, TriangleAlert, X } from "lucide-react";
 
 import { Button } from "@/components/atoms/button";
 import type { ArExperienceConfig } from "@/features/ar-experience/domain/ar-experience";
 import { useArExperience } from "@/features/ar-experience/presentation/hooks/use-ar-experience";
+import {
+  collectArtwork,
+  getCurrentCollectionUser,
+} from "@/features/collection/infrastructure/supabase/collection-repository";
 
 interface ArViewerProps {
   config: ArExperienceConfig;
   backHref?: string;
   artwork?: {
+    id: string;
+    slug: string;
     title: string;
     artistName: string;
   };
@@ -20,9 +27,14 @@ interface ArViewerProps {
 export function ArViewer({
   config,
   backHref = "/",
+  artwork,
 }: ArViewerProps) {
+  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const autoStartedRef = useRef(false);
+  const collectionSavedRef = useRef(false);
+  const [collectionSaved, setCollectionSaved] = useState(false);
+  const [collectionSaveError, setCollectionSaveError] = useState<string | null>(null);
 
   const stableConfig = useMemo(
     () => ({
@@ -43,16 +55,62 @@ export function ArViewer({
   } = useArExperience(stableConfig);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container || autoStartedRef.current) return;
+    if (autoStartedRef.current) return;
 
-    autoStartedRef.current = true;
-    void start(container);
+    let active = true;
+
+    async function beginAr() {
+      if (artwork) {
+        const user = await getCurrentCollectionUser();
+        if (!active) return;
+
+        if (!user) {
+          const nextPath = `${window.location.pathname}${window.location.search}`;
+          router.replace(`/login?next=${encodeURIComponent(nextPath)}`);
+          return;
+        }
+      }
+
+      const arContainer = containerRef.current;
+      if (!active || !arContainer) return;
+
+      autoStartedRef.current = true;
+      await start(arContainer);
+    }
+
+    void beginAr();
 
     return () => {
+      active = false;
       void stop();
     };
-  }, [start, stop]);
+  }, [artwork, router, start, stop]);
+
+  useEffect(() => {
+    if (
+      status !== "found" ||
+      !artwork?.id ||
+      collectionSavedRef.current
+    ) {
+      return;
+    }
+
+    collectionSavedRef.current = true;
+    setCollectionSaveError(null);
+
+    void collectArtwork(artwork.id)
+      .then((result) => {
+        if (result.collected) setCollectionSaved(true);
+      })
+      .catch((cause) => {
+        collectionSavedRef.current = false;
+        setCollectionSaveError(
+          cause instanceof Error
+            ? cause.message
+            : "Đã nhận diện sản phẩm nhưng chưa thể lưu vào Collection.",
+        );
+      });
+  }, [artwork?.id, status]);
 
   const retry = () => {
     const container = containerRef.current;
@@ -75,7 +133,7 @@ export function ArViewer({
           type="button"
           variant="outline"
           size="icon"
-          className="size-11 rounded-full border-white/25 bg-black/25 text-white shadow-lg backdrop-blur-md hover:bg-black/45 hover:text-white"
+          className="size-11 rounded-none border-white/25 bg-black/25 text-white shadow-lg backdrop-blur-md hover:bg-black/45 hover:text-white"
         >
           <ArrowLeft className="size-5" aria-hidden="true" />
           <span className="sr-only">Back</span>
@@ -88,16 +146,16 @@ export function ArViewer({
             role="dialog"
             aria-modal="true"
             aria-labelledby="camera-permission-title"
-            className="w-full max-w-md rounded-[2rem] border border-white/12 bg-[#0b0b0e]/95 p-5 shadow-[0_30px_100px_rgba(0,0,0,0.65)] sm:p-6"
+            className="w-full max-w-md border border-white/12 bg-[#09090d]/96 p-5 shadow-[0_30px_100px_rgba(0,0,0,0.65)] sm:p-6"
           >
             <div className="flex items-start justify-between gap-4">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-amber-300/20 bg-amber-300/10 text-amber-200">
+              <div className="flex size-11 shrink-0 items-center justify-center border border-amber-300/20 bg-amber-300/10 text-amber-200">
                 <Settings className="size-5" aria-hidden="true" />
               </div>
               <button
                 type="button"
                 onClick={dismissCameraPermissionHelp}
-                className="flex size-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white"
+                className="flex size-10 shrink-0 items-center justify-center border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white"
                 aria-label="Close camera permission help"
               >
                 <X className="size-4" aria-hidden="true" />
@@ -121,7 +179,7 @@ export function ArViewer({
               </p>
             </div>
 
-            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+            <div className="mt-5 border border-white/10 bg-white/[0.04] p-4">
               <ol className="space-y-3 text-sm leading-5 text-white/75">
                 <li>1. Tap <strong className="font-medium text-white">aA → Website Settings</strong>.</li>
                 <li>2. Set <strong className="font-medium text-white">Camera → Allow</strong>.</li>
@@ -135,7 +193,7 @@ export function ArViewer({
 
             <Button
               type="button"
-              className="mt-5 w-full bg-white text-black hover:bg-white/90"
+              className="mt-5 w-full rounded-none bg-white text-black hover:bg-violet-100"
               onClick={retry}
             >
               <RotateCcw className="size-4" aria-hidden="true" />
@@ -146,7 +204,7 @@ export function ArViewer({
       )}
 
       {status === "error" && !cameraPermissionIssue && error && (
-        <div className="absolute inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md items-start gap-3 rounded-2xl border border-white/12 bg-black/70 p-4 backdrop-blur-xl">
+        <div className="absolute inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md items-start gap-3 border border-white/12 bg-black/75 p-4 backdrop-blur-xl">
           <TriangleAlert className="mt-0.5 size-5 shrink-0 text-amber-300" aria-hidden="true" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">Camera could not start</p>
@@ -159,6 +217,28 @@ export function ArViewer({
               Try again
             </button>
           </div>
+        </div>
+      )}
+
+      {collectionSaveError && (
+        <div className="absolute inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto max-w-md border border-amber-300/15 bg-black/75 px-4 py-3 text-xs leading-5 text-amber-100/75 backdrop-blur-xl">
+          {collectionSaveError}
+        </div>
+      )}
+
+      {collectionSaved && !collectionSaveError && (
+        <div className="absolute inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md items-center gap-3 border border-cyan-100/18 bg-black/78 p-4 backdrop-blur-xl">
+          <CheckCircle2 className="size-5 shrink-0 text-cyan-100" aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-white">Artwork unlocked</p>
+            <p className="mt-0.5 text-xs text-white/48">Added to your collection.</p>
+          </div>
+          <Link
+            href="/collection"
+            className="shrink-0 text-xs font-medium text-white underline underline-offset-4"
+          >
+            View collection
+          </Link>
         </div>
       )}
     </main>

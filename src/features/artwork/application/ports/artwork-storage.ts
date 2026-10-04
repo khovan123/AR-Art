@@ -7,5 +7,6 @@ import type {
 export interface ArtworkStorage {
   createSignedUpload(path: string): Promise<SignedUploadSlot>;
   assertAssetsExist(artwork: Artwork): Promise<void>;
+  removeAssets(artwork: Artwork): Promise<void>;
   getPublicUrls(artwork: Artwork): ArtworkAssetUrls;
 }
