@@ -21,23 +21,24 @@ export default async function ArtworkPage({
   if (!artwork) notFound();
 
   return (
-    <main className="min-h-screen bg-[#efeee8] text-[#11110f]">
-      <header className="mx-auto flex w-full max-w-[94rem] items-center justify-between border-b border-black/15 px-5 py-5 sm:px-8 lg:px-12">
+    <main className="relative min-h-screen overflow-hidden bg-[#050507] text-white">
+      <div className="pointer-events-none absolute right-[10%] top-[18%] size-80 rounded-full bg-violet-700/7 blur-[130px]" />
+      <header className="relative mx-auto flex w-full max-w-[94rem] items-center justify-between border-b border-white/12 px-5 py-5 sm:px-8 lg:px-12">
         <HistoryBackButton
           fallbackHref="/"
           variant="ghost"
-          className="h-auto rounded-none p-0 text-xs uppercase tracking-[0.14em] text-black/55 hover:bg-transparent hover:text-black"
+          className="h-auto rounded-none p-0 text-xs uppercase tracking-[0.14em] text-white/50 hover:bg-transparent hover:text-white"
         >
           <ArrowLeft className="size-3.5" aria-hidden="true" />
           Gallery
         </HistoryBackButton>
         <Link href="/" className="text-lg font-semibold tracking-[-0.045em]">EVERIE</Link>
-        <span className="text-[0.62rem] uppercase tracking-[0.18em] text-black/35">Digital work</span>
+        <span className="text-[0.62rem] uppercase tracking-[0.18em] text-white/28">Digital work</span>
       </header>
 
-      <section className="mx-auto grid min-h-[calc(100svh-4.8rem)] w-full max-w-[94rem] gap-12 px-5 py-12 sm:px-8 lg:grid-cols-[1.16fr_0.84fr] lg:items-center lg:px-12 lg:py-16">
+      <section className="relative mx-auto grid min-h-[calc(100svh-4.8rem)] w-full max-w-[94rem] gap-12 px-5 py-12 sm:px-8 lg:grid-cols-[1.16fr_0.84fr] lg:items-center lg:px-12 lg:py-16">
         <div className="relative">
-          <div className="overflow-hidden bg-[#d7d6cf]">
+          <div className="overflow-hidden border border-white/10 bg-[#0a0a0d] p-2 shadow-[0_35px_120px_rgba(0,0,0,0.38)] sm:p-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={artwork.targetImageUrl}
@@ -45,14 +46,14 @@ export default async function ArtworkPage({
               className="mx-auto aspect-[4/5] max-h-[74svh] w-full object-contain"
             />
           </div>
-          <div className="mt-3 flex items-center justify-between border-t border-black/20 pt-3 text-[0.62rem] uppercase tracking-[0.15em] text-black/38">
+          <div className="mt-3 flex items-center justify-between border-t border-white/12 pt-3 text-[0.62rem] uppercase tracking-[0.15em] text-white/30">
             <span>Everie archive</span>
-            <span>AR enabled</span>
+            <span className="text-cyan-100/45">AR enabled</span>
           </div>
         </div>
 
         <div className="lg:pl-8">
-          <div className="flex items-center justify-between gap-6 border-t border-black/20 pt-3 text-[0.62rem] uppercase tracking-[0.16em] text-black/38">
+          <div className="flex items-center justify-between gap-6 border-t border-white/12 pt-3 text-[0.62rem] uppercase tracking-[0.16em] text-white/30">
             <span>Work / {artwork.slug}</span>
             <span>2D AR</span>
           </div>
@@ -60,15 +61,15 @@ export default async function ArtworkPage({
           <h1 className="mt-10 font-serif text-6xl leading-[0.86] tracking-[-0.06em] sm:text-8xl">
             {artwork.title}
           </h1>
-          <p className="mt-6 text-xs uppercase tracking-[0.18em] text-black/45">{artwork.artistName}</p>
+          <p className="mt-6 text-xs uppercase tracking-[0.18em] text-violet-100/45">{artwork.artistName}</p>
 
           {artwork.description ? (
-            <p className="mt-9 max-w-xl whitespace-pre-wrap text-sm leading-7 text-black/55">
+            <p className="mt-9 max-w-xl whitespace-pre-wrap text-sm leading-7 text-white/48">
               {artwork.description}
             </p>
           ) : null}
 
-          <div className="mt-12 grid grid-cols-2 border-y border-black/20 py-4 text-xs uppercase tracking-[0.12em] text-black/45">
+          <div className="mt-12 grid grid-cols-2 border-y border-white/12 py-4 text-xs uppercase tracking-[0.12em] text-white/38">
             <span>AR layer</span>
             <span className="text-right">Collect after scan</span>
           </div>
@@ -76,7 +77,7 @@ export default async function ArtworkPage({
           <div className="mt-7 flex flex-wrap items-center gap-2">
             <Link
               href={`/ar/${artwork.slug}`}
-              className="inline-flex h-12 items-center gap-2 bg-[#11110f] px-5 text-xs font-medium uppercase tracking-[0.12em] text-[#efeee8] transition hover:bg-black/85"
+              className="inline-flex h-12 items-center gap-2 bg-white px-5 text-xs font-medium uppercase tracking-[0.12em] text-black transition hover:bg-violet-100"
             >
               <Camera className="size-4" aria-hidden="true" />
               Open AR
@@ -85,7 +86,7 @@ export default async function ArtworkPage({
 
             <Link
               href="/collection"
-              className="inline-flex h-12 items-center gap-2 border border-black/25 px-5 text-xs font-medium uppercase tracking-[0.12em] text-black/65 transition hover:border-black hover:text-black"
+              className="inline-flex h-12 items-center gap-2 border border-white/18 px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/58 transition hover:border-white/45 hover:text-white"
             >
               <Sparkles className="size-4" aria-hidden="true" />
               Collection

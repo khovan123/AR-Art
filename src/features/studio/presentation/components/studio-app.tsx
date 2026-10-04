@@ -374,8 +374,8 @@ function CollectionEditorModal({
                   onClick={() => void removeCollection()}
                   className={
                     ui.confirmDelete
-                      ? "border-rose-300/25 bg-rose-400/10 text-rose-200 hover:bg-rose-400/15 hover:text-rose-100"
-                      : "border-white/10 bg-transparent text-white/42 hover:bg-white/[0.05] hover:text-rose-200"
+                      ? "rounded-none border-rose-300/25 bg-rose-400/10 text-rose-200 hover:bg-rose-400/15 hover:text-rose-100"
+                      : "rounded-none border-white/10 bg-transparent text-white/42 hover:bg-white/[0.05] hover:text-rose-200"
                   }
                 >
                   {ui.deleting ? (
@@ -403,7 +403,7 @@ function CollectionEditorModal({
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-white/10 bg-transparent text-white/55 hover:bg-white/[0.06] hover:text-white"
+              className="rounded-none border-white/10 bg-transparent text-white/55 hover:bg-white/[0.06] hover:text-white"
             >
               Cancel
             </Button>
@@ -411,7 +411,7 @@ function CollectionEditorModal({
               type="submit"
               form="collection-editor-form"
               disabled={!isValid || isSubmitting || ui.deleting}
-              className="bg-white text-black hover:bg-white/90"
+              className="rounded-none bg-white text-black hover:bg-violet-100"
             >
               {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Check className="size-4" />}
               {collection ? "Save changes" : "Create collection"}
@@ -426,7 +426,7 @@ function CollectionEditorModal({
           <Input
             id="collection-name"
             placeholder="e.g. Neon Series"
-            className="h-11 border-white/10 bg-white/[0.045] text-white"
+            className="h-11 rounded-none border-white/10 bg-white/[0.045] text-white"
             {...register("name")}
           />
           {errors.name ? <p className="text-xs text-rose-300">{errors.name.message}</p> : null}
@@ -438,14 +438,14 @@ function CollectionEditorModal({
           render={({ field }) => (
             <div>
               <Label className="text-white/68">Visibility</Label>
-              <div className="mt-2 grid grid-cols-2 gap-2 rounded-2xl border border-white/8 bg-white/[0.025] p-1.5">
+              <div className="mt-2 grid grid-cols-2 gap-px border border-white/10 bg-white/10 p-px">
                 <button
                   type="button"
                   onClick={() => field.onChange("draft")}
-                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm transition ${
+                  className={`flex items-center justify-center gap-2 px-4 py-2.5 text-sm transition ${
                     field.value === "draft"
                       ? "bg-white text-black"
-                      : "text-white/45 hover:bg-white/[0.05] hover:text-white"
+                      : "bg-[#09090d] text-white/45 hover:bg-white/[0.05] hover:text-white"
                   }`}
                 >
                   <LockKeyhole className="size-4" />
@@ -454,10 +454,10 @@ function CollectionEditorModal({
                 <button
                   type="button"
                   onClick={() => field.onChange("published")}
-                  className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm transition ${
+                  className={`flex items-center justify-center gap-2 px-4 py-2.5 text-sm transition ${
                     field.value === "published"
                       ? "bg-white text-black"
-                      : "text-white/45 hover:bg-white/[0.05] hover:text-white"
+                      : "bg-[#09090d] text-white/45 hover:bg-white/[0.05] hover:text-white"
                   }`}
                 >
                   <CircleDot className="size-4" />
@@ -479,7 +479,7 @@ function CollectionEditorModal({
               </div>
 
               {products.length === 0 ? (
-                <div className="mt-2 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-7 text-center">
+                <div className="mt-2 border border-dashed border-white/10 bg-white/[0.02] p-7 text-center">
                   <ImageIcon className="mx-auto size-5 text-white/25" />
                   <p className="mt-2 text-sm text-white/38">Add a product first.</p>
                 </div>
@@ -500,13 +500,13 @@ function CollectionEditorModal({
                               : [...field.value, product.id],
                           )
                         }
-                        className={`group flex min-w-0 items-center gap-3 rounded-2xl border p-2.5 text-left transition ${
+                        className={`group flex min-w-0 items-center gap-3 border p-2.5 text-left transition ${
                           selected
                             ? "border-cyan-200/25 bg-cyan-200/9"
                             : "border-white/8 bg-white/[0.025] hover:border-white/14 hover:bg-white/[0.05]"
                         } disabled:cursor-not-allowed disabled:opacity-35`}
                       >
-                        <div className="size-12 shrink-0 overflow-hidden rounded-xl bg-black/55">
+                        <div className="size-12 shrink-0 overflow-hidden bg-black/55">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={product.targetImageUrl} alt="" className="h-full w-full object-cover" />
                         </div>
@@ -517,7 +517,7 @@ function CollectionEditorModal({
                           </p>
                         </div>
                         <span
-                          className={`flex size-6 shrink-0 items-center justify-center rounded-full border transition ${
+                          className={`flex size-6 shrink-0 items-center justify-center border transition ${
                             selected
                               ? "border-cyan-100/40 bg-cyan-100 text-black"
                               : "border-white/14 text-transparent"
@@ -538,7 +538,7 @@ function CollectionEditorModal({
         />
 
         {errors.root?.message ? (
-          <p className="rounded-xl border border-rose-300/15 bg-rose-400/8 px-3 py-2.5 text-sm text-rose-200">
+          <p className="border border-rose-300/15 bg-rose-400/8 px-3 py-2.5 text-sm text-rose-200">
             {errors.root.message}
           </p>
         ) : null}
@@ -603,9 +603,9 @@ export function StudioApp({ view }: { view: StudioView }) {
     : null;
 
   return (
-    <main className="creator-studio creator-studio-immersive relative min-h-screen overflow-hidden bg-[#0b0b0a] text-white">
-      <div className="pointer-events-none fixed inset-0 opacity-45"><CreatorSpatialScene /></div>
-      <div className="pointer-events-none fixed inset-0 z-[1] bg-black/62" />
+    <main className="creator-studio creator-studio-immersive relative min-h-screen overflow-hidden bg-[#050507] text-white">
+      <div className="pointer-events-none fixed inset-0 opacity-38"><CreatorSpatialScene /></div>
+      <div className="pointer-events-none fixed inset-0 z-[1] bg-black/66" />
 
       <div className="relative z-10 mx-auto min-h-screen w-full max-w-[94rem] px-5 py-5 sm:px-8 lg:px-12">
         <header className="flex flex-wrap items-center justify-between gap-5 border-b border-white/18 py-3">
@@ -626,7 +626,7 @@ export function StudioApp({ view }: { view: StudioView }) {
           </nav>
 
           <Link href="/create">
-            <Button className="rounded-none bg-white px-5 text-black hover:bg-white/88">
+            <Button className="rounded-none bg-white px-5 text-black hover:bg-violet-100">
               <Plus className="size-4" />
               Add product
             </Button>
@@ -638,7 +638,7 @@ export function StudioApp({ view }: { view: StudioView }) {
             {state.phase === "error" ? (
               <div className="max-w-md border border-rose-300/20 bg-black/65 p-6 text-center">
                 <p className="text-sm text-rose-200">{state.error}</p>
-                <Button onClick={() => void load()} className="mt-4 bg-white text-black">Try again</Button>
+                <Button onClick={() => void load()} className="mt-4 rounded-none bg-white text-black">Try again</Button>
               </div>
             ) : (
               <div className="flex items-center gap-3 text-sm text-white/45">
@@ -653,11 +653,11 @@ export function StudioApp({ view }: { view: StudioView }) {
               <section className="pb-16 pt-16 sm:pt-24">
                 <div className="grid items-end gap-10 lg:grid-cols-[1.1fr_0.9fr]">
                   <div>
-                    <p className="flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.24em] text-white/42">
+                    <p className="flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.24em] text-violet-200/45">
                       <Sparkles className="size-4" /> Your studio
                     </p>
                     <h1 className="mt-6 max-w-4xl font-serif text-6xl font-normal leading-[0.86] tracking-[-0.055em] sm:text-8xl">
-                      Everything you create,<br />in one place.
+                      Everything you create,<br /><span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">in one place.</span>
                     </h1>
                   </div>
 
@@ -690,7 +690,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                     </div>
                     <div className="mt-5 grid gap-4 sm:grid-cols-2">
                       {state.products.slice(0, 4).map((product) => <ProductCard key={product.id} product={product} />)}
-                      {state.products.length === 0 && <p className="col-span-2 rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-white/35">No products yet. Add your first AR product.</p>}
+                      {state.products.length === 0 && <p className="col-span-2 border-y border-dashed border-white/10 p-8 text-center text-sm text-white/35">No products yet. Add your first AR product.</p>}
                     </div>
                   </div>
 
@@ -730,7 +730,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                     <p className="text-xs uppercase tracking-[0.24em] text-cyan-200/45">Your products</p>
                     <h1 className="mt-4 font-serif text-6xl font-normal leading-none tracking-[-0.05em] sm:text-8xl">Products</h1>
                   </div>
-                  <Link href="/create"><Button className="rounded-none bg-white px-5 text-black hover:bg-white/88"><Plus className="size-4" />New product</Button></Link>
+                  <Link href="/create"><Button className="rounded-none bg-white px-5 text-black hover:bg-violet-100"><Plus className="size-4" />New product</Button></Link>
                 </div>
                 <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {state.products.map((product) => <ProductCard key={product.id} product={product} />)}
@@ -752,7 +752,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                   <Button
                     type="button"
                     onClick={() => dispatch({ type: "open-create" })}
-                    className="rounded-none bg-white px-5 text-black hover:bg-white/88"
+                    className="rounded-none bg-white px-5 text-black hover:bg-violet-100"
                   >
                     <Plus className="size-4" />
                     New collection

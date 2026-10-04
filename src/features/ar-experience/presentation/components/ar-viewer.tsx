@@ -128,7 +128,7 @@ export function ArViewer({
           type="button"
           variant="outline"
           size="icon"
-          className="size-11 rounded-full border-white/25 bg-black/25 text-white shadow-lg backdrop-blur-md hover:bg-black/45 hover:text-white"
+          className="size-11 rounded-none border-white/25 bg-black/25 text-white shadow-lg backdrop-blur-md hover:bg-black/45 hover:text-white"
         >
           <ArrowLeft className="size-5" aria-hidden="true" />
           <span className="sr-only">Back</span>
@@ -141,16 +141,16 @@ export function ArViewer({
             role="dialog"
             aria-modal="true"
             aria-labelledby="camera-permission-title"
-            className="w-full max-w-md rounded-[2rem] border border-white/12 bg-[#0b0b0e]/95 p-5 shadow-[0_30px_100px_rgba(0,0,0,0.65)] sm:p-6"
+            className="w-full max-w-md border border-white/12 bg-[#09090d]/96 p-5 shadow-[0_30px_100px_rgba(0,0,0,0.65)] sm:p-6"
           >
             <div className="flex items-start justify-between gap-4">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-amber-300/20 bg-amber-300/10 text-amber-200">
+              <div className="flex size-11 shrink-0 items-center justify-center border border-amber-300/20 bg-amber-300/10 text-amber-200">
                 <Settings className="size-5" aria-hidden="true" />
               </div>
               <button
                 type="button"
                 onClick={dismissCameraPermissionHelp}
-                className="flex size-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white"
+                className="flex size-10 shrink-0 items-center justify-center border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white"
                 aria-label="Close camera permission help"
               >
                 <X className="size-4" aria-hidden="true" />
@@ -174,7 +174,7 @@ export function ArViewer({
               </p>
             </div>
 
-            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+            <div className="mt-5 border border-white/10 bg-white/[0.04] p-4">
               <ol className="space-y-3 text-sm leading-5 text-white/75">
                 <li>1. Tap <strong className="font-medium text-white">aA → Website Settings</strong>.</li>
                 <li>2. Set <strong className="font-medium text-white">Camera → Allow</strong>.</li>
@@ -188,7 +188,7 @@ export function ArViewer({
 
             <Button
               type="button"
-              className="mt-5 w-full bg-white text-black hover:bg-white/90"
+              className="mt-5 w-full rounded-none bg-white text-black hover:bg-violet-100"
               onClick={retry}
             >
               <RotateCcw className="size-4" aria-hidden="true" />
@@ -199,7 +199,7 @@ export function ArViewer({
       )}
 
       {status === "error" && !cameraPermissionIssue && error && (
-        <div className="absolute inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md items-start gap-3 rounded-2xl border border-white/12 bg-black/70 p-4 backdrop-blur-xl">
+        <div className="absolute inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md items-start gap-3 border border-white/12 bg-black/75 p-4 backdrop-blur-xl">
           <TriangleAlert className="mt-0.5 size-5 shrink-0 text-amber-300" aria-hidden="true" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">Camera could not start</p>
@@ -216,7 +216,7 @@ export function ArViewer({
       )}
 
       {collectionSaveError && (
-        <div className="absolute inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto max-w-md rounded-2xl border border-amber-300/15 bg-black/75 px-4 py-3 text-xs leading-5 text-amber-100/75 backdrop-blur-xl">
+        <div className="absolute inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto max-w-md border border-amber-300/15 bg-black/75 px-4 py-3 text-xs leading-5 text-amber-100/75 backdrop-blur-xl">
           {collectionSaveError}
         </div>
       )}

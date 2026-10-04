@@ -266,15 +266,15 @@ export function AuthForm({ nextPath }: AuthFormProps) {
 
   return (
     <div className="mt-12 w-full">
-      <div className="grid grid-cols-2 border-b border-black/20">
+      <div className="grid grid-cols-2 border-b border-white/12">
         <button
           type="button"
           onClick={() => changeMode("signin")}
           aria-pressed={mode === "signin"}
           className={`border-b-2 px-0 pb-4 text-left text-xs font-medium uppercase tracking-[0.14em] transition ${
             mode === "signin"
-              ? "border-black text-black"
-              : "border-transparent text-black/35 hover:text-black/70"
+              ? "border-white text-white"
+              : "border-transparent text-white/30 hover:text-white/70"
           }`}
         >
           Đăng nhập
@@ -285,8 +285,8 @@ export function AuthForm({ nextPath }: AuthFormProps) {
           aria-pressed={mode === "signup"}
           className={`border-b-2 px-0 pb-4 text-right text-xs font-medium uppercase tracking-[0.14em] transition ${
             mode === "signup"
-              ? "border-black text-black"
-              : "border-transparent text-black/35 hover:text-black/70"
+              ? "border-white text-white"
+              : "border-transparent text-white/30 hover:text-white/70"
           }`}
         >
           Tạo tài khoản
@@ -297,20 +297,20 @@ export function AuthForm({ nextPath }: AuthFormProps) {
         <input type="hidden" {...register("mode")} />
 
         <label className="block">
-          <span className="block text-[0.65rem] uppercase tracking-[0.18em] text-black/40">Email</span>
+          <span className="block text-[0.65rem] uppercase tracking-[0.18em] text-white/35">Email</span>
           <input
             type="email"
             autoComplete="email"
             aria-invalid={Boolean(errors.email)}
             aria-describedby={errors.email ? "auth-email-error" : undefined}
             {...register("email")}
-            className={`mt-3 h-12 w-full border-0 border-b bg-transparent px-0 text-base text-black outline-none transition placeholder:text-black/25 ${
-              errors.email ? "border-red-500/55" : "border-black/25 focus:border-black"
+            className={`mt-3 h-12 w-full border-0 border-b bg-transparent px-0 text-base text-white outline-none transition placeholder:text-white/20 ${
+              errors.email ? "border-rose-300/55" : "border-white/18 focus:border-cyan-200/70"
             }`}
             placeholder="you@example.com"
           />
           {errors.email?.message ? (
-            <p id="auth-email-error" className="mt-2 text-xs text-red-700/70">
+            <p id="auth-email-error" className="mt-2 text-xs text-rose-200/80">
               {errors.email.message}
             </p>
           ) : null}
@@ -320,8 +320,8 @@ export function AuthForm({ nextPath }: AuthFormProps) {
           <div
             className={`border-l-2 py-1 pl-4 text-sm leading-6 ${
               recoverySucceeded
-                ? "border-emerald-700 text-emerald-900/75"
-                : "border-amber-700 text-amber-950/75"
+                ? "border-emerald-300/55 text-emerald-100/80"
+                : "border-amber-300/55 text-amber-100/80"
             }`}
           >
             <div className="flex items-start gap-3">
@@ -360,34 +360,34 @@ export function AuthForm({ nextPath }: AuthFormProps) {
         ) : null}
 
         <label className="block">
-          <span className="block text-[0.65rem] uppercase tracking-[0.18em] text-black/40">Mật khẩu</span>
+          <span className="block text-[0.65rem] uppercase tracking-[0.18em] text-white/35">Mật khẩu</span>
           <input
             type="password"
             autoComplete={mode === "signin" ? "current-password" : "new-password"}
             aria-invalid={Boolean(errors.password)}
             aria-describedby={errors.password ? "auth-password-error" : undefined}
             {...register("password")}
-            className={`mt-3 h-12 w-full border-0 border-b bg-transparent px-0 text-base text-black outline-none transition placeholder:text-black/25 ${
-              errors.password ? "border-red-500/55" : "border-black/25 focus:border-black"
+            className={`mt-3 h-12 w-full border-0 border-b bg-transparent px-0 text-base text-white outline-none transition placeholder:text-white/20 ${
+              errors.password ? "border-rose-300/55" : "border-white/18 focus:border-cyan-200/70"
             }`}
             placeholder="Tối thiểu 6 ký tự"
           />
           {errors.password?.message ? (
-            <p id="auth-password-error" className="mt-2 text-xs text-red-700/70">{errors.password.message}</p>
+            <p id="auth-password-error" className="mt-2 text-xs text-rose-200/80">{errors.password.message}</p>
           ) : null}
         </label>
 
         {serverMessage ? (
-          <p className="border-l-2 border-red-700 py-1 pl-4 text-sm leading-6 text-red-900/75">{serverMessage}</p>
+          <p className="border-l-2 border-rose-300/55 py-1 pl-4 text-sm leading-6 text-rose-100/80">{serverMessage}</p>
         ) : null}
         {successMessage ? (
-          <p className="border-l-2 border-emerald-700 py-1 pl-4 text-sm leading-6 text-emerald-900/75">{successMessage}</p>
+          <p className="border-l-2 border-emerald-300/55 py-1 pl-4 text-sm leading-6 text-emerald-100/80">{successMessage}</p>
         ) : null}
 
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="h-13 w-full rounded-none bg-[#11110f] text-[#efeee8] hover:bg-black/85"
+          className="h-13 w-full rounded-none bg-white text-black hover:bg-violet-100"
         >
           {isSubmitting ? (
             <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
@@ -400,7 +400,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
         </Button>
       </form>
 
-      <p className="mt-6 text-xs leading-5 text-black/38">Bộ sưu tập đi theo tài khoản của bạn trên mọi thiết bị.</p>
+      <p className="mt-6 text-xs leading-5 text-white/30">Bộ sưu tập đi theo tài khoản của bạn trên mọi thiết bị.</p>
     </div>
   );
 }
