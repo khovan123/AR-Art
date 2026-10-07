@@ -31,7 +31,6 @@ import {
 } from "@/features/artwork/domain/artwork-create-form-schema";
 import { getSupabaseBrowserClient } from "@/features/artwork/infrastructure/supabase/supabase-clients";
 import { ArCompositionPreview } from "@/features/artwork/presentation/components/ar-composition-preview";
-import { CreatorSpatialScene } from "@/features/artwork/presentation/components/creator-spatial-scene";
 import { compileMindTarget } from "@/features/artwork/presentation/lib/compile-mind-target";
 import { readImageAspectRatio } from "@/features/artwork/presentation/lib/read-image-aspect-ratio";
 import { readVideoAspectRatio } from "@/features/artwork/presentation/lib/read-video-aspect-ratio";
@@ -163,11 +162,11 @@ export function ArtworkCreateForm({
     register,
     handleSubmit,
     setValue,
-    trigger,
-    formState: { errors, isSubmitting, isValid },
+    formState: { errors, isSubmitting },
   } = useForm<ArtworkCreateFormValues>({
     resolver: zodResolver(artworkCreateFormSchema),
-    mode: "onChange",
+    mode: "onSubmit",
+    reValidateMode: "onSubmit",
     defaultValues: {
       title: "",
       artistName: "",
@@ -192,7 +191,8 @@ export function ArtworkCreateForm({
 
   const detailsReady = Boolean(title?.trim() && artistName?.trim());
   const arReady = arMode === "spatial_layers" ? spatialLayers.length > 0 : Boolean(overlayVideo);
-  const canPublish = isValid && !isSubmitting;
+  const publishReady = detailsReady && Boolean(targetImage) && arReady;
+  const canSubmit = !isSubmitting;
 
   async function getAuthHeaders() {
     const supabase = getSupabaseBrowserClient();
@@ -375,7 +375,6 @@ export function ArtworkCreateForm({
         scale: isModel(file) ? 0.3 : 0.5,
       });
     });
-    window.setTimeout(() => void trigger("spatialLayers"), 0);
   }
 
   if (workflow.result) {
@@ -483,7 +482,7 @@ export function ArtworkCreateForm({
             ["01", "Details", detailsReady],
             ["02", "Artwork", Boolean(targetImage)],
             ["03", "AR layer", arReady],
-            ["04", "Publish", canPublish],
+            ["04", "Publish", publishReady],
           ].map(([number, label, ready]) => (
             <div
               key={String(label)}
@@ -531,8 +530,7 @@ export function ArtworkCreateForm({
                       key={option.value}
                       type="button"
                       onClick={() => {
-                        setValue("arMode", option.value, { shouldDirty: true, shouldValidate: true });
-                        void trigger();
+                        setValue("arMode", option.value, { shouldDirty: true, shouldValidate: false });
                       }}
                       className={`min-h-40 rounded-[5px] p-5 text-left ring-1 ring-inset transition ${selected ? "bg-violet-200/[0.09] text-white ring-violet-200/24" : "bg-white/[0.025] text-white ring-white/[0.06] hover:bg-white/[0.055]"}`}
                     >
@@ -545,7 +543,7 @@ export function ArtworkCreateForm({
               </div>
             </div>
 
-            <Controller name="targetImage" control={control} render={({ field: { onChange, onBlur, name, ref } }) => (
+            <Controller name="targetImage" control={control} render={({ field: { onChange, name, ref } }) => (
               <label className={`block cursor-pointer rounded-[5px] bg-white/[0.025] p-5 ring-1 ring-inset ring-white/[0.07] transition hover:bg-white/[0.05] ${errors.targetImage ? "text-rose-200" : ""}`}>
                 <div className="flex items-center justify-between gap-6">
                   <div className="flex items-center gap-4">
@@ -553,13 +551,13 @@ export function ArtworkCreateForm({
                     <div><p className="font-serif text-2xl">Artwork image</p><p className="mt-1 text-xs text-white/36">{targetImage ? `${targetImage.name} · ${formatMb(targetImage.size)}` : "JPG, PNG or WebP · max 6 MB"}</p></div>
                   </div>
                 </div>
-                <input ref={ref} name={name} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onBlur={onBlur} onChange={(event) => onChange(event.target.files?.[0] ?? undefined)} />
+                <input ref={ref} name={name} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => onChange(event.target.files?.[0] ?? undefined)} />
                 {errors.targetImage?.message ? <p className="mt-3 text-xs text-rose-200/80">{errors.targetImage.message}</p> : null}
               </label>
             )} />
 
             {arMode !== "spatial_layers" ? (
-              <Controller name="overlayVideo" control={control} render={({ field: { onChange, onBlur, name, ref } }) => (
+              <Controller name="overlayVideo" control={control} render={({ field: { onChange, name, ref } }) => (
                 <label className={`block cursor-pointer rounded-[5px] bg-white/[0.025] p-5 ring-1 ring-inset ring-white/[0.07] transition hover:bg-white/[0.05] ${errors.overlayVideo ? "text-rose-200" : ""}`}>
                   <div className="flex items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
@@ -570,7 +568,7 @@ export function ArtworkCreateForm({
                       </div>
                     </div>
                   </div>
-                  <input ref={ref} name={name} type="file" accept="video/mp4,video/webm" className="sr-only" onBlur={onBlur} onChange={(event) => onChange(event.target.files?.[0] ?? undefined)} />
+                  <input ref={ref} name={name} type="file" accept="video/mp4,video/webm" className="sr-only" onChange={(event) => onChange(event.target.files?.[0] ?? undefined)} />
                   {errors.overlayVideo?.message ? <p className="mt-3 text-xs text-rose-200/80">{errors.overlayVideo.message}</p> : null}
                 </label>
               )} />
@@ -599,7 +597,7 @@ export function ArtworkCreateForm({
                           <p className="truncate text-sm font-medium text-white/78">{layer.file.name}</p>
                           <p className="mt-1 text-[0.62rem] uppercase tracking-[0.14em] text-white/30">{layerKind(layer.file)} layer</p>
                         </div>
-                        <button type="button" aria-label={`Remove ${layer.file.name}`} onClick={() => { removeSpatialLayer(index); window.setTimeout(() => void trigger("spatialLayers"), 0); }} className="p-2 text-white/35 transition hover:text-rose-200">
+                        <button type="button" aria-label={`Remove ${layer.file.name}`} onClick={() => removeSpatialLayer(index)} className="p-2 text-white/35 transition hover:text-rose-200">
                           <Trash2 className="size-4" />
                         </button>
                       </div>
@@ -634,11 +632,11 @@ export function ArtworkCreateForm({
                 Publish creates a public artwork page and a QR that opens the AR camera directly. Collection happens only after target recognition.
               </p>
               <div className="flex flex-wrap items-center gap-2">
-                <Button type="button" variant="outline" disabled={!canPublish} onClick={() => void saveDraft()} className="h-12 border-white/12 bg-transparent px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/55 hover:bg-white/[0.05] hover:text-white disabled:opacity-30">
+                <Button type="button" variant="outline" disabled={!canSubmit} onClick={() => void saveDraft()} className="h-12 border-white/12 bg-transparent px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/55 hover:bg-white/[0.05] hover:text-white disabled:opacity-30">
                   {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Check className="size-4" />}
                   Save draft
                 </Button>
-                <Button type="submit" disabled={!canPublish} className="h-12 bg-white px-6 text-xs font-medium uppercase tracking-[0.12em] text-black hover:bg-violet-100 disabled:bg-white/10 disabled:text-white/25">
+                <Button type="submit" disabled={!canSubmit} className="h-12 bg-white px-6 text-xs font-medium uppercase tracking-[0.12em] text-black hover:bg-violet-100 disabled:bg-white/10 disabled:text-white/25">
                   {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Upload className="size-4" />}
                   {isSubmitting ? "Working…" : "Publish and get QR"}
                 </Button>
@@ -657,7 +655,7 @@ export function ArtworkCreateForm({
                 spatialLayers={spatialLayers}
               />
             ) : (
-              <CreatorSpatialScene />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_62%_32%,rgba(124,58,237,0.12),transparent_30%),radial-gradient(circle_at_30%_72%,rgba(34,211,238,0.06),transparent_26%),linear-gradient(180deg,#09090d,#050507)]" />
             )}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/78 via-black/5 to-black/20" />
             <div className="absolute inset-x-0 bottom-0 z-10 p-6 sm:p-8">
