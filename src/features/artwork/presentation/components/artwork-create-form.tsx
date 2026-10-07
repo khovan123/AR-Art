@@ -178,9 +178,7 @@ export function ArtworkCreateForm() {
 
     const shareUrl = new URL(data.sharePath, window.location.origin).toString();
     const arUrl = new URL(data.arPath, window.location.origin).toString();
-    const scanUrl = new URL(data.sharePath, window.location.origin);
-    scanUrl.searchParams.set("collect", "1");
-    const qrDataUrl = await QRCode.toDataURL(scanUrl.toString(), {
+    const qrDataUrl = await QRCode.toDataURL(arUrl, {
       width: 640,
       margin: 2,
       errorCorrectionLevel: "M",
