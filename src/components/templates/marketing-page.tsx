@@ -264,6 +264,8 @@ export async function MarketingPage() {
               <Link
                 key={artwork.id}
                 href={`/art/${artwork.slug}`}
+                data-reveal
+                data-reveal-delay={String((index % 3) * 70)}
                 className={`group block ${index === 1 || index === 4 ? "lg:mt-16" : ""}`}
               >
                 <div className="relative overflow-hidden border border-white/8 bg-white/[0.03]">
@@ -353,7 +355,12 @@ export async function MarketingPage() {
                   {AR_MODES.map((mode, index) => {
                     const Icon = mode.icon;
                     return (
-                      <div key={mode.title} className={`min-h-52 bg-[#0b0b0f] p-5 ${index === 0 ? "ring-1 ring-inset ring-violet-300/35" : ""}`}>
+                      <div
+                        key={mode.title}
+                        data-reveal
+                        data-reveal-delay={String(index * 65)}
+                        className={`min-h-52 bg-[#0b0b0f] p-5 ${index === 0 ? "ring-1 ring-inset ring-violet-300/35" : ""}`}
+                      >
                         <Icon className={`size-5 ${index === 0 ? "text-violet-100" : "text-white/35"}`} />
                         <p className="mt-8 text-[0.55rem] uppercase tracking-[0.15em] text-white/28">{mode.label}</p>
                         <p className="mt-2 font-serif text-xl leading-none text-white/88">{mode.title}</p>
@@ -387,6 +394,8 @@ export async function MarketingPage() {
               artists.map(([artist, count], index) => (
                 <div
                   key={artist}
+                  data-reveal
+                  data-reveal-delay={String(index * 55)}
                   className="group grid grid-cols-[3rem_1fr_auto] items-baseline gap-4 border-t border-white/15 py-5 transition hover:border-violet-300/35 sm:grid-cols-[5rem_1fr_auto]"
                 >
                   <span className="text-xs text-white/25">{String(index + 1).padStart(2, "0")}</span>

@@ -7,9 +7,22 @@ import { useEffect, useState } from "react";
 import { EverieBrand } from "@/components/atoms/everie-brand";
 import { getCurrentCollectionUser } from "@/features/collection/infrastructure/supabase/collection-repository";
 
+const SECTION_IDS = ["how-it-works", "works", "artists"] as const;
+type SectionId = (typeof SECTION_IDS)[number];
+
+function sectionLinkClass(active: boolean) {
+  return `group relative py-2 transition-colors duration-300 after:absolute after:inset-x-0 after:bottom-0 after:h-px after:origin-left after:bg-white after:transition-transform after:duration-300 ${
+    active
+      ? "text-white after:scale-x-100"
+      : "text-white/46 after:scale-x-0 hover:text-white group-hover:after:scale-x-100"
+  }`;
+}
+
 export function SiteHeader() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -26,10 +39,37 @@ export function SiteHeader() {
   }, []);
 
   useEffect(() => {
-    const update = () => setScrolled(window.scrollY > 36);
+    let frame = 0;
+
+    const update = () => {
+      frame = 0;
+      setScrolled(window.scrollY > 36);
+
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      setScrollProgress(Math.min(1, Math.max(0, window.scrollY / maxScroll)));
+
+      const activationLine = window.innerHeight * 0.38;
+      let nextSection: SectionId | null = null;
+      SECTION_IDS.forEach((id) => {
+        const section = document.getElementById(id);
+        if (section && section.getBoundingClientRect().top <= activationLine) nextSection = id;
+      });
+      setActiveSection(nextSection);
+    };
+
+    const scheduleUpdate = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(update);
+    };
+
     update();
-    window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
   }, []);
 
   return (
@@ -49,15 +89,27 @@ export function SiteHeader() {
         </div>
 
         <nav className="flex items-center gap-3 text-[0.6rem] font-medium uppercase tracking-[0.1em] sm:gap-5 sm:text-[0.65rem] sm:tracking-[0.12em] lg:gap-7">
-          <Link href="/#how-it-works" className="hidden text-white/46 transition hover:text-white md:inline">
+          <a
+            href="#how-it-works"
+            aria-current={activeSection === "how-it-works" ? "location" : undefined}
+            className={`hidden md:inline ${sectionLinkClass(activeSection === "how-it-works")}`}
+          >
             How it works
-          </Link>
-          <Link href="/#works" className="hidden text-white/46 transition hover:text-white sm:inline">
+          </a>
+          <a
+            href="#works"
+            aria-current={activeSection === "works" ? "location" : undefined}
+            className={`hidden sm:inline ${sectionLinkClass(activeSection === "works")}`}
+          >
             Works
-          </Link>
-          <Link href="/#artists" className="hidden text-white/46 transition hover:text-white lg:inline">
+          </a>
+          <a
+            href="#artists"
+            aria-current={activeSection === "artists" ? "location" : undefined}
+            className={`hidden lg:inline ${sectionLinkClass(activeSection === "artists")}`}
+          >
             Artists
-          </Link>
+          </a>
           <Link href="/collection" className="text-white/46 transition hover:text-white">
             Collection
           </Link>
@@ -81,6 +133,12 @@ export function SiteHeader() {
             Publish <ArrowUpRight className="size-3.5" />
           </Link>
         </nav>
+      </div>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px overflow-hidden bg-white/[0.04]">
+        <div
+          className="h-full origin-left bg-gradient-to-r from-violet-300/80 via-white/65 to-cyan-200/75 transition-transform duration-150 ease-out"
+          style={{ transform: `scaleX(${scrollProgress})` }}
+        />
       </div>
     </header>
   );
