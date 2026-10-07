@@ -23,7 +23,7 @@ export async function listCollectedArtworkIds() {
     .from("user_collection")
     .select("artwork_id")
     .eq("user_id", user.id)
-    .order("collected_at", { ascending: true });
+    .order("collected_at", { ascending: false });
 
   if (error) {
     throw new Error(`Unable to load collection: ${error.message}`);
@@ -50,4 +50,23 @@ export async function collectArtwork(artworkId: string) {
   }
 
   return { collected: true, reason: null };
+}
+
+export async function removeCollectedArtwork(artworkId: string) {
+  const supabase = getSupabaseBrowserClient();
+  const user = await getCurrentCollectionUser();
+
+  if (!user) {
+    throw new Error("Please sign in again to update your collection.");
+  }
+
+  const { error } = await supabase
+    .from("user_collection")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("artwork_id", artworkId);
+
+  if (error) {
+    throw new Error(`Unable to remove collection item: ${error.message}`);
+  }
 }

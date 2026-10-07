@@ -21,6 +21,7 @@ interface ArViewerProps {
     slug: string;
     title: string;
     artistName: string;
+    ownerId: string | null;
   };
 }
 
@@ -33,6 +34,7 @@ export function ArViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   const autoStartedRef = useRef(false);
   const collectionSavedRef = useRef(false);
+  const viewerUserIdRef = useRef<string | null>(null);
   const [collectionSaved, setCollectionSaved] = useState(false);
   const [collectionSaveError, setCollectionSaveError] = useState<string | null>(null);
 
@@ -69,6 +71,8 @@ export function ArViewer({
           router.replace(`/login?next=${encodeURIComponent(nextPath)}`);
           return;
         }
+
+        viewerUserIdRef.current = user.id;
       }
 
       const arContainer = containerRef.current;
@@ -90,6 +94,7 @@ export function ArViewer({
     if (
       status !== "found" ||
       !artwork?.id ||
+      (artwork.ownerId && artwork.ownerId === viewerUserIdRef.current) ||
       collectionSavedRef.current
     ) {
       return;
@@ -110,7 +115,7 @@ export function ArViewer({
             : "Đã nhận diện sản phẩm nhưng chưa thể lưu vào Collection.",
         );
       });
-  }, [artwork?.id, status]);
+  }, [artwork?.id, artwork?.ownerId, status]);
 
   const retry = () => {
     const container = containerRef.current;

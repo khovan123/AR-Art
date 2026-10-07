@@ -18,7 +18,7 @@ export default async function CollectionPage() {
           <ArrowLeft className="size-3.5" /> Gallery
         </Link>
         <Link href="/" className="text-lg font-semibold tracking-[-0.04em]">EVERIE</Link>
-        <span className="text-[0.62rem] uppercase tracking-[0.18em] text-white/28">Private archive</span>
+        <span className="text-[0.62rem] uppercase tracking-[0.18em] text-white/28">Personal collection</span>
       </header>
 
       <section className="relative mx-auto w-full max-w-[94rem] px-5 pb-12 pt-16 sm:px-8 lg:px-12 lg:pb-16 lg:pt-24">
@@ -26,8 +26,11 @@ export default async function CollectionPage() {
           <p className="text-[0.68rem] uppercase tracking-[0.25em] text-violet-200/45">Your collection</p>
           <div>
             <h1 className="max-w-5xl font-serif text-6xl leading-[0.88] tracking-[-0.055em] sm:text-8xl lg:text-9xl">
-              Works you have <span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">unlocked.</span>
+              Works you <span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">discovered.</span>
             </h1>
+            <p className="mt-6 max-w-2xl text-sm leading-6 text-white/38">
+              Scan a published work to save it here automatically. Remove anything you no longer want to keep.
+            </p>
           </div>
         </div>
       </section>

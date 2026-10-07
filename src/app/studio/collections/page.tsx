@@ -1,5 +1,5 @@
-import { StudioApp } from "@/features/studio/presentation/components/studio-app";
+import { redirect } from "next/navigation";
 
 export default function StudioCollectionsPage() {
-  return <StudioApp view="collections" />;
+  redirect("/collection");
 }
