@@ -37,6 +37,12 @@ function deleteReducer(_state: DeleteState, action: DeleteAction): DeleteState {
   return { confirming: false, deleting: false };
 }
 
+function arModeLabel(mode: PublishedArtwork["arMode"]) {
+  if (mode === "transparent_motion") return "Transparent motion";
+  if (mode === "spatial_layers") return "Layered AR";
+  return "Animated artwork";
+}
+
 async function authHeaders() {
   const supabase = getSupabaseBrowserClient();
   const { data } = await supabase.auth.getSession();
@@ -332,7 +338,7 @@ export function ProductManagerModal({
                 Distribution
               </p>
               <p className="mt-1 text-sm text-white/58">
-                {product.status === "published" ? "Public QR and AR access" : "Private until published"}
+                {product.status === "published" ? "Public QR and AR access" : "Private until published"} · {arModeLabel(product.arMode)}
               </p>
             </div>
             <span

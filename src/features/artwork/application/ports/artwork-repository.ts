@@ -1,11 +1,13 @@
 import type {
   Artwork,
+  ArtworkArAssetInput,
   CreateArtworkDraftInput,
   UpdateArtworkInput,
 } from "@/features/artwork/domain/artwork";
 
 export interface ArtworkRepository {
   createDraft(input: CreateArtworkDraftInput): Promise<Artwork>;
+  createArAssets(inputs: ArtworkArAssetInput[]): Promise<void>;
   findById(id: string): Promise<Artwork | null>;
   findPublishedBySlug(slug: string): Promise<Artwork | null>;
   listPublished(): Promise<Artwork[]>;
