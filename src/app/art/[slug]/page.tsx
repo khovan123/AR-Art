@@ -6,19 +6,15 @@ import { HistoryBackButton } from "@/components/molecules/history-back-button";
 import { createArtworkServices } from "@/features/artwork/infrastructure/supabase/artwork-services";
 import { EditArtworkButton } from "@/features/artwork/presentation/components/edit-artwork-button";
 import { ShareArtworkButton } from "@/features/artwork/presentation/components/share-artwork-button";
-import { CollectScanEntry } from "@/features/collection/presentation/components/collect-scan-entry";
 
 export const dynamic = "force-dynamic";
 
 export default async function ArtworkPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ collect?: string }>;
 }) {
   const { slug } = await params;
-  const query = await searchParams;
   const { getPublishedArtwork } = createArtworkServices();
   const artwork = await getPublishedArtwork.execute(slug);
 
@@ -26,10 +22,6 @@ export default async function ArtworkPage({
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050507] text-white">
-      {query.collect === "1" ? (
-        <CollectScanEntry artworkId={artwork.id} ownerId={artwork.ownerId} />
-      ) : null}
-
       <div className="pointer-events-none absolute right-[10%] top-[18%] size-80 rounded-full bg-violet-700/7 blur-[130px]" />
       <header className="relative mx-auto flex w-full max-w-[94rem] items-center justify-between border-b border-white/12 px-5 py-5 sm:px-8 lg:px-12">
         <HistoryBackButton

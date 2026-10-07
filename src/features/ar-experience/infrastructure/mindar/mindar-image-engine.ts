@@ -22,6 +22,7 @@ type MindArRuntime = {
   addAnchor(index: number): MindArAnchor;
   start(): Promise<void>;
   stop(): Promise<void> | void;
+  resize(): void;
 };
 
 type MindArConstructor = new (options: {
@@ -79,6 +80,7 @@ export class MindArImageEngine implements ArEngine {
   private video: HTMLVideoElement | null = null;
   private videoTexture: THREE.VideoTexture | null = null;
   private started = false;
+  private cleanupViewportSync: (() => void) | null = null;
 
   async start(
     container: HTMLElement,
@@ -163,6 +165,8 @@ export class MindArImageEngine implements ArEngine {
         });
       }
 
+      this.bindViewportSync(runtime, container);
+
       try {
         await cameraVideo.play();
       } catch {
@@ -191,6 +195,51 @@ export class MindArImageEngine implements ArEngine {
       await this.stop();
       throw error;
     }
+  }
+
+  private bindViewportSync(runtime: MindArRuntime, container: HTMLElement) {
+    this.cleanupViewportSync?.();
+
+    let frameId: number | null = null;
+    let settleTimer: number | null = null;
+
+    const resize = () => {
+      if (this.runtime !== runtime || !container.isConnected) return;
+      if (container.clientWidth <= 0 || container.clientHeight <= 0) return;
+      runtime.resize();
+    };
+
+    const scheduleResize = () => {
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        resize();
+        window.requestAnimationFrame(resize);
+      });
+
+      if (settleTimer !== null) window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(resize, 250);
+    };
+
+    const resizeObserver = new ResizeObserver(scheduleResize);
+    resizeObserver.observe(container);
+    window.addEventListener("resize", scheduleResize, { passive: true });
+    window.addEventListener("orientationchange", scheduleResize, { passive: true });
+    window.visualViewport?.addEventListener("resize", scheduleResize, { passive: true });
+    window.visualViewport?.addEventListener("scroll", scheduleResize, { passive: true });
+
+    this.cleanupViewportSync = () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", scheduleResize);
+      window.removeEventListener("orientationchange", scheduleResize);
+      window.visualViewport?.removeEventListener("resize", scheduleResize);
+      window.visualViewport?.removeEventListener("scroll", scheduleResize);
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      if (settleTimer !== null) window.clearTimeout(settleTimer);
+      this.cleanupViewportSync = null;
+    };
+
+    scheduleResize();
   }
 
   private createOverlay(overlay: ArOverlay) {
@@ -258,6 +307,7 @@ export class MindArImageEngine implements ArEngine {
   }
 
   async stop() {
+    this.cleanupViewportSync?.();
     if (!this.runtime) return;
 
     const runtime = this.runtime;
