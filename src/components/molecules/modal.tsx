@@ -11,6 +11,7 @@ export function Modal({
   icon,
   children,
   footer,
+  headerContent,
   maxWidthClassName = "max-w-2xl",
 }: {
   open: boolean;
@@ -20,6 +21,7 @@ export function Modal({
   icon?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
+  headerContent?: ReactNode;
   maxWidthClassName?: string;
 }) {
   const titleId = useId();
@@ -60,19 +62,26 @@ export function Modal({
       >
         <header className="relative flex items-center justify-between gap-4 bg-white/[0.012] px-5 py-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            {icon ? (
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-[4px] bg-violet-300/8 text-violet-100">
-                {icon}
-              </div>
-            ) : null}
-            <div className="min-w-0">
-              {eyebrow ? (
-                <p className="text-[0.65rem] uppercase tracking-[0.2em] text-white/35">{eyebrow}</p>
-              ) : null}
-              <h2 id={titleId} className="mt-0.5 truncate text-lg font-medium text-white sm:text-xl">
-                {title}
-              </h2>
-            </div>
+            {headerContent ? (
+              <div className="min-w-0">{headerContent}</div>
+            ) : (
+              <>
+                {icon ? (
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-[4px] bg-violet-300/8 text-violet-100">
+                    {icon}
+                  </div>
+                ) : null}
+                <div className="min-w-0">
+                  {eyebrow ? (
+                    <p className="text-[0.65rem] uppercase tracking-[0.2em] text-white/35">{eyebrow}</p>
+                  ) : null}
+                  <h2 id={titleId} className="mt-0.5 truncate text-lg font-medium text-white sm:text-xl">
+                    {title}
+                  </h2>
+                </div>
+              </>
+            )}
+            {headerContent ? <h2 id={titleId} className="sr-only">{title}</h2> : null}
           </div>
 
           <button

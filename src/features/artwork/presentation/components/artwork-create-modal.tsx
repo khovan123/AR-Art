@@ -1,5 +1,6 @@
 "use client";
 
+import { EverieBrand } from "@/components/atoms/everie-brand";
 import { Modal } from "@/components/molecules/modal";
 import { ArtworkCreateForm } from "@/features/artwork/presentation/components/artwork-create-form";
 
@@ -16,7 +17,8 @@ export function ArtworkCreateModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Add product"
+      title="Create a new Everie product"
+      headerContent={<EverieBrand href={null} className="opacity-80" />}
       maxWidthClassName="max-w-[92rem]"
     >
       <div data-motion-skip>

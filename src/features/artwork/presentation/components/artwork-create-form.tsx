@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import QRCode from "qrcode";
 import {
@@ -156,6 +156,7 @@ export function ArtworkCreateForm({
   onDone?: () => void;
 }) {
   const [workflow, dispatch] = useReducer(workflowReducer, initialWorkflowState);
+  const [submitIntent, setSubmitIntent] = useState<"draft" | "publish" | null>(null);
 
   const {
     control,
@@ -349,8 +350,26 @@ export function ArtworkCreateForm({
     }
   }
 
-  const publish = handleSubmit((values) => runWorkflow(values, "publish"));
-  const saveDraft = handleSubmit((values) => runWorkflow(values, "draft"));
+  const publish = handleSubmit(
+    async (values) => {
+      try {
+        await runWorkflow(values, "publish");
+      } finally {
+        setSubmitIntent(null);
+      }
+    },
+    () => setSubmitIntent(null),
+  );
+  const saveDraft = handleSubmit(
+    async (values) => {
+      try {
+        await runWorkflow(values, "draft");
+      } finally {
+        setSubmitIntent(null);
+      }
+    },
+    () => setSubmitIntent(null),
+  );
 
   async function copyShareUrl() {
     if (!workflow.result?.shareUrl) return;
@@ -378,6 +397,8 @@ export function ArtworkCreateForm({
   }
 
   if (workflow.result) {
+    const isPublished = workflow.result.status === "published";
+
     return (
       <main className={embedded ? "relative text-white" : "relative min-h-screen overflow-hidden bg-[#050507] text-white"}>
         <div className={embedded ? "hidden" : "pointer-events-none absolute right-[8%] top-24 size-80 rounded-full bg-violet-700/7 blur-[130px]"} />
@@ -387,28 +408,31 @@ export function ArtworkCreateForm({
           <span aria-hidden="true" />
         </header>
 
-        <section className={embedded ? "relative mx-auto grid w-full items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]" : "relative mx-auto grid min-h-[calc(100svh-4.8rem)] w-full max-w-[94rem] items-center gap-12 px-5 py-14 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:px-12 lg:py-20"}>
-          <div>
-            <h1 className={embedded ? "max-w-3xl font-serif text-4xl leading-[0.92] tracking-[-0.045em] sm:text-5xl" : "max-w-3xl font-serif text-6xl leading-[0.88] tracking-[-0.055em] sm:text-8xl"}>
-              {workflow.result.status === "published" ? (
-                <>Ready for<br /><span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">the wall.</span></>
+        <section className={embedded ? `creator-success relative mx-auto grid w-full items-center gap-10 ${isPublished ? "lg:grid-cols-[1.05fr_0.95fr]" : ""}` : `creator-success relative mx-auto grid min-h-[calc(100svh-4.8rem)] w-full max-w-[94rem] items-center gap-12 px-5 py-14 sm:px-8 lg:px-12 lg:py-20 ${isPublished ? "lg:grid-cols-[1.05fr_0.95fr]" : ""}`}>
+          <div className="creator-success-copy">
+            <div className="creator-success-mark" aria-hidden="true">
+              <Check className="size-5" />
+            </div>
+
+            <h1 className={embedded ? "mt-8 max-w-3xl font-serif text-5xl leading-[0.9] tracking-[-0.05em] sm:text-6xl" : "mt-8 max-w-4xl font-serif text-6xl leading-[0.88] tracking-[-0.055em] sm:text-8xl"}>
+              {isPublished ? (
+                <>Now part of <span className="bg-gradient-to-r from-violet-200 via-white to-cyan-200 bg-clip-text italic text-transparent">Everie.</span></>
               ) : (
-                <>Ready when<br /><span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">you are.</span></>
+                <>Draft <span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">saved.</span></>
               )}
             </h1>
 
-            {workflow.result.shareUrl ? (
-              <div className="mt-10 rounded-[5px] bg-white/[0.018] p-4">
-                <p className="text-[0.62rem] uppercase tracking-[0.16em] text-white/28">Artwork link</p>
-                <p className="mt-2 break-all text-sm text-white/58">{workflow.result.shareUrl}</p>
-              </div>
-            ) : (
-              <p className="mt-8 max-w-xl text-sm leading-6 text-white/45">
-                Your artwork and AR experience are uploaded and kept private. Open the product in Studio whenever you are ready to publish it.
-              </p>
-            )}
+            <p className="mt-6 max-w-xl text-sm leading-7 text-white/46 sm:text-base">
+              {isPublished
+                ? "Your artwork is live in the Everie archive. Its AR experience can now be discovered, recognized, and added to a visitor’s collection."
+                : "Your artwork and AR setup are safely stored in Studio. Keep refining it and publish whenever it is ready to join Everie."}
+            </p>
 
-            <div className="mt-6 flex flex-wrap gap-2">
+            {workflow.result.shareUrl ? (
+              <p className="mt-5 max-w-xl break-all text-xs leading-5 text-white/28">{workflow.result.shareUrl}</p>
+            ) : null}
+
+            <div className="mt-8 flex flex-wrap gap-2">
               {workflow.result.shareUrl ? (
                 <>
                   <button type="button" onClick={copyShareUrl} className="inline-flex h-12 items-center gap-2 rounded-[4px] bg-white px-5 text-xs font-medium uppercase tracking-[0.12em] text-black transition hover:bg-violet-100">
@@ -416,48 +440,42 @@ export function ArtworkCreateForm({
                     {workflow.copied ? "Copied" : "Copy link"}
                   </button>
                   {workflow.result.qrDataUrl ? (
-                    <a href={workflow.result.qrDataUrl} download="everie-qr.png" className="inline-flex h-12 items-center gap-2 rounded-[4px] bg-white/[0.035] px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/58 ring-1 ring-inset ring-white/10 transition hover:bg-white/[0.06] hover:text-white hover:ring-white/20">
+                    <a href={workflow.result.qrDataUrl} download="everie-qr.png" className="inline-flex h-12 items-center gap-2 rounded-[4px] px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/58 transition hover:bg-white/[0.04] hover:text-white">
                       <Download className="size-4" /> Download QR
                     </a>
                   ) : null}
-                  <a href={workflow.result.shareUrl} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center rounded-[4px] bg-white/[0.035] px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/58 ring-1 ring-inset ring-white/10 transition hover:bg-white/[0.06] hover:text-white hover:ring-white/20">
+                  <a href={workflow.result.shareUrl} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center rounded-[4px] px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/58 transition hover:bg-white/[0.04] hover:text-white">
                     Open work
                   </a>
                   {embedded && onDone ? (
-                    <button type="button" onClick={onDone} className="inline-flex h-12 items-center rounded-[4px] px-4 text-xs font-medium uppercase tracking-[0.12em] text-white/46 transition hover:text-white">
+                    <button type="button" onClick={onDone} className="inline-flex h-12 items-center rounded-[4px] px-4 text-xs font-medium uppercase tracking-[0.12em] text-white/42 transition hover:text-white">
                       Done
                     </button>
                   ) : null}
                 </>
               ) : embedded && onDone ? (
                 <button type="button" onClick={onDone} className="inline-flex h-12 items-center rounded-[4px] bg-white px-5 text-xs font-medium uppercase tracking-[0.12em] text-black transition hover:bg-violet-100">
-                  Manage draft
+                  Back to Studio
                 </button>
               ) : (
                 <Link href="/studio/products" className="inline-flex h-12 items-center rounded-[4px] bg-white px-5 text-xs font-medium uppercase tracking-[0.12em] text-black transition hover:bg-violet-100">
-                  Manage draft
+                  Back to Studio
                 </Link>
               )}
             </div>
           </div>
 
-          <div className="rounded-[8px] bg-[#09090d]/88 p-8 shadow-[0_35px_120px_rgba(0,0,0,0.35)] ring-1 ring-inset ring-white/[0.06] sm:p-12">
-            {workflow.result.qrDataUrl ? (
-              <div className="mx-auto max-w-sm p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={workflow.result.qrDataUrl} alt="QR code for the published AR artwork" className="aspect-square w-full rounded-[5px] bg-white p-3" />
-                <div className="mt-5 flex items-center justify-between pt-2 text-[0.62rem] uppercase tracking-[0.16em] text-white/45">
-                  <EverieBrand href={null} className="opacity-70" textClassName="text-[0.58rem]" iconClassName="size-3.5" /><span>Scan to enter AR</span>
-                </div>
+          {isPublished && workflow.result.qrDataUrl ? (
+            <div className="creator-success-qr relative mx-auto w-full max-w-sm">
+              <div className="creator-success-qr-glow" aria-hidden="true" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={workflow.result.qrDataUrl} alt="QR code for the published AR artwork" className="relative aspect-square w-full rounded-[6px] bg-white p-3 shadow-[0_35px_120px_rgba(0,0,0,0.48)]" />
+              <div className="relative mt-5 flex items-center justify-between text-[0.6rem] uppercase tracking-[0.15em] text-white/38">
+                <EverieBrand href={null} className="opacity-65" textClassName="text-[0.58rem]" iconClassName="size-3.5" />
+                <span>Scan to enter AR</span>
               </div>
-            ) : (
-              <div className="flex min-h-[24rem] flex-col items-center justify-center rounded-[6px] bg-white/[0.02] px-8 text-center">
-                <Check className="size-7 text-cyan-100/65" />
-                <p className="mt-5 font-serif text-3xl">Saved privately.</p>
-                <p className="mt-3 max-w-xs text-sm leading-6 text-white/35">QR and public sharing become available when you publish this product from Studio.</p>
-              </div>
-            )}
-          </div>
+            </div>
+          ) : null}
         </section>
       </main>
     );
@@ -500,23 +518,30 @@ export function ArtworkCreateForm({
         </div>
 
         <form
-          onSubmit={publish}
+          onSubmit={(event) => {
+            if (!submitIntent) setSubmitIntent("publish");
+            void publish(event);
+          }}
           noValidate
           className="mt-6 grid overflow-hidden rounded-[8px] bg-[#07070a]/68 shadow-[0_36px_120px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-white/[0.06] lg:grid-cols-[1.05fr_0.95fr]"
         >
           <div className="space-y-9 p-5 sm:p-7 lg:p-8">
-            <div className="grid gap-8 sm:grid-cols-2">
-              <label className="block">
-                <span className="text-[0.65rem] uppercase tracking-[0.17em] text-white/35">Artwork title</span>
-                <Input id="title" maxLength={120} aria-invalid={Boolean(errors.title)} placeholder="e.g. Neon Saigon" {...register("title")} className="mt-3 h-12 rounded-none border-0 border-b border-white/18 bg-transparent px-0 text-base text-white shadow-none placeholder:text-white/18 focus-visible:border-cyan-200/70 focus-visible:ring-0" />
-                {errors.title?.message ? <p className="mt-2 text-xs text-rose-200/80">{errors.title.message}</p> : null}
-              </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <label htmlFor="title" className="text-[0.62rem] uppercase tracking-[0.16em] text-white/34 transition-colors focus-within:text-violet-100/70">Artwork title</label>
+                <div className={`rounded-[6px] bg-white/[0.028] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] ring-1 ring-inset transition duration-300 focus-within:bg-white/[0.045] ${errors.title ? "ring-rose-300/24" : "ring-white/[0.06] focus-within:ring-violet-200/24"}`}>
+                  <Input id="title" maxLength={120} aria-invalid={Boolean(errors.title)} placeholder="e.g. Neon Saigon" {...register("title")} className="h-13 rounded-[6px] border-0 bg-transparent px-4 text-[0.98rem] text-white shadow-none placeholder:text-white/20 focus-visible:ring-0" />
+                </div>
+                {errors.title?.message ? <p className="px-1 text-xs text-rose-200/80">{errors.title.message}</p> : null}
+              </div>
 
-              <label className="block">
-                <span className="text-[0.65rem] uppercase tracking-[0.17em] text-white/35">Artist / creator</span>
-                <Input id="artistName" maxLength={120} aria-invalid={Boolean(errors.artistName)} placeholder="Artist name" {...register("artistName")} className="mt-3 h-12 rounded-none border-0 border-b border-white/18 bg-transparent px-0 text-base text-white shadow-none placeholder:text-white/18 focus-visible:border-cyan-200/70 focus-visible:ring-0" />
-                {errors.artistName?.message ? <p className="mt-2 text-xs text-rose-200/80">{errors.artistName.message}</p> : null}
-              </label>
+              <div className="grid gap-2">
+                <label htmlFor="artistName" className="text-[0.62rem] uppercase tracking-[0.16em] text-white/34">Artist / creator</label>
+                <div className={`rounded-[6px] bg-white/[0.028] shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] ring-1 ring-inset transition duration-300 focus-within:bg-white/[0.045] ${errors.artistName ? "ring-rose-300/24" : "ring-white/[0.06] focus-within:ring-violet-200/24"}`}>
+                  <Input id="artistName" maxLength={120} aria-invalid={Boolean(errors.artistName)} placeholder="Artist name" {...register("artistName")} className="h-13 rounded-[6px] border-0 bg-transparent px-4 text-[0.98rem] text-white shadow-none placeholder:text-white/20 focus-visible:ring-0" />
+                </div>
+                {errors.artistName?.message ? <p className="px-1 text-xs text-rose-200/80">{errors.artistName.message}</p> : null}
+              </div>
             </div>
 
             <div>
@@ -605,20 +630,20 @@ export function ArtworkCreateForm({
                       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">
                           Motion
-                          <select {...register(`spatialLayers.${index}.animation`)} className="mt-1 h-9 w-full rounded-[4px] border border-white/10 bg-black px-2 text-xs normal-case tracking-normal text-white/70">
+                          <select {...register(`spatialLayers.${index}.animation`)} className="mt-1 h-9 w-full rounded-[5px] border-0 bg-white/[0.035] px-2 text-xs normal-case tracking-normal text-white/70 outline-none ring-1 ring-inset ring-white/[0.06] transition focus:bg-white/[0.055] focus:ring-violet-200/20">
                             <option value="none">Still</option><option value="float">Float</option><option value="pulse">Pulse</option><option value="rotate">Rotate</option><option value="orbit">Orbit</option>
                           </select>
                         </label>
                         <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">
                           Blend
-                          <select {...register(`spatialLayers.${index}.blendMode`)} className="mt-1 h-9 w-full rounded-[4px] border border-white/10 bg-black px-2 text-xs normal-case tracking-normal text-white/70">
+                          <select {...register(`spatialLayers.${index}.blendMode`)} className="mt-1 h-9 w-full rounded-[5px] border-0 bg-white/[0.035] px-2 text-xs normal-case tracking-normal text-white/70 outline-none ring-1 ring-inset ring-white/[0.06] transition focus:bg-white/[0.055] focus:ring-violet-200/20">
                             <option value="normal">Normal</option><option value="additive">Glow</option>
                           </select>
                         </label>
-                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">Scale<Input type="number" step="0.05" {...register(`spatialLayers.${index}.scale`, { valueAsNumber: true })} className="mt-1 h-9 border-white/10 bg-black text-xs" /></label>
-                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">X<Input type="number" step="0.05" {...register(`spatialLayers.${index}.x`, { valueAsNumber: true })} className="mt-1 h-9 border-white/10 bg-black text-xs" /></label>
-                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">Y<Input type="number" step="0.05" {...register(`spatialLayers.${index}.y`, { valueAsNumber: true })} className="mt-1 h-9 border-white/10 bg-black text-xs" /></label>
-                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">Depth<Input type="number" step="0.01" {...register(`spatialLayers.${index}.depth`, { valueAsNumber: true })} className="mt-1 h-9 border-white/10 bg-black text-xs" /></label>
+                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">Scale<Input type="number" step="0.05" {...register(`spatialLayers.${index}.scale`, { valueAsNumber: true })} className="mt-1 h-9 rounded-[5px] border-0 bg-white/[0.035] text-xs ring-1 ring-inset ring-white/[0.06] focus-visible:ring-violet-200/20" /></label>
+                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">X<Input type="number" step="0.05" {...register(`spatialLayers.${index}.x`, { valueAsNumber: true })} className="mt-1 h-9 rounded-[5px] border-0 bg-white/[0.035] text-xs ring-1 ring-inset ring-white/[0.06] focus-visible:ring-violet-200/20" /></label>
+                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">Y<Input type="number" step="0.05" {...register(`spatialLayers.${index}.y`, { valueAsNumber: true })} className="mt-1 h-9 rounded-[5px] border-0 bg-white/[0.035] text-xs ring-1 ring-inset ring-white/[0.06] focus-visible:ring-violet-200/20" /></label>
+                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">Depth<Input type="number" step="0.01" {...register(`spatialLayers.${index}.depth`, { valueAsNumber: true })} className="mt-1 h-9 rounded-[5px] border-0 bg-white/[0.035] text-xs ring-1 ring-inset ring-white/[0.06] focus-visible:ring-violet-200/20" /></label>
                       </div>
                     </div>
                   );
@@ -632,13 +657,27 @@ export function ArtworkCreateForm({
                 Publish creates a public artwork page and a QR that opens the AR camera directly. Collection happens only after target recognition.
               </p>
               <div className="flex flex-wrap items-center gap-2">
-                <Button type="button" variant="outline" disabled={!canSubmit} onClick={() => void saveDraft()} className="h-12 border-white/12 bg-transparent px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/55 hover:bg-white/[0.05] hover:text-white disabled:opacity-30">
-                  {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Check className="size-4" />}
-                  Save draft
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!canSubmit}
+                  onClick={() => {
+                    setSubmitIntent("draft");
+                    void saveDraft();
+                  }}
+                  className="h-12 border-white/12 bg-transparent px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/55 hover:bg-white/[0.05] hover:text-white disabled:opacity-30"
+                >
+                  {submitIntent === "draft" && isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Check className="size-4" />}
+                  {submitIntent === "draft" && isSubmitting ? "Saving…" : "Save draft"}
                 </Button>
-                <Button type="submit" disabled={!canSubmit} className="h-12 bg-white px-6 text-xs font-medium uppercase tracking-[0.12em] text-black hover:bg-violet-100 disabled:bg-white/10 disabled:text-white/25">
-                  {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Upload className="size-4" />}
-                  {isSubmitting ? "Working…" : "Publish and get QR"}
+                <Button
+                  type="submit"
+                  disabled={!canSubmit}
+                  onClick={() => setSubmitIntent("publish")}
+                  className="h-12 bg-white px-6 text-xs font-medium uppercase tracking-[0.12em] text-black hover:bg-violet-100 disabled:bg-white/10 disabled:text-white/25"
+                >
+                  {submitIntent === "publish" && isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                  {submitIntent === "publish" && isSubmitting ? "Publishing…" : "Publish and get QR"}
                 </Button>
               </div>
             </div>

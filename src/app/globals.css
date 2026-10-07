@@ -863,6 +863,142 @@ a {
 }
 
 
+
+/* Everie creator success */
+.creator-success {
+  isolation: isolate;
+  position: relative;
+  overflow: hidden;
+}
+
+.creator-success::before {
+  content: "";
+  position: absolute;
+  width: min(44rem, 72vw);
+  aspect-ratio: 1;
+  left: -14%;
+  top: 8%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(124,58,237,0.16), rgba(34,211,238,0.055) 38%, transparent 70%);
+  filter: blur(18px);
+  opacity: 0;
+  animation: creator-success-bloom 1200ms cubic-bezier(0.16,1,0.3,1) 120ms forwards;
+  pointer-events: none;
+}
+
+.creator-success-copy {
+  position: relative;
+  z-index: 1;
+  animation: creator-success-copy-in 760ms cubic-bezier(0.16,1,0.3,1) both;
+}
+
+.creator-success-mark {
+  position: relative;
+  display: inline-flex;
+  width: 3rem;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  color: rgb(207 250 254);
+  background: radial-gradient(circle, rgba(103,232,249,0.12), transparent 72%);
+}
+
+.creator-success-mark::before,
+.creator-success-mark::after {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid rgba(196,181,253,0.34);
+  border-radius: 999px;
+  transform: translate(-50%, -50%) scale(0.48);
+  opacity: 0;
+  animation: creator-success-ring 1700ms cubic-bezier(0.16,1,0.3,1) 160ms forwards;
+}
+
+.creator-success-mark::after {
+  border-color: rgba(103,232,249,0.26);
+  animation-delay: 360ms;
+}
+
+.creator-success-mark svg {
+  opacity: 0;
+  transform: scale(0.5) rotate(-12deg);
+  animation: creator-success-check 520ms cubic-bezier(0.16,1,0.3,1) 260ms forwards;
+}
+
+.creator-success-qr {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transform: translate3d(0,22px,0) scale(0.97);
+  animation: creator-success-qr-in 850ms cubic-bezier(0.16,1,0.3,1) 260ms forwards;
+}
+
+.creator-success-qr-glow {
+  position: absolute;
+  inset: 9% -10% -6%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(196,181,253,0.22), transparent 46%),
+    radial-gradient(circle at 70% 72%, rgba(103,232,249,0.14), transparent 48%);
+  filter: blur(42px);
+  opacity: 0;
+  animation: creator-success-glow 1800ms ease-out 420ms forwards;
+  pointer-events: none;
+}
+
+@keyframes creator-success-copy-in {
+  from { opacity: 0; transform: translate3d(0,18px,0); filter: blur(5px); }
+  to { opacity: 1; transform: translate3d(0,0,0); filter: blur(0); }
+}
+
+@keyframes creator-success-bloom {
+  0% { opacity: 0; transform: scale(0.72); }
+  55% { opacity: 1; }
+  100% { opacity: 0.58; transform: scale(1.08); }
+}
+
+@keyframes creator-success-ring {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.48); }
+  34% { opacity: 0.72; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2.35); }
+}
+
+@keyframes creator-success-check {
+  to { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+@keyframes creator-success-qr-in {
+  to { opacity: 1; transform: translate3d(0,0,0) scale(1); }
+}
+
+@keyframes creator-success-glow {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 0.72; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .creator-success::before,
+  .creator-success-copy,
+  .creator-success-mark::before,
+  .creator-success-mark::after,
+  .creator-success-mark svg,
+  .creator-success-qr,
+  .creator-success-qr-glow {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  .creator-success-mark::before,
+  .creator-success-mark::after {
+    display: none;
+  }
+}
+
 /* Everie authentication experience */
 .auth-page {
   isolation: isolate;
