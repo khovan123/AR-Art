@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, ScanLine } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 import { BackLink } from "@/components/atoms/back-link";
 import { EverieBrand } from "@/components/atoms/everie-brand";
@@ -22,33 +22,29 @@ export default async function LoginPage({
         <section className="relative hidden min-h-screen overflow-hidden border-r border-white/10 bg-[#030305] lg:block">
           <ImmersiveGalleryShowcase />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_35%,transparent_18%,rgba(3,3,5,0.3)_56%,rgba(3,3,5,0.94)_100%)]" />
-          <div className="auth-home-enter absolute inset-x-0 top-0 flex items-center justify-between p-8 text-[0.62rem] uppercase tracking-[0.2em] text-white/38">
+          <div className="auth-home-enter absolute inset-x-0 top-0 p-8">
             <EverieBrand />
-            <span>Personal archive</span>
           </div>
           <div className="absolute inset-x-0 bottom-0 p-10 xl:p-14">
-            <p className="auth-copy-item auth-copy-eyebrow text-[0.62rem] uppercase tracking-[0.22em] text-violet-200/55">Recognized in AR</p>
-            <h1 className="auth-copy-item auth-copy-title mt-5 max-w-2xl font-serif text-6xl leading-[0.88] tracking-[-0.05em] xl:text-8xl">
+            <h1 className="auth-copy-item auth-copy-title max-w-2xl font-serif text-6xl leading-[0.88] tracking-[-0.05em] xl:text-8xl">
               Keep the works<br /><span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">you truly discover.</span>
             </h1>
-            <p className="auth-copy-item auth-copy-description mt-6 max-w-lg border-l border-white/15 pl-5 text-sm leading-6 text-white/42">
+            <p className="auth-copy-item auth-copy-description mt-6 max-w-lg text-sm leading-6 text-white/42">
               Your Collection records artwork only after the AR camera recognizes its target, then keeps that discovery with your account.
             </p>
           </div>
         </section>
 
         <section className="relative flex min-h-screen flex-col px-5 py-6 sm:px-10 lg:px-14 xl:px-20">
-          <div className="auth-home-enter relative flex items-center justify-between border-b border-white/12 pb-5">
+          <div className="auth-home-enter relative grid grid-cols-[1fr_auto_1fr] items-center border-b border-white/10 pb-5">
             <BackLink href="/" />
-            <span className="text-[0.6rem] uppercase tracking-[0.18em] text-white/28">Everie account</span>
+            <EverieBrand />
+            <span aria-hidden="true" />
           </div>
 
           <div className="relative flex flex-1 items-center py-12 sm:py-14">
             <div className="w-full max-w-lg">
-              <div className="auth-copy-item auth-copy-eyebrow flex items-center gap-2 text-[0.62rem] uppercase tracking-[0.22em] text-violet-100/48">
-                <ScanLine className="size-3.5" /> Member access
-              </div>
-              <h2 className="auth-copy-item auth-copy-title mt-5 font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-6xl">
+              <h2 className="auth-copy-item auth-copy-title font-serif text-5xl leading-[0.94] tracking-[-0.045em] sm:text-6xl">
                 Your collection,<br /><span className="text-violet-100 italic">kept together.</span>
               </h2>
               <p className="auth-copy-item auth-copy-description mt-4 max-w-md text-sm leading-6 text-white/38">
@@ -58,8 +54,7 @@ export default async function LoginPage({
             </div>
           </div>
 
-          <div className="auth-home-enter relative flex items-center justify-between border-t border-white/12 pt-5 text-[0.6rem] uppercase tracking-[0.14em] text-white/28">
-            <span>Browser AR archive</span>
+          <div className="auth-home-enter relative flex justify-end border-t border-white/10 pt-5 text-[0.6rem] uppercase tracking-[0.14em] text-white/28">
             <Link href="/collection" className="inline-flex items-center gap-2 transition hover:text-white">
               View collection <ArrowUpRight className="size-3" />
             </Link>

@@ -11,7 +11,6 @@ import {
   LoaderCircle,
   Pencil,
   Plus,
-  Sparkles,
 } from "lucide-react";
 
 import { BackLink } from "@/components/atoms/back-link";
@@ -104,8 +103,8 @@ function ProductCard({
   onManage: () => void;
 }) {
   return (
-    <article className="group relative border-t border-white/18 pt-3 transition duration-500 hover:border-white/45">
-      <div className="relative aspect-[4/5] overflow-hidden bg-black/60">
+    <article className="group relative">
+      <div className="relative aspect-[4/5] overflow-hidden rounded-[6px] bg-black/60 shadow-[0_24px_70px_rgba(0,0,0,0.28)] ring-1 ring-inset ring-white/[0.05]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={product.targetImageUrl}
@@ -113,46 +112,46 @@ function ProductCard({
           className="h-full w-full object-cover opacity-80 transition duration-700 group-hover:scale-[1.035] group-hover:opacity-100"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-        <span
-          className={`absolute left-3 top-3 border px-2 py-1 text-[0.58rem] uppercase tracking-[0.16em] backdrop-blur-md ${
-            product.status === "published"
-              ? "border-emerald-200/20 bg-emerald-300/10 text-emerald-100/78"
-              : "border-white/16 bg-black/55 text-white/58"
-          }`}
-        >
+        <span className={`absolute left-4 top-4 inline-flex items-center gap-2 text-[0.56rem] font-medium uppercase tracking-[0.16em] ${product.status === "published" ? "text-emerald-100/82" : "text-white/58"}`}>
+          <span className={`size-1.5 rounded-full ${product.status === "published" ? "bg-emerald-200" : "bg-white/45"}`} />
           {product.status === "published" ? "Live" : "Draft"}
         </span>
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-4">
+          <p className="text-[0.56rem] uppercase tracking-[0.15em] text-white/48">
+            {productModeLabel(product.arMode)}
+          </p>
+          {product.status === "published" ? (
+            <Link
+              href={`/art/${product.slug}`}
+              className="flex size-8 items-center justify-center rounded-full bg-black/38 text-white/58 backdrop-blur-md transition duration-300 hover:bg-white hover:text-black"
+              aria-label={`Open ${product.title}`}
+            >
+              <ArrowUpRight className="size-4" />
+            </Link>
+          ) : null}
+        </div>
       </div>
-      <div className="border-b border-white/12 pb-4 pt-4">
-        <div className="flex items-start justify-between gap-3">
+      <div className="border-b border-white/14 py-4 transition-colors duration-500 group-hover:border-white/35">
+        <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
           <div className="min-w-0">
             <h3 className="truncate text-base font-medium text-white">{product.title}</h3>
             <p className="mt-1 truncate text-xs text-white/38">by {product.artistName}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={onManage}
-              className="inline-flex h-9 items-center gap-2 border-b border-white/24 px-0 text-[0.62rem] uppercase tracking-[0.13em] text-white/50 transition-[border-color,color] duration-300 hover:border-white/60 hover:text-white"
-            >
-              <Pencil className="size-3.5" />
-              Manage
-            </button>
-            {product.status === "published" ? (
-              <Link
-                href={`/art/${product.slug}`}
-                className="flex size-9 items-center justify-center text-white/42 transition-colors duration-300 hover:text-white"
-                aria-label={`Open ${product.title}`}
-              >
-                <ArrowUpRight className="size-4" />
-              </Link>
-            ) : null}
-          </div>
+          <button
+            type="button"
+            onClick={onManage}
+            className="group/manage inline-flex items-center gap-2 justify-self-start pb-1 text-[0.6rem] font-medium uppercase tracking-[0.14em] text-white/48 transition-colors duration-300 hover:text-white sm:justify-self-end"
+          >
+            <Pencil className="size-3.5" />
+            Manage
+            <span className="h-px w-5 bg-white/24 transition-all duration-300 group-hover/manage:w-8 group-hover/manage:bg-white/70" />
+          </button>
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-[0.58rem] uppercase tracking-[0.12em] text-white/26">
-          <span>{productModeLabel(product.arMode)}</span>
-          <span className="text-white/14">·</span>
-          <span>{product.status === "draft" ? "Ready to continue" : "QR opens AR"}</span>
+        <div className="mt-3 flex items-center justify-between gap-4 text-[0.56rem] uppercase tracking-[0.13em] text-white/24">
+          <span>{product.status === "published" ? "Published" : "Draft workspace"}</span>
+          <span className="text-right text-white/34">
+            {product.status === "published" ? "QR ready" : "Continue editing"}
+          </span>
         </div>
       </div>
     </article>
@@ -243,7 +242,7 @@ export function StudioApp({ view }: { view: StudioView }) {
             {state.phase === "error" ? (
               <div className="max-w-md border-t border-rose-300/30 py-6 text-center">
                 <p className="text-sm text-rose-200">{state.error}</p>
-                <Button onClick={() => void load()} className="mt-4 rounded-none bg-white text-black">Try again</Button>
+                <Button onClick={() => void load()} className="mt-4 bg-white text-black">Try again</Button>
               </div>
             ) : (
               <div className="flex items-center gap-3 text-sm text-white/45">
@@ -258,41 +257,46 @@ export function StudioApp({ view }: { view: StudioView }) {
               <section className="studio-view-enter pb-16 pt-16 sm:pt-24">
                 <div className="grid items-end gap-10 lg:grid-cols-[1.1fr_0.9fr]">
                   <div>
-                    <p className="flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.24em] text-violet-200/45">
-                      <Sparkles className="size-4" /> Your studio
-                    </p>
-                    <h1 className="mt-6 max-w-4xl font-serif text-6xl font-normal leading-[0.86] tracking-[-0.055em] sm:text-8xl">
+                    <h1 className="max-w-4xl font-serif text-6xl font-normal leading-[0.86] tracking-[-0.055em] sm:text-8xl">
                       Everything you publish,<br /><span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">in one place.</span>
                     </h1>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    {[
-                      [state.products.length, "Products", Boxes],
-                      [published, "Live", CircleDot],
-                      [drafts, "Drafts", ImageIcon],
-                    ].map(([value, label, Icon]) => {
-                      const MetricIcon = Icon as typeof Boxes;
-                      return (
-                        <div key={String(label)} className="border-t border-white/18 py-4">
-                          <MetricIcon className="size-4 text-white/35" />
-                          <p className="mt-8 text-3xl font-semibold tracking-tight">{String(value)}</p>
-                          <p className="mt-1 text-[0.65rem] uppercase tracking-[0.16em] text-white/30">{String(label)}</p>
-                        </div>
-                      );
-                    })}
+                  <div data-reveal className="lg:pl-8">
+                    <div className="grid grid-cols-3 border-t border-white/12">
+                      {[
+                        [state.products.length, "Products", Boxes],
+                        [published, "Live", CircleDot],
+                        [drafts, "Drafts", ImageIcon],
+                      ].map(([value, label, Icon], index) => {
+                        const MetricIcon = Icon as typeof Boxes;
+                        return (
+                          <div
+                            key={String(label)}
+                            className={`py-5 ${index > 0 ? "pl-5 sm:pl-7" : ""}`}
+                          >
+                            <div className="flex items-center gap-2 text-white/30">
+                              <MetricIcon className="size-3.5" />
+                              <span className="text-[0.56rem] uppercase tracking-[0.16em]">
+                                {String(label)}
+                              </span>
+                            </div>
+                            <p className="mt-8 font-serif text-4xl leading-none tracking-[-0.04em] text-white sm:text-5xl">
+                              {String(value).padStart(2, "0")}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-16 border-t border-white/18 pt-8">
+                <div className="mt-16 border-t border-white/12 pt-8">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.18em] text-white/30">Recent products</p>
-                      <h2 className="mt-1 text-xl font-medium">Products</h2>
-                    </div>
+                    <h2 className="text-xl font-medium">Recent products</h2>
                     <Link href="/studio/products" scroll={false} className="text-xs text-white/50 transition-colors duration-300 hover:text-white">View all →</Link>
                   </div>
-                  <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
                     {state.products.slice(0, 4).map((product) => (
                       <ProductCard
                         key={product.id}
@@ -301,7 +305,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                       />
                     ))}
                     {state.products.length === 0 && (
-                      <p className="col-span-full border-y border-dashed border-white/10 p-8 text-center text-sm text-white/35">
+                      <p className="col-span-full border-t border-white/10 p-8 text-center text-sm text-white/35">
                         No products yet. Add your first AR product.
                       </p>
                     )}
@@ -313,15 +317,12 @@ export function StudioApp({ view }: { view: StudioView }) {
             {view === "products" && (
               <section className="studio-view-enter pb-16 pt-14 sm:pt-20">
                 <div className="flex flex-wrap items-end justify-between gap-5">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.24em] text-cyan-200/45">Your products</p>
-                    <h1 className="mt-4 font-serif text-6xl font-normal leading-none tracking-[-0.05em] sm:text-8xl">Products</h1>
-                  </div>
+                  <h1 className="font-serif text-6xl font-normal leading-none tracking-[-0.05em] sm:text-8xl">Products</h1>
                   <Link href="/create" className="inline-flex items-center gap-2 border-b border-white/45 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.13em] text-white/72 transition-[border-color,color] duration-300 hover:border-white hover:text-white">
                     <Plus className="size-3.5" /> New product
                   </Link>
                 </div>
-                <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {state.products.map((product) => (
                     <ProductCard
                       key={product.id}
@@ -330,7 +331,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                     />
                   ))}
                   {state.products.length === 0 && (
-                    <div className="border-y border-dashed border-white/15 p-12 text-center text-white/35 sm:col-span-2 lg:col-span-3">
+                    <div className="border-t border-white/10 p-12 text-center text-white/35 sm:col-span-2 lg:col-span-3">
                       <ImageIcon className="mx-auto size-6" />
                       <p className="mt-3 text-sm">No products yet.</p>
                     </div>

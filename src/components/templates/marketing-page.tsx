@@ -97,14 +97,7 @@ export async function MarketingPage() {
 
         <section className="relative mx-auto grid min-h-[94svh] w-full max-w-[94rem] items-end gap-10 px-5 pb-10 pt-28 sm:px-8 lg:grid-cols-[0.78fr_1.22fr] lg:px-12 lg:pb-16 lg:pt-32">
           <div className="everie-hero-copy relative z-10 pb-3">
-            <div className="inline-flex items-center gap-2 border border-violet-300/20 bg-violet-400/[0.07] px-3 py-2">
-              <span className="size-1.5 bg-violet-300" />
-              <p className="text-[0.62rem] font-medium uppercase tracking-[0.22em] text-violet-100/65">
-                Digital art · Browser AR
-              </p>
-            </div>
-
-            <h1 className="mt-7 font-serif text-[clamp(4rem,9.5vw,9rem)] font-normal leading-[0.79] tracking-[-0.072em]">
+            <h1 className="font-serif text-[clamp(4rem,9.5vw,9rem)] font-normal leading-[0.79] tracking-[-0.072em]">
               Art,
               <span className="block bg-gradient-to-r from-white via-violet-200 to-cyan-200 bg-clip-text italic text-transparent">
                 beyond
@@ -119,13 +112,13 @@ export async function MarketingPage() {
             <div className="mt-8 flex flex-wrap gap-2.5">
               <Link
                 href="#works"
-                className="inline-flex h-12 items-center gap-3 bg-white px-5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-black transition hover:bg-violet-100"
+                className="inline-flex h-12 items-center gap-3 rounded-[4px] bg-white px-5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-black transition hover:bg-violet-100"
               >
                 Explore works <ArrowDownRight className="size-4" />
               </Link>
               <Link
                 href="/create"
-                className="inline-flex h-12 items-center gap-3 border border-white/18 bg-white/[0.035] px-5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white/68 transition hover:border-white/38 hover:bg-white/[0.07] hover:text-white"
+                className="inline-flex h-12 items-center gap-3 rounded-[4px] bg-white/[0.045] px-5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white/68 ring-1 ring-inset ring-white/10 transition hover:bg-white/[0.08] hover:text-white hover:ring-white/20"
               >
                 Publish a work <ArrowUpRight className="size-4" />
               </Link>
@@ -145,7 +138,7 @@ export async function MarketingPage() {
             </div>
           </div>
 
-          <div className="everie-hero-visual relative min-h-[36rem] overflow-hidden border border-white/10 bg-black lg:min-h-[46rem]">
+          <div className="everie-hero-visual relative min-h-[36rem] overflow-hidden rounded-[8px] bg-black shadow-[0_40px_140px_rgba(0,0,0,0.4)] ring-1 ring-inset ring-white/[0.06] lg:min-h-[46rem]">
             <ImmersiveGalleryShowcase />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_55%_50%,transparent_22%,rgba(0,0,0,0.16)_58%,rgba(0,0,0,0.78)_100%)]" />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#030305] via-[#030305]/35 to-transparent" />
@@ -155,7 +148,7 @@ export async function MarketingPage() {
                 href={`/art/${featured.slug}`}
                 className="group absolute bottom-6 right-5 z-10 w-[44%] min-w-44 max-w-[17rem] sm:bottom-8 sm:right-8"
               >
-                <div className="relative border border-white/18 bg-black/72 p-2 shadow-[0_28px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl transition duration-500 group-hover:-translate-y-1 group-hover:border-violet-200/40">
+                <div className="relative rounded-[6px] bg-black/70 p-2 shadow-[0_28px_80px_rgba(0,0,0,0.55)] ring-1 ring-inset ring-white/10 backdrop-blur-xl transition duration-500 group-hover:-translate-y-1 group-hover:ring-violet-200/24">
                   <div className="relative aspect-square overflow-hidden bg-black">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -171,16 +164,12 @@ export async function MarketingPage() {
                     </div>
                   </div>
                 </div>
-                <span className="absolute -right-2 -top-2 flex size-10 items-center justify-center border border-white/20 bg-white text-black transition duration-300 group-hover:translate-x-1 group-hover:-translate-y-1">
+                <span className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-[4px] bg-white/90 text-black transition duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
                   <ArrowUpRight className="size-4" />
                 </span>
               </Link>
             ) : null}
 
-            <div className="absolute left-5 top-5 z-10 flex items-center gap-2 text-[0.58rem] uppercase tracking-[0.19em] text-white/45 sm:left-7 sm:top-7">
-              <span className="size-1.5 animate-pulse bg-cyan-300" />
-              Live spatial scene
-            </div>
           </div>
         </section>
       </div>
@@ -225,11 +214,11 @@ export async function MarketingPage() {
                   return (
                     <article
                       key={step.number}
-                      className={`group relative min-h-[19rem] overflow-hidden border border-violet-300/15 bg-[linear-gradient(155deg,rgba(76,29,149,0.34),rgba(10,7,18,0.92)_58%)] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.3)] transition duration-500 hover:border-violet-200/30 lg:p-7 ${index % 2 === 1 ? "lg:translate-y-10" : ""}`}
+                      className={`group relative min-h-[19rem] overflow-hidden rounded-[6px] bg-[linear-gradient(155deg,rgba(76,29,149,0.28),rgba(10,7,18,0.88)_58%)] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.24)] ring-1 ring-inset ring-violet-200/10 transition duration-500 hover:ring-violet-200/22 lg:p-7 ${index % 2 === 1 ? "lg:translate-y-10" : ""}`}
                     >
                       <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-violet-400/10 blur-[70px]" />
                       <div className="relative flex items-start justify-between gap-6">
-                        <span className="flex size-10 items-center justify-center border border-violet-200/20 bg-violet-200/10 text-[0.62rem] font-semibold tracking-[0.12em] text-violet-100">
+                        <span className="text-[0.62rem] font-semibold tracking-[0.12em] text-violet-100/70">
                           {step.number}
                         </span>
                         <Icon className="size-5 text-white/35 transition group-hover:text-violet-100/75" />
@@ -268,7 +257,7 @@ export async function MarketingPage() {
                 data-reveal-delay={String((index % 3) * 70)}
                 className={`group block ${index === 1 || index === 4 ? "lg:mt-16" : ""}`}
               >
-                <div className="relative overflow-hidden border border-white/8 bg-white/[0.03]">
+                <div className="relative overflow-hidden rounded-[5px] bg-white/[0.025] ring-1 ring-inset ring-white/[0.05]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={artwork.targetImageUrl}
@@ -317,7 +306,7 @@ export async function MarketingPage() {
             </Link>
           </div>
 
-          <div className="relative border border-white/10 bg-[#09090d]/96 shadow-[0_45px_140px_rgba(0,0,0,0.5)]">
+          <div className="relative overflow-hidden rounded-[8px] bg-[#09090d]/92 shadow-[0_45px_140px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/[0.07]">
             <div className="flex items-center justify-between border-b border-white/10 bg-[#07070a] px-4 py-3 sm:px-5">
               <div className="flex items-center gap-2" aria-hidden="true">
                 <span className="size-2.5 rounded-full bg-rose-300/70" />
@@ -348,10 +337,10 @@ export async function MarketingPage() {
                     <p className="text-[0.58rem] uppercase tracking-[0.17em] text-violet-100/50">AR experience</p>
                     <h3 className="mt-2 font-serif text-3xl tracking-[-0.03em]">Select a rendering mode</h3>
                   </div>
-                  <span className="border border-white/10 px-2.5 py-1 text-[0.55rem] uppercase tracking-[0.15em] text-white/35">Preview ready</span>
+                  <span className="text-[0.55rem] uppercase tracking-[0.15em] text-white/30">Preview ready</span>
                 </div>
 
-                <div className="mt-5 grid gap-px border border-white/10 bg-white/10 lg:grid-cols-3">
+                <div className="mt-5 grid gap-3 lg:grid-cols-3">
                   {AR_MODES.map((mode, index) => {
                     const Icon = mode.icon;
                     return (
@@ -359,7 +348,7 @@ export async function MarketingPage() {
                         key={mode.title}
                         data-reveal
                         data-reveal-delay={String(index * 65)}
-                        className={`min-h-52 bg-[#0b0b0f] p-5 ${index === 0 ? "ring-1 ring-inset ring-violet-300/35" : ""}`}
+                        className={`min-h-52 rounded-[5px] bg-white/[0.025] p-5 ring-1 ring-inset ${index === 0 ? "ring-violet-300/28" : "ring-white/[0.06]"}`}
                       >
                         <Icon className={`size-5 ${index === 0 ? "text-violet-100" : "text-white/35"}`} />
                         <p className="mt-8 text-[0.55rem] uppercase tracking-[0.15em] text-white/28">{mode.label}</p>
@@ -370,8 +359,8 @@ export async function MarketingPage() {
                   })}
                 </div>
 
-                <div className="mt-5 grid gap-4 border border-cyan-200/10 bg-cyan-200/[0.035] p-4 sm:grid-cols-[auto_1fr_auto] sm:items-center">
-                  <div className="flex size-10 items-center justify-center border border-cyan-100/15 text-cyan-100/65">
+                <div className="mt-6 grid gap-4 border-t border-cyan-100/12 pt-5 sm:grid-cols-[auto_1fr_auto] sm:items-center">
+                  <div className="flex size-8 items-center justify-center text-cyan-100/65">
                     <ScanLine className="size-4" />
                   </div>
                   <div>

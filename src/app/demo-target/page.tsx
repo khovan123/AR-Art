@@ -12,16 +12,15 @@ export default function DemoTargetPage() {
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 border-b border-white/12 pb-5">
           <BackLink href="/" label="Home" className="justify-self-start" />
           <EverieBrand />
-          <span className="justify-self-end text-[0.62rem] uppercase tracking-[0.18em] text-white/28">AR test target</span>
+          <span aria-hidden="true" />
         </div>
 
         <section className="mx-auto mt-14 max-w-2xl">
-          <p className="text-[0.68rem] uppercase tracking-[0.24em] text-violet-200/45">MindAR sample target</p>
-          <h1 className="mt-5 font-serif text-5xl leading-[0.92] tracking-[-0.045em] sm:text-7xl">
+          <h1 className="font-serif text-5xl leading-[0.92] tracking-[-0.045em] sm:text-7xl">
             Scan this image<br /><span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">with the AR camera.</span>
           </h1>
 
-          <div className="mt-10 border border-white/12 bg-[#09090d] p-3 shadow-[0_30px_100px_rgba(0,0,0,0.4)] sm:p-5">
+          <div className="mt-10 overflow-hidden rounded-[7px] bg-[#09090d] p-3 shadow-[0_30px_100px_rgba(0,0,0,0.4)] ring-1 ring-inset ring-white/[0.06] sm:p-5">
             {/* External img is intentional: this target is the exact image used by the default .mind file. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={arConfig.targetImageUrl} alt="MindAR demo image target" className="mx-auto h-auto w-full bg-white" />

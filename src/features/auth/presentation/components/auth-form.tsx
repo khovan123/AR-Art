@@ -261,10 +261,10 @@ export function AuthForm({ nextPath }: AuthFormProps) {
   const recoveryPending = confirmationRecovery.status === "resending";
 
   return (
-    <div className="auth-card relative mt-10 w-full overflow-hidden border border-white/12 bg-[#0d0a14]/82 shadow-[0_34px_110px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
+    <div className="auth-card relative mt-10 w-full overflow-hidden rounded-[8px] bg-[#0d0a14]/76 shadow-[0_34px_110px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/[0.07] backdrop-blur-2xl">
       <div className="auth-card-glow" />
 
-      <div className="auth-mode-switch relative grid grid-cols-2 gap-px border-b border-white/10 bg-white/[0.035] p-1">
+      <div className="auth-mode-switch relative grid grid-cols-2 border-b border-white/10">
         <span
           aria-hidden="true"
           className={`auth-mode-indicator ${mode === "signup" ? "is-signup" : ""}`}
@@ -274,7 +274,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
           onClick={() => changeMode("signin")}
           aria-pressed={mode === "signin"}
           className={`relative z-10 px-4 py-3 text-center text-[0.65rem] font-semibold uppercase tracking-[0.14em] transition ${
-            mode === "signin" ? "text-black" : "text-white/38 hover:text-white/70"
+            mode === "signin" ? "text-white" : "text-white/38 hover:text-white/70"
           }`}
         >
           Đăng nhập
@@ -284,7 +284,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
           onClick={() => changeMode("signup")}
           aria-pressed={mode === "signup"}
           className={`relative z-10 px-4 py-3 text-center text-[0.65rem] font-semibold uppercase tracking-[0.14em] transition ${
-            mode === "signup" ? "text-black" : "text-white/38 hover:text-white/70"
+            mode === "signup" ? "text-white" : "text-white/38 hover:text-white/70"
           }`}
         >
           Tạo tài khoản
@@ -302,7 +302,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
             aria-invalid={Boolean(errors.email)}
             aria-describedby={errors.email ? "auth-email-error" : undefined}
             {...register("email")}
-            className={`mt-2.5 h-12 w-full border bg-white/[0.035] px-3.5 text-sm text-white outline-none transition placeholder:text-white/20 ${
+            className={`mt-2.5 h-12 w-full rounded-[4px] border bg-white/[0.025] px-3.5 text-sm text-white outline-none transition placeholder:text-white/20 ${
               errors.email
                 ? "border-rose-300/45"
                 : "border-white/12 hover:border-white/22 focus:border-violet-300/60"
@@ -318,7 +318,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
 
         {showRecovery ? (
           <div
-            className={`auth-message border p-4 text-sm leading-6 ${
+            className={`auth-message rounded-[5px] border p-4 text-sm leading-6 ${
               recoverySucceeded
                 ? "border-emerald-300/15 bg-emerald-300/[0.055] text-emerald-100/80"
                 : "border-amber-300/15 bg-amber-300/[0.055] text-amber-100/80"
@@ -367,7 +367,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
             aria-invalid={Boolean(errors.password)}
             aria-describedby={errors.password ? "auth-password-error" : undefined}
             {...register("password")}
-            className={`mt-2.5 h-12 w-full border bg-white/[0.035] px-3.5 text-sm text-white outline-none transition placeholder:text-white/20 ${
+            className={`mt-2.5 h-12 w-full rounded-[4px] border bg-white/[0.025] px-3.5 text-sm text-white outline-none transition placeholder:text-white/20 ${
               errors.password
                 ? "border-rose-300/45"
                 : "border-white/12 hover:border-white/22 focus:border-violet-300/60"
@@ -382,12 +382,12 @@ export function AuthForm({ nextPath }: AuthFormProps) {
         </label>
 
         {serverMessage ? (
-          <p className="auth-error border border-rose-300/15 bg-rose-300/[0.05] px-4 py-3 text-sm leading-6 text-rose-100/80">
+          <p className="auth-error rounded-[5px] border border-rose-300/15 bg-rose-300/[0.05] px-4 py-3 text-sm leading-6 text-rose-100/80">
             {serverMessage}
           </p>
         ) : null}
         {successMessage ? (
-          <p className="auth-message border border-emerald-300/15 bg-emerald-300/[0.05] px-4 py-3 text-sm leading-6 text-emerald-100/80">
+          <p className="auth-message rounded-[5px] border border-emerald-300/15 bg-emerald-300/[0.05] px-4 py-3 text-sm leading-6 text-emerald-100/80">
             {successMessage}
           </p>
         ) : null}
@@ -395,7 +395,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
         <Button
           type="submit"
           disabled={isSubmitting}
-          className={`auth-submit-button h-12 w-full rounded-none bg-white text-xs font-semibold uppercase tracking-[0.13em] text-black hover:bg-violet-100 ${
+          className={`auth-submit-button h-12 w-full rounded-[4px] bg-white text-xs font-semibold uppercase tracking-[0.13em] text-black hover:bg-violet-100 ${
             isSubmitting ? "is-loading" : ""
           }`}
         >

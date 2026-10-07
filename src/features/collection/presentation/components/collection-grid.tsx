@@ -87,7 +87,7 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
 
   if (loading) {
     return (
-      <div className="border-y border-white/12 py-10 text-xs uppercase tracking-[0.16em] text-white/30">
+      <div className="border-b border-white/10 py-10 text-xs uppercase tracking-[0.16em] text-white/30">
         Loading your collection…
       </div>
     );
@@ -95,10 +95,7 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
 
   if (!userEmail) {
     return (
-      <section className="grid min-h-[28rem] items-center border-y border-white/12 py-14 lg:grid-cols-[0.7fr_1.3fr]">
-        <div className="hidden lg:block">
-          <span className="text-[0.68rem] uppercase tracking-[0.22em] text-white/30">Personal collection</span>
-        </div>
+      <section className="min-h-[28rem] border-t border-white/10 py-14">
         <div className="max-w-2xl">
           <ScanLine className="size-5 text-white/30" aria-hidden="true" />
           <h2 className="mt-6 font-serif text-5xl leading-[0.95] tracking-[-0.045em] sm:text-6xl">
@@ -106,7 +103,7 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
           </h2>
           <Link
             href="/login?next=/collection"
-            className="mt-9 inline-flex items-center gap-3 bg-white px-6 py-4 text-xs font-medium uppercase tracking-[0.14em] text-black transition hover:bg-violet-100"
+            className="mt-9 inline-flex items-center gap-3 rounded-[4px] bg-white px-6 py-4 text-xs font-medium uppercase tracking-[0.14em] text-black transition hover:bg-violet-100"
           >
             Sign in <ArrowUpRight className="size-4" />
           </Link>
@@ -117,7 +114,7 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
 
   return (
     <div>
-      <div className="mb-12 flex flex-wrap items-center justify-between gap-4 border-y border-white/12 py-4">
+      <div className="mb-12 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 py-4">
         <div className="flex items-baseline gap-4">
           <span className="text-[0.62rem] uppercase tracking-[0.18em] text-white/28">Signed in</span>
           <span className="text-sm text-white/58">{userEmail}</span>
@@ -140,7 +137,7 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
           {collectedArtworks.map((artwork, index) => (
             <article key={artwork.id} className={index % 3 === 1 ? "lg:mt-12" : ""}>
               <Link href={`/art/${artwork.slug}`} className="group block">
-                <div className="relative overflow-hidden border border-white/8 bg-[#0a0a0d]">
+                <div className="relative overflow-hidden rounded-[5px] bg-[#0a0a0d] ring-1 ring-inset ring-white/[0.05]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={artwork.targetImageUrl}
@@ -155,8 +152,7 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
 
                 <div className="mt-4 grid grid-cols-[1fr_auto] gap-5 border-t border-white/12 pt-3">
                   <div>
-                    <p className="text-[0.62rem] uppercase tracking-[0.15em] text-cyan-100/55">Recognized in AR</p>
-                    <h2 className="mt-2 font-serif text-2xl leading-none text-white">{artwork.title}</h2>
+                    <h2 className="font-serif text-2xl leading-none text-white">{artwork.title}</h2>
                     <p className="mt-2 text-xs uppercase tracking-[0.12em] text-white/35">{artwork.artistName}</p>
                   </div>
                   <ArrowUpRight className="mt-1 size-4 text-white/35 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-cyan-100" />
@@ -180,8 +176,8 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
           ))}
         </div>
       ) : (
-        <section className="flex min-h-[24rem] flex-col items-center justify-center border-y border-dashed border-white/12 px-6 text-center">
-          <div className="flex size-16 items-center justify-center border border-white/15 text-white/30">
+        <section className="flex min-h-[24rem] flex-col items-center justify-center border-t border-white/10 px-6 text-center">
+          <div className="flex size-14 items-center justify-center rounded-full bg-white/[0.035] text-white/30">
             <ScanLine className="size-6" />
           </div>
           <h2 className="mt-6 font-serif text-4xl tracking-[-0.035em]">Nothing collected yet.</h2>

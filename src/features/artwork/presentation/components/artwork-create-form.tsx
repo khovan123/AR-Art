@@ -373,20 +373,15 @@ export function ArtworkCreateForm() {
     return (
       <main className="relative min-h-screen overflow-hidden bg-[#050507] text-white">
         <div className="pointer-events-none absolute right-[8%] top-24 size-80 rounded-full bg-violet-700/7 blur-[130px]" />
-        <header className="relative mx-auto flex w-full max-w-[94rem] items-center justify-between border-b border-white/12 px-5 py-5 sm:px-8 lg:px-12">
+        <header className="relative mx-auto grid w-full max-w-[94rem] grid-cols-[1fr_auto_1fr] items-center border-b border-white/10 px-5 py-5 sm:px-8 lg:px-12">
           <BackLink href="/studio/products" label="Products" />
           <EverieBrand />
-          <span className="text-[0.62rem] uppercase tracking-[0.18em] text-cyan-100/45">
-            {workflow.result.status === "published" ? "Published" : "Draft saved"}
-          </span>
+          <span aria-hidden="true" />
         </header>
 
         <section className="relative mx-auto grid min-h-[calc(100svh-4.8rem)] w-full max-w-[94rem] items-center gap-12 px-5 py-14 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:px-12 lg:py-20">
           <div>
-            <p className="text-[0.68rem] uppercase tracking-[0.24em] text-violet-200/45">
-              {workflow.result.status === "published" ? "Work is live" : "Saved privately"}
-            </p>
-            <h1 className="mt-6 max-w-3xl font-serif text-6xl leading-[0.88] tracking-[-0.055em] sm:text-8xl">
+            <h1 className="max-w-3xl font-serif text-6xl leading-[0.88] tracking-[-0.055em] sm:text-8xl">
               {workflow.result.status === "published" ? (
                 <>Ready for<br /><span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">the wall.</span></>
               ) : (
@@ -395,7 +390,7 @@ export function ArtworkCreateForm() {
             </h1>
 
             {workflow.result.shareUrl ? (
-              <div className="mt-10 border-y border-white/12 py-4">
+              <div className="mt-10 border-t border-white/10 pt-4">
                 <p className="text-[0.62rem] uppercase tracking-[0.16em] text-white/28">Artwork link</p>
                 <p className="mt-2 break-all text-sm text-white/58">{workflow.result.shareUrl}</p>
               </div>
@@ -408,38 +403,38 @@ export function ArtworkCreateForm() {
             <div className="mt-6 flex flex-wrap gap-2">
               {workflow.result.shareUrl ? (
                 <>
-                  <button type="button" onClick={copyShareUrl} className="inline-flex h-12 items-center gap-2 bg-white px-5 text-xs font-medium uppercase tracking-[0.12em] text-black transition hover:bg-violet-100">
+                  <button type="button" onClick={copyShareUrl} className="inline-flex h-12 items-center gap-2 rounded-[4px] bg-white px-5 text-xs font-medium uppercase tracking-[0.12em] text-black transition hover:bg-violet-100">
                     {workflow.copied ? <Check className="size-4" /> : <Copy className="size-4" />}
                     {workflow.copied ? "Copied" : "Copy link"}
                   </button>
                   {workflow.result.qrDataUrl ? (
-                    <a href={workflow.result.qrDataUrl} download="everie-qr.png" className="inline-flex h-12 items-center gap-2 border border-white/18 px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/58 transition hover:border-white/45 hover:text-white">
+                    <a href={workflow.result.qrDataUrl} download="everie-qr.png" className="inline-flex h-12 items-center gap-2 rounded-[4px] bg-white/[0.035] px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/58 ring-1 ring-inset ring-white/10 transition hover:bg-white/[0.06] hover:text-white hover:ring-white/20">
                       <Download className="size-4" /> Download QR
                     </a>
                   ) : null}
-                  <a href={workflow.result.shareUrl} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center border border-white/18 px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/58 transition hover:border-white/45 hover:text-white">
+                  <a href={workflow.result.shareUrl} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center rounded-[4px] bg-white/[0.035] px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/58 ring-1 ring-inset ring-white/10 transition hover:bg-white/[0.06] hover:text-white hover:ring-white/20">
                     Open work
                   </a>
                 </>
               ) : (
-                <Link href="/studio/products" className="inline-flex h-12 items-center bg-white px-5 text-xs font-medium uppercase tracking-[0.12em] text-black transition hover:bg-violet-100">
+                <Link href="/studio/products" className="inline-flex h-12 items-center rounded-[4px] bg-white px-5 text-xs font-medium uppercase tracking-[0.12em] text-black transition hover:bg-violet-100">
                   Manage draft
                 </Link>
               )}
             </div>
           </div>
 
-          <div className="border border-white/10 bg-[#09090d] p-8 shadow-[0_35px_120px_rgba(0,0,0,0.35)] sm:p-12">
+          <div className="rounded-[8px] bg-[#09090d]/88 p-8 shadow-[0_35px_120px_rgba(0,0,0,0.35)] ring-1 ring-inset ring-white/[0.06] sm:p-12">
             {workflow.result.qrDataUrl ? (
-              <div className="mx-auto max-w-sm border border-white/12 p-7">
+              <div className="mx-auto max-w-sm p-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={workflow.result.qrDataUrl} alt="QR code for the published AR artwork" className="aspect-square w-full bg-white p-3" />
+                <img src={workflow.result.qrDataUrl} alt="QR code for the published AR artwork" className="aspect-square w-full rounded-[5px] bg-white p-3" />
                 <div className="mt-5 flex items-center justify-between border-t border-white/15 pt-4 text-[0.62rem] uppercase tracking-[0.16em] text-white/45">
                   <EverieBrand href={null} className="opacity-70" textClassName="text-[0.58rem]" iconClassName="size-3.5" /><span>Scan to enter AR</span>
                 </div>
               </div>
             ) : (
-              <div className="flex min-h-[24rem] flex-col items-center justify-center border border-white/12 px-8 text-center">
+              <div className="flex min-h-[24rem] flex-col items-center justify-center rounded-[6px] bg-white/[0.02] px-8 text-center">
                 <Check className="size-7 text-cyan-100/65" />
                 <p className="mt-5 font-serif text-3xl">Saved privately.</p>
                 <p className="mt-3 max-w-xs text-sm leading-6 text-white/35">QR and public sharing become available when you publish this product from Studio.</p>
@@ -454,23 +449,18 @@ export function ArtworkCreateForm() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050507] text-white">
       <div className="pointer-events-none absolute right-[12%] top-28 size-80 rounded-full bg-violet-700/7 blur-[130px]" />
-      <header className="relative mx-auto flex w-full max-w-[94rem] items-center justify-between border-b border-white/12 px-5 py-5 sm:px-8 lg:px-12">
+      <header className="relative mx-auto grid w-full max-w-[94rem] grid-cols-[1fr_auto_1fr] items-center border-b border-white/10 px-5 py-5 sm:px-8 lg:px-12">
         <BackLink href="/studio/products" label="Studio" />
         <EverieBrand />
-        <span className="text-[0.62rem] uppercase tracking-[0.18em] text-white/28">New work</span>
+        <span aria-hidden="true" />
       </header>
 
       <section className="relative mx-auto w-full max-w-[94rem] px-5 py-14 sm:px-8 lg:px-12 lg:py-20">
-        <div className="grid gap-10 lg:grid-cols-[0.38fr_1.62fr]">
-          <p className="text-[0.68rem] uppercase tracking-[0.24em] text-violet-200/45">Publish / 01</p>
-          <div>
-            <h1 className="max-w-5xl font-serif text-6xl leading-[0.86] tracking-[-0.055em] sm:text-8xl lg:text-9xl">
-              Give the work<br /><span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">another layer.</span>
-            </h1>
-          </div>
-        </div>
+        <h1 className="max-w-5xl font-serif text-6xl leading-[0.86] tracking-[-0.055em] sm:text-8xl lg:text-9xl">
+          Give the work<br /><span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">another layer.</span>
+        </h1>
 
-        <div className="mt-12 grid grid-cols-4 gap-px border border-white/10 bg-white/10 p-px">
+        <div className="mt-12 grid grid-cols-4 gap-5 border-t border-white/10 pt-4">
           {[
             ["01", "Details", detailsReady],
             ["02", "Artwork", Boolean(targetImage)],
@@ -479,7 +469,7 @@ export function ArtworkCreateForm() {
           ].map(([number, label, ready]) => (
             <div
               key={String(label)}
-              className={`min-w-0 bg-[#08080b] px-3 py-3 sm:px-4 ${ready ? "text-white" : "text-white/28"}`}
+              className={`min-w-0 py-2 ${ready ? "text-white" : "text-white/28"}`}
             >
               <p className="text-[0.55rem] tabular-nums tracking-[0.14em] opacity-55">{String(number)}</p>
               <p className="mt-1 truncate text-[0.58rem] font-medium uppercase tracking-[0.1em] sm:text-[0.62rem]">
@@ -495,7 +485,7 @@ export function ArtworkCreateForm() {
         <form
           onSubmit={publish}
           noValidate
-          className="mt-5 grid overflow-hidden border border-white/10 bg-[#07070a]/72 shadow-[0_36px_120px_rgba(0,0,0,0.3)] lg:grid-cols-[1.05fr_0.95fr]"
+          className="mt-6 grid overflow-hidden rounded-[8px] bg-[#07070a]/68 shadow-[0_36px_120px_rgba(0,0,0,0.3)] ring-1 ring-inset ring-white/[0.06] lg:grid-cols-[1.05fr_0.95fr]"
         >
           <div className="space-y-9 p-5 sm:p-7 lg:p-8">
             <div className="grid gap-8 sm:grid-cols-2">
@@ -514,7 +504,7 @@ export function ArtworkCreateForm() {
 
             <div>
               <p className="text-[0.65rem] uppercase tracking-[0.17em] text-white/35">AR experience</p>
-              <div className="mt-3 grid gap-px border border-white/12 bg-white/10 lg:grid-cols-3">
+              <div className="mt-3 grid gap-3 lg:grid-cols-3">
                 {AR_MODE_OPTIONS.map((option) => {
                   const Icon = option.icon;
                   const selected = arMode === option.value;
@@ -526,11 +516,11 @@ export function ArtworkCreateForm() {
                         setValue("arMode", option.value, { shouldDirty: true, shouldValidate: true });
                         void trigger();
                       }}
-                      className={`min-h-40 p-5 text-left transition ${selected ? "bg-white text-black" : "bg-[#09090d] text-white hover:bg-white/[0.055]"}`}
+                      className={`min-h-40 rounded-[5px] p-5 text-left ring-1 ring-inset transition ${selected ? "bg-violet-200/[0.09] text-white ring-violet-200/24" : "bg-white/[0.025] text-white ring-white/[0.06] hover:bg-white/[0.055]"}`}
                     >
                       <Icon className="size-5" />
                       <p className="mt-8 font-serif text-xl">{option.title}</p>
-                      <p className={`mt-2 text-xs leading-5 ${selected ? "text-black/55" : "text-white/36"}`}>{option.description}</p>
+                      <p className={`mt-2 text-xs leading-5 ${selected ? "text-white/58" : "text-white/36"}`}>{option.description}</p>
                     </button>
                   );
                 })}
@@ -538,13 +528,12 @@ export function ArtworkCreateForm() {
             </div>
 
             <Controller name="targetImage" control={control} render={({ field: { onChange, onBlur, name, ref } }) => (
-              <label className={`block cursor-pointer border border-white/12 bg-[#09090d] p-5 transition hover:bg-white/[0.055] ${errors.targetImage ? "text-rose-200" : ""}`}>
+              <label className={`block cursor-pointer rounded-[5px] bg-white/[0.025] p-5 ring-1 ring-inset ring-white/[0.07] transition hover:bg-white/[0.05] ${errors.targetImage ? "text-rose-200" : ""}`}>
                 <div className="flex items-center justify-between gap-6">
                   <div className="flex items-center gap-4">
                     <ImagePlus className="size-5" />
                     <div><p className="font-serif text-2xl">Artwork image</p><p className="mt-1 text-xs text-white/36">{targetImage ? `${targetImage.name} · ${formatMb(targetImage.size)}` : "JPG, PNG or WebP · max 6 MB"}</p></div>
                   </div>
-                  <span className="text-[0.62rem] uppercase tracking-[0.15em] text-white/28">Target</span>
                 </div>
                 <input ref={ref} name={name} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onBlur={onBlur} onChange={(event) => onChange(event.target.files?.[0] ?? undefined)} />
                 {errors.targetImage?.message ? <p className="mt-3 text-xs text-rose-200/80">{errors.targetImage.message}</p> : null}
@@ -553,7 +542,7 @@ export function ArtworkCreateForm() {
 
             {arMode !== "spatial_layers" ? (
               <Controller name="overlayVideo" control={control} render={({ field: { onChange, onBlur, name, ref } }) => (
-                <label className={`block cursor-pointer border border-white/12 bg-[#09090d] p-5 transition hover:bg-white/[0.055] ${errors.overlayVideo ? "text-rose-200" : ""}`}>
+                <label className={`block cursor-pointer rounded-[5px] bg-white/[0.025] p-5 ring-1 ring-inset ring-white/[0.07] transition hover:bg-white/[0.05] ${errors.overlayVideo ? "text-rose-200" : ""}`}>
                   <div className="flex items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
                       <Video className="size-5" />
@@ -562,7 +551,6 @@ export function ArtworkCreateForm() {
                         <p className="mt-1 text-xs text-white/36">{overlayVideo ? `${overlayVideo.name} · ${formatMb(overlayVideo.size)}` : "MP4 or WebM · use the same proportions as the artwork"}</p>
                       </div>
                     </div>
-                    <span className="text-[0.62rem] uppercase tracking-[0.15em] text-white/28">Motion</span>
                   </div>
                   <input ref={ref} name={name} type="file" accept="video/mp4,video/webm" className="sr-only" onBlur={onBlur} onChange={(event) => onChange(event.target.files?.[0] ?? undefined)} />
                   {errors.overlayVideo?.message ? <p className="mt-3 text-xs text-rose-200/80">{errors.overlayVideo.message}</p> : null}
@@ -570,7 +558,7 @@ export function ArtworkCreateForm() {
               )} />
             ) : (
               <div className="space-y-3">
-                <label className="flex cursor-pointer items-center justify-between gap-6 border border-dashed border-white/18 bg-[#09090d] p-5 transition hover:border-white/35 hover:bg-white/[0.04]">
+                <label className="flex cursor-pointer items-center justify-between gap-6 rounded-[5px] border border-dashed border-white/14 bg-white/[0.02] p-5 transition hover:border-white/28 hover:bg-white/[0.04]">
                   <div className="flex items-center gap-4">
                     <Layers3 className="size-5" />
                     <div>
@@ -586,7 +574,7 @@ export function ArtworkCreateForm() {
                   const layer = spatialLayers[index];
                   if (!layer) return null;
                   return (
-                    <div key={field.id} className="border border-white/10 bg-[#09090d] p-4">
+                    <div key={field.id} className="rounded-[5px] bg-white/[0.02] p-4 ring-1 ring-inset ring-white/[0.06]">
                       <Controller name={`spatialLayers.${index}.file`} control={control} render={() => <></>} />
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
@@ -601,20 +589,20 @@ export function ArtworkCreateForm() {
                       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">
                           Motion
-                          <select {...register(`spatialLayers.${index}.animation`)} className="mt-1 h-9 w-full border border-white/10 bg-black px-2 text-xs normal-case tracking-normal text-white/70">
+                          <select {...register(`spatialLayers.${index}.animation`)} className="mt-1 h-9 w-full rounded-[4px] border border-white/10 bg-black px-2 text-xs normal-case tracking-normal text-white/70">
                             <option value="none">Still</option><option value="float">Float</option><option value="pulse">Pulse</option><option value="rotate">Rotate</option><option value="orbit">Orbit</option>
                           </select>
                         </label>
                         <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">
                           Blend
-                          <select {...register(`spatialLayers.${index}.blendMode`)} className="mt-1 h-9 w-full border border-white/10 bg-black px-2 text-xs normal-case tracking-normal text-white/70">
+                          <select {...register(`spatialLayers.${index}.blendMode`)} className="mt-1 h-9 w-full rounded-[4px] border border-white/10 bg-black px-2 text-xs normal-case tracking-normal text-white/70">
                             <option value="normal">Normal</option><option value="additive">Glow</option>
                           </select>
                         </label>
-                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">Scale<Input type="number" step="0.05" {...register(`spatialLayers.${index}.scale`, { valueAsNumber: true })} className="mt-1 h-9 rounded-none border-white/10 bg-black text-xs" /></label>
-                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">X<Input type="number" step="0.05" {...register(`spatialLayers.${index}.x`, { valueAsNumber: true })} className="mt-1 h-9 rounded-none border-white/10 bg-black text-xs" /></label>
-                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">Y<Input type="number" step="0.05" {...register(`spatialLayers.${index}.y`, { valueAsNumber: true })} className="mt-1 h-9 rounded-none border-white/10 bg-black text-xs" /></label>
-                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">Depth<Input type="number" step="0.01" {...register(`spatialLayers.${index}.depth`, { valueAsNumber: true })} className="mt-1 h-9 rounded-none border-white/10 bg-black text-xs" /></label>
+                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">Scale<Input type="number" step="0.05" {...register(`spatialLayers.${index}.scale`, { valueAsNumber: true })} className="mt-1 h-9 border-white/10 bg-black text-xs" /></label>
+                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">X<Input type="number" step="0.05" {...register(`spatialLayers.${index}.x`, { valueAsNumber: true })} className="mt-1 h-9 border-white/10 bg-black text-xs" /></label>
+                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">Y<Input type="number" step="0.05" {...register(`spatialLayers.${index}.y`, { valueAsNumber: true })} className="mt-1 h-9 border-white/10 bg-black text-xs" /></label>
+                        <label className="text-[0.62rem] uppercase tracking-[0.12em] text-white/32">Depth<Input type="number" step="0.01" {...register(`spatialLayers.${index}.depth`, { valueAsNumber: true })} className="mt-1 h-9 border-white/10 bg-black text-xs" /></label>
                       </div>
                     </div>
                   );
@@ -628,11 +616,11 @@ export function ArtworkCreateForm() {
                 Publish creates a public artwork page and a QR that opens the AR camera directly. Collection happens only after target recognition.
               </p>
               <div className="flex flex-wrap items-center gap-2">
-                <Button type="button" variant="outline" disabled={!canPublish} onClick={() => void saveDraft()} className="h-12 rounded-none border-white/15 bg-transparent px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/55 hover:bg-white/[0.05] hover:text-white disabled:opacity-30">
+                <Button type="button" variant="outline" disabled={!canPublish} onClick={() => void saveDraft()} className="h-12 border-white/12 bg-transparent px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/55 hover:bg-white/[0.05] hover:text-white disabled:opacity-30">
                   {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Check className="size-4" />}
                   Save draft
                 </Button>
-                <Button type="submit" disabled={!canPublish} className="h-12 rounded-none bg-white px-6 text-xs font-medium uppercase tracking-[0.12em] text-black hover:bg-violet-100 disabled:bg-white/10 disabled:text-white/25">
+                <Button type="submit" disabled={!canPublish} className="h-12 bg-white px-6 text-xs font-medium uppercase tracking-[0.12em] text-black hover:bg-violet-100 disabled:bg-white/10 disabled:text-white/25">
                   {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Upload className="size-4" />}
                   {isSubmitting ? "Working…" : "Publish and get QR"}
                 </Button>
@@ -655,10 +643,6 @@ export function ArtworkCreateForm() {
             )}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/78 via-black/5 to-black/20" />
             <div className="absolute inset-x-0 bottom-0 z-10 p-6 sm:p-8">
-              <p className="text-[0.62rem] uppercase tracking-[0.18em] text-white/45">From artwork to AR</p>
-              <div className="mt-5 grid grid-cols-3 gap-4 border-t border-white/20 pt-4 text-xs uppercase tracking-[0.11em] text-white/58">
-                <span>01 · Artwork</span><span>02 · AR</span><span>03 · Publish</span>
-              </div>
               {arMode === "spatial_layers" ? (
                 <div className="mt-6 flex items-center gap-3 border-t border-white/15 pt-4 text-xs text-white/45"><Box className="size-4" /><span>{spatialLayers.length} spatial layer{spatialLayers.length === 1 ? "" : "s"}</span></div>
               ) : null}

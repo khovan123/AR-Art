@@ -3,7 +3,8 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-const REVEAL_SELECTOR = ".everie-section, main article, [data-reveal]";
+const REVEAL_SELECTOR =
+  '.everie-section, main section:not([role="dialog"]), main article, [data-reveal]';
 const ROUTE_LEAVE_MS = 260;
 
 function isPlainLeftClick(event: MouseEvent) {
@@ -63,7 +64,7 @@ export function AppMotion() {
               observer?.unobserve(entry.target);
             });
           },
-          { threshold: 0.12, rootMargin: "0px 0px -10% 0px" },
+          { threshold: 0.08, rootMargin: "0px 0px -6% 0px" },
         );
 
     function registerElement(element: Element) {

@@ -56,14 +56,12 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`relative z-10 flex max-h-[88vh] w-full ${maxWidthClassName} flex-col overflow-hidden border border-white/14 bg-[#09090d]/96 shadow-[0_45px_160px_rgba(0,0,0,0.72)] backdrop-blur-2xl`}
+        className={`relative z-10 flex max-h-[88vh] w-full ${maxWidthClassName} flex-col overflow-hidden rounded-[8px] border border-white/10 bg-[#09090d]/94 shadow-[0_45px_160px_rgba(0,0,0,0.72)] backdrop-blur-2xl`}
       >
-        <div className="pointer-events-none absolute inset-x-16 top-0 h-px bg-gradient-to-r from-transparent via-violet-300/45 to-transparent" />
-
-        <header className="relative flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-6">
+        <header className="relative flex items-center justify-between gap-4 border-b border-white/8 px-5 py-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             {icon ? (
-              <div className="flex size-10 shrink-0 items-center justify-center border border-violet-300/15 bg-violet-300/8 text-violet-100">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-[4px] bg-violet-300/8 text-violet-100">
                 {icon}
               </div>
             ) : null}
@@ -80,7 +78,7 @@ export function Modal({
           <button
             type="button"
             onClick={onClose}
-            className="flex size-9 shrink-0 items-center justify-center border border-white/12 bg-transparent text-white/45 transition hover:border-white/35 hover:text-white"
+            className="flex size-9 shrink-0 items-center justify-center rounded-[4px] bg-transparent text-white/45 transition hover:bg-white/[0.05] hover:text-white"
             aria-label="Close"
           >
             <X className="size-4" />
@@ -92,7 +90,7 @@ export function Modal({
         </div>
 
         {footer ? (
-          <footer className="relative border-t border-white/10 bg-black/15 px-5 py-4 sm:px-6">
+          <footer className="relative border-t border-white/8 px-5 py-4 sm:px-6">
             {footer}
           </footer>
         ) : null}
