@@ -4,8 +4,8 @@ import type { ArEngine } from "@/features/ar-experience/application/ports/ar-eng
 import type {
   ArExperienceCallbacks,
   ArExperienceConfig,
-  ArOverlay,
 } from "@/features/ar-experience/domain/ar-experience";
+import { ThreeArOverlayScene } from "@/features/ar-experience/infrastructure/three/three-ar-overlay-scene";
 
 type MindArAnchor = {
   group: THREE.Group;
@@ -22,6 +22,7 @@ type MindArRuntime = {
   addAnchor(index: number): MindArAnchor;
   start(): Promise<void>;
   stop(): Promise<void> | void;
+  resize(): void;
 };
 
 type MindArConstructor = new (options: {
@@ -67,7 +68,7 @@ export function preloadMindArRuntime() {
 
 function getPreloadedMindArRuntime() {
   if (!mindArModule) {
-    throw new Error("AR engine is still loading. Wait a moment and tap Start camera again.");
+    throw new Error("AR engine is still loading. Wait a moment and try again.");
   }
 
   return mindArModule;
@@ -75,10 +76,10 @@ function getPreloadedMindArRuntime() {
 
 export class MindArImageEngine implements ArEngine {
   private runtime: MindArRuntime | null = null;
-  private animatedObject: THREE.Object3D | null = null;
-  private video: HTMLVideoElement | null = null;
-  private videoTexture: THREE.VideoTexture | null = null;
+  private overlayScene: ThreeArOverlayScene | null = null;
   private started = false;
+  private targetVisible = false;
+  private cleanupViewportSync: (() => void) | null = null;
 
   async start(
     container: HTMLElement,
@@ -88,11 +89,7 @@ export class MindArImageEngine implements ArEngine {
     if (this.runtime) await this.stop();
 
     try {
-      // This lookup is synchronous. The module is preloaded before the button
-      // becomes active so iPhone Safari reaches MindAR's getUserMedia() from
-      // the same user interaction without an import await in between.
       const mindArModule = getPreloadedMindArRuntime();
-
       const runtime = new mindArModule.MindARThree({
         container,
         imageTargetSrc: config.targetUrl,
@@ -106,31 +103,25 @@ export class MindArImageEngine implements ArEngine {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
       const anchor = runtime.addAnchor(config.targetIndex);
-      const overlay = this.createOverlay(config.overlay);
-      anchor.group.add(overlay);
-
       anchor.onTargetFound = () => {
-        if (this.video) void this.video.play().catch(() => undefined);
+        this.targetVisible = true;
+        this.overlayScene?.setTargetVisible(true);
         callbacks.onTargetFound();
       };
       anchor.onTargetLost = () => {
-        this.video?.pause();
+        this.targetVisible = false;
+        this.overlayScene?.setTargetVisible(false);
         callbacks.onTargetLost();
       };
 
+      // Camera/tracking starts before artwork assets are loaded. This preserves
+      // the iOS Safari user-gesture permission path even for larger GLB assets.
       await runtime.start();
 
-      // MindAR 1.2.5 assigns the camera video z-index:-2. Inside our
-      // full-screen black AR surface that places the live camera behind the
-      // page background on iOS Safari, even though getUserMedia is running.
-      // Normalize the camera/canvas stacking after MindAR creates the stream.
       const cameraVideo =
         runtime.video ?? container.querySelector<HTMLVideoElement>("video");
-
       if (!cameraVideo || !(cameraVideo.srcObject instanceof MediaStream)) {
-        throw new Error(
-          "Camera started but the live preview stream is unavailable.",
-        );
+        throw new Error("Camera started but the live preview stream is unavailable.");
       }
 
       cameraVideo.muted = true;
@@ -163,25 +154,30 @@ export class MindArImageEngine implements ArEngine {
         });
       }
 
+      this.bindViewportSync(runtime, container);
+
       try {
         await cameraVideo.play();
       } catch {
-        // The stream may already be playing. Safari can reject a redundant
-        // play() while still rendering the live camera correctly.
+        // Safari can reject a redundant play() while the camera is already live.
       }
 
       this.started = true;
       callbacks.onScanning();
 
+      const overlayScene = new ThreeArOverlayScene();
+      this.overlayScene = overlayScene;
+      overlayScene.setTargetVisible(this.targetVisible);
+      const overlay = await overlayScene.create(config.overlay);
+      if (this.runtime !== runtime || this.overlayScene !== overlayScene) {
+        overlayScene.dispose();
+        return;
+      }
+      anchor.group.add(overlay);
+
       const clock = new THREE.Clock();
       renderer.setAnimationLoop(() => {
-        const elapsed = clock.getElapsedTime();
-        if (this.animatedObject) {
-          this.animatedObject.rotation.x = elapsed * 0.7;
-          this.animatedObject.rotation.y = elapsed * 1.05;
-          const pulse = 0.9 + Math.sin(elapsed * 2.5) * 0.08;
-          this.animatedObject.scale.setScalar(pulse);
-        }
+        overlayScene.update(clock.getElapsedTime());
         renderer.render(scene, camera);
       });
     } catch (cause) {
@@ -193,84 +189,61 @@ export class MindArImageEngine implements ArEngine {
     }
   }
 
-  private createOverlay(overlay: ArOverlay) {
-    if (overlay.kind === "video") {
-      const video = document.createElement("video");
-      video.src = overlay.url;
-      video.crossOrigin = "anonymous";
-      video.loop = true;
-      video.muted = true;
-      video.defaultMuted = true;
-      video.playsInline = true;
-      video.autoplay = true;
-      video.setAttribute("muted", "");
-      video.setAttribute("playsinline", "");
-      video.setAttribute("webkit-playsinline", "");
-      video.setAttribute("autoplay", "");
-      video.preload = "auto";
-      this.video = video;
+  private bindViewportSync(runtime: MindArRuntime, container: HTMLElement) {
+    this.cleanupViewportSync?.();
 
-      const texture = new THREE.VideoTexture(video);
-      texture.colorSpace = THREE.SRGBColorSpace;
-      this.videoTexture = texture;
+    let frameId: number | null = null;
+    let settleTimer: number | null = null;
 
-      const height = 1 / Math.max(overlay.aspectRatio, 0.1);
-      const plane = new THREE.Mesh(
-        new THREE.PlaneGeometry(1, height),
-        new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }),
-      );
-      plane.position.z = 0.02;
-      return plane;
-    }
+    const resize = () => {
+      if (this.runtime !== runtime || !container.isConnected) return;
+      if (container.clientWidth <= 0 || container.clientHeight <= 0) return;
+      runtime.resize();
+    };
 
-    const group = new THREE.Group();
-    const artworkPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(1, 0.552),
-      new THREE.MeshBasicMaterial({
-        color: 0xf59e0b,
-        transparent: true,
-        opacity: 0.16,
-        side: THREE.DoubleSide,
-      }),
-    );
-    artworkPlane.position.z = 0.01;
-    group.add(artworkPlane);
+    const scheduleResize = () => {
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        resize();
+        window.requestAnimationFrame(resize);
+      });
 
-    const halo = new THREE.Mesh(
-      new THREE.TorusKnotGeometry(0.14, 0.035, 96, 14),
-      new THREE.MeshNormalMaterial({ transparent: true, opacity: 0.95 }),
-    );
-    halo.position.set(0, 0, 0.12);
-    group.add(halo);
-    this.animatedObject = halo;
+      if (settleTimer !== null) window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(resize, 250);
+    };
 
-    const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(0.3, 0.008, 16, 96),
-      new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.8,
-      }),
-    );
-    ring.position.z = 0.06;
-    group.add(ring);
-    return group;
+    const resizeObserver = new ResizeObserver(scheduleResize);
+    resizeObserver.observe(container);
+    window.addEventListener("resize", scheduleResize, { passive: true });
+    window.addEventListener("orientationchange", scheduleResize, { passive: true });
+    window.visualViewport?.addEventListener("resize", scheduleResize, { passive: true });
+    window.visualViewport?.addEventListener("scroll", scheduleResize, { passive: true });
+
+    this.cleanupViewportSync = () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", scheduleResize);
+      window.removeEventListener("orientationchange", scheduleResize);
+      window.visualViewport?.removeEventListener("resize", scheduleResize);
+      window.visualViewport?.removeEventListener("scroll", scheduleResize);
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      if (settleTimer !== null) window.clearTimeout(settleTimer);
+      this.cleanupViewportSync = null;
+    };
+
+    scheduleResize();
   }
 
   async stop() {
-    if (!this.runtime) return;
+    this.cleanupViewportSync?.();
+    this.overlayScene?.dispose();
+    this.overlayScene = null;
+    this.targetVisible = false;
 
+    if (!this.runtime) return;
     const runtime = this.runtime;
     this.runtime = null;
-    this.animatedObject = null;
-
     runtime.renderer.setAnimationLoop(null);
-    this.video?.pause();
-    if (this.video) this.video.removeAttribute("src");
-    this.video?.load();
-    this.video = null;
-    this.videoTexture?.dispose();
-    this.videoTexture = null;
 
     if (this.started) {
       try {

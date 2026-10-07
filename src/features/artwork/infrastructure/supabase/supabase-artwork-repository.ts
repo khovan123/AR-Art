@@ -2,6 +2,9 @@ import type { ArtworkRepository } from "@/features/artwork/application/ports/art
 import {
   EVERIE_MVP_MAX_PRODUCTS,
   type Artwork,
+  type ArtworkArConfig,
+  type ArtworkArMode,
+  type ArtworkArAssetInput,
   type CreateArtworkDraftInput,
   type UpdateArtworkInput,
 } from "@/features/artwork/domain/artwork";
@@ -17,9 +20,11 @@ type ArtworkRow = {
   status: "draft" | "published";
   target_image_path: string;
   target_file_path: string;
-  overlay_path: string;
-  overlay_type: "video";
-  overlay_aspect_ratio: number;
+  overlay_path: string | null;
+  overlay_type: "video" | null;
+  overlay_aspect_ratio: number | null;
+  ar_mode?: ArtworkArMode | null;
+  ar_config?: ArtworkArConfig | null;
   created_at: string;
   published_at: string | null;
 };
@@ -38,6 +43,8 @@ function mapArtwork(row: ArtworkRow): Artwork {
     overlayPath: row.overlay_path,
     overlayType: row.overlay_type,
     overlayAspectRatio: row.overlay_aspect_ratio,
+    arMode: row.ar_mode ?? "motion_extract",
+    arConfig: row.ar_config ?? {},
     createdAt: row.created_at,
     publishedAt: row.published_at,
   };
@@ -59,14 +66,33 @@ export class SupabaseArtworkRepository implements ArtworkRepository {
         target_image_path: input.targetImagePath,
         target_file_path: input.targetFilePath,
         overlay_path: input.overlayPath,
-        overlay_type: "video",
+        overlay_type: input.overlayPath ? "video" : null,
         overlay_aspect_ratio: input.overlayAspectRatio,
+        ar_mode: input.arMode,
+        ar_config: input.arConfig,
       })
       .select("*")
       .single<ArtworkRow>();
 
     if (error) throw new Error(`Unable to create artwork draft: ${error.message}`);
     return mapArtwork(data);
+  }
+
+  async createArAssets(inputs: ArtworkArAssetInput[]) {
+    if (inputs.length === 0) return;
+    const supabase = getSupabaseServerClient();
+    const { error } = await supabase.from("artwork_ar_assets").insert(
+      inputs.map((input) => ({
+        id: input.id,
+        artwork_id: input.artworkId,
+        asset_type: input.assetType,
+        storage_path: input.storagePath,
+        mime_type: input.mimeType,
+        metadata: input.metadata,
+      })),
+    );
+
+    if (error) throw new Error(`Unable to create AR assets: ${error.message}`);
   }
 
   async findById(id: string) {

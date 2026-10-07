@@ -11,9 +11,15 @@ create table if not exists public.artworks (
   status text not null default 'draft' check (status in ('draft', 'published')),
   target_image_path text not null,
   target_file_path text not null,
-  overlay_path text not null,
-  overlay_type text not null default 'video' check (overlay_type in ('video')),
-  overlay_aspect_ratio double precision not null check (overlay_aspect_ratio between 0.2 and 5),
+  overlay_path text,
+  overlay_type text check (overlay_type is null or overlay_type in ('video')),
+  overlay_aspect_ratio double precision check (
+    overlay_aspect_ratio is null or overlay_aspect_ratio between 0.2 and 5
+  ),
+  ar_mode text not null default 'motion_extract' check (
+    ar_mode in ('motion_extract', 'transparent_motion', 'spatial_layers')
+  ),
+  ar_config jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   published_at timestamptz
 );
@@ -32,6 +38,41 @@ on public.artworks
 for select
 to authenticated
 using ((select auth.uid()) = owner_id or owner_id is null);
+
+-- Spatial AR assets are normalized so individual layers can be replaced or managed
+-- later without storing public/signed URLs in the database.
+create table if not exists public.artwork_ar_assets (
+  id uuid primary key,
+  artwork_id uuid not null references public.artworks(id) on delete cascade,
+  asset_type text not null check (asset_type in ('image', 'video', 'model')),
+  storage_path text not null,
+  mime_type text not null,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  unique (artwork_id, storage_path)
+);
+
+create index if not exists artwork_ar_assets_artwork_id_idx
+  on public.artwork_ar_assets (artwork_id);
+
+alter table public.artwork_ar_assets enable row level security;
+revoke all privileges on table public.artwork_ar_assets from anon;
+revoke all privileges on table public.artwork_ar_assets from authenticated;
+grant select on table public.artwork_ar_assets to authenticated;
+
+drop policy if exists "Creators can view their own AR assets" on public.artwork_ar_assets;
+create policy "Creators can view their own AR assets"
+on public.artwork_ar_assets
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.artworks
+    where artworks.id = artwork_ar_assets.artwork_id
+      and ((select auth.uid()) = artworks.owner_id or artworks.owner_id is null)
+  )
+);
 
 -- A collection is now the authenticated user's automatic discovery archive.
 -- Recognized artworks are inserted by the client after a successful AR scan.
@@ -90,6 +131,7 @@ values (
     'image/webp',
     'video/mp4',
     'video/webm',
+    'model/gltf-binary',
     'application/octet-stream'
   ]
 )

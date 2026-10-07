@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 
-import { createArtworkServices } from "@/features/artwork/infrastructure/supabase/artwork-services";
+import { buildArtworkOverlay } from "@/features/ar-experience/application/build-artwork-overlay";
 import { ArViewer } from "@/features/ar-experience/presentation/components/ar-viewer";
+import { createArtworkServices } from "@/features/artwork/infrastructure/supabase/artwork-services";
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +23,7 @@ export default async function PublishedArPage({
       config={{
         targetUrl: artwork.targetFileUrl,
         targetIndex: 0,
-        overlay: {
-          kind: "video",
-          url: artwork.overlayUrl,
-          aspectRatio: artwork.overlayAspectRatio,
-        },
+        overlay: buildArtworkOverlay(artwork),
       }}
       artwork={{
         id: artwork.id,
