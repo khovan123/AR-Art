@@ -291,7 +291,7 @@ export function ProductManagerModal({
 
           <div>
             <Label className="text-white/68">Visibility</Label>
-            <div className="mt-2 flex gap-6 border-b border-white/10">
+            <div className="mt-2 flex gap-6">
               <button
                 type="button"
                 onClick={() =>
@@ -326,8 +326,8 @@ export function ProductManagerModal({
           ) : null}
         </form>
 
-        <aside className="border-t border-white/14 pt-6 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
-          <div className="flex items-center justify-between gap-4 border-b border-white/12 pb-4">
+        <aside className="pt-3 lg:pl-4 lg:pt-0">
+          <div className="flex items-center justify-between gap-4 pb-2">
             <div>
               <p className="text-[0.62rem] uppercase tracking-[0.16em] text-white/28">
                 Distribution
@@ -362,13 +362,13 @@ export function ProductManagerModal({
                 </div>
               )}
 
-              <div className="mt-6 space-y-4 border-t border-white/10 pt-4">
+              <div className="mt-6 space-y-4 rounded-[5px] bg-white/[0.018] p-4">
                 <p className="text-[0.55rem] uppercase tracking-[0.15em] text-white/24">Public artwork link · view only</p>
                 <p className="mt-1 break-all text-xs leading-5 text-white/42">{publicPath}</p>
                 <p className="mt-3 text-[0.55rem] uppercase tracking-[0.15em] text-violet-100/38">QR destination · AR camera</p>
                 <p className="mt-1 break-all text-xs leading-5 text-white/42">{arPath}</p>
               </div>
-              <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-t border-white/10 pt-4">
+              <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 pt-1">
                 <Button
                   type="button"
                   variant="ghost"

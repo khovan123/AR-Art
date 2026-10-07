@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useReducer } from "react";
+import { useCallback, useEffect, useReducer, useState } from "react";
 import {
   ArrowUpRight,
   Boxes,
@@ -13,11 +13,13 @@ import {
   Plus,
 } from "lucide-react";
 
+import { AmbientDivider } from "@/components/atoms/ambient-divider";
 import { BackLink } from "@/components/atoms/back-link";
 import { Button } from "@/components/atoms/button";
 import { EverieBrand } from "@/components/atoms/everie-brand";
 import type { PublishedArtwork } from "@/features/artwork/domain/artwork";
 import { getSupabaseBrowserClient } from "@/features/artwork/infrastructure/supabase/supabase-clients";
+import { ArtworkCreateModal } from "@/features/artwork/presentation/components/artwork-create-modal";
 import { CreatorSpatialScene } from "@/features/artwork/presentation/components/creator-spatial-scene";
 import { getCurrentCollectionUser } from "@/features/collection/infrastructure/supabase/collection-repository";
 import { ProductManagerModal } from "@/features/studio/presentation/components/product-manager-modal";
@@ -131,7 +133,7 @@ function ProductCard({
           ) : null}
         </div>
       </div>
-      <div className="border-b border-white/14 py-4 transition-colors duration-500 group-hover:border-white/35">
+      <div className="py-4">
         <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
           <div className="min-w-0">
             <h3 className="truncate text-base font-medium text-white">{product.title}</h3>
@@ -162,6 +164,7 @@ export function StudioApp({ view }: { view: StudioView }) {
   const router = useRouter();
   const pathname = usePathname();
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const load = useCallback(async () => {
     dispatch({ type: "loading" });
@@ -214,7 +217,7 @@ export function StudioApp({ view }: { view: StudioView }) {
       <div className="pointer-events-none fixed inset-0 z-[1] bg-black/66" />
 
       <div className="relative z-10 mx-auto min-h-screen w-full max-w-[94rem] px-5 sm:px-8 lg:px-12">
-        <header className="sticky top-0 z-30 border-b border-white/12 bg-[#050507]/88 backdrop-blur-xl">
+        <header className="everie-nav-surface sticky top-0 z-30 bg-[#050507]/88 backdrop-blur-xl">
           <div className="grid min-h-16 grid-cols-[1fr_auto] items-center gap-x-5 sm:grid-cols-[1fr_auto_1fr]">
             <div className="flex min-w-0 items-center gap-4 sm:gap-5">
               <BackLink href="/" className="shrink-0" />
@@ -222,25 +225,26 @@ export function StudioApp({ view }: { view: StudioView }) {
               <EverieBrand href="/studio" suffix="Studio" className="hidden opacity-90 md:inline-flex" />
             </div>
 
-            <nav className="order-3 col-span-2 flex items-center justify-center gap-7 border-t border-white/8 sm:order-none sm:col-span-1 sm:border-t-0">
+            <nav className="order-3 col-span-2 flex items-center justify-center gap-7 sm:order-none sm:col-span-1">
               <Link href="/studio" scroll={false} className={navClass(view === "overview")}>OVERVIEW</Link>
               <Link href="/studio/products" scroll={false} className={navClass(view === "products")}>PRODUCTS</Link>
             </nav>
 
-            <Link
-              href="/create"
+            <button
+              type="button"
+              onClick={() => setCreateOpen(true)}
               className="justify-self-end inline-flex items-center gap-2 border-b border-white/45 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.13em] text-white/72 transition-[border-color,color] duration-300 hover:border-white hover:text-white"
             >
               <Plus className="size-3.5" />
               Add product
-            </Link>
+            </button>
           </div>
         </header>
 
         {state.phase !== "ready" ? (
           <section className="flex min-h-[70vh] items-center justify-center">
             {state.phase === "error" ? (
-              <div className="max-w-md border-t border-rose-300/30 py-6 text-center">
+              <div className="max-w-md rounded-[5px] bg-rose-300/[0.035] px-5 py-6 text-center">
                 <p className="text-sm text-rose-200">{state.error}</p>
                 <Button onClick={() => void load()} className="mt-4 bg-white text-black">Try again</Button>
               </div>
@@ -263,7 +267,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                   </div>
 
                   <div data-reveal className="lg:pl-8">
-                    <div className="grid grid-cols-3 border-t border-white/12">
+                    <div className="grid grid-cols-3">
                       {[
                         [state.products.length, "Products", Boxes],
                         [published, "Live", CircleDot],
@@ -291,7 +295,8 @@ export function StudioApp({ view }: { view: StudioView }) {
                   </div>
                 </div>
 
-                <div className="mt-16 border-t border-white/12 pt-8">
+                <AmbientDivider className="mt-10" />
+                <div className="pt-5">
                   <div className="flex items-center justify-between">
                     <h2 className="text-xl font-medium">Recent products</h2>
                     <Link href="/studio/products" scroll={false} className="text-xs text-white/50 transition-colors duration-300 hover:text-white">View all →</Link>
@@ -305,7 +310,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                       />
                     ))}
                     {state.products.length === 0 && (
-                      <p className="col-span-full border-t border-white/10 p-8 text-center text-sm text-white/35">
+                      <p className="col-span-full p-8 text-center text-sm text-white/35">
                         No products yet. Add your first AR product.
                       </p>
                     )}
@@ -318,9 +323,9 @@ export function StudioApp({ view }: { view: StudioView }) {
               <section className="studio-view-enter pb-16 pt-14 sm:pt-20">
                 <div className="flex flex-wrap items-end justify-between gap-5">
                   <h1 className="font-serif text-6xl font-normal leading-none tracking-[-0.05em] sm:text-8xl">Products</h1>
-                  <Link href="/create" className="inline-flex items-center gap-2 border-b border-white/45 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.13em] text-white/72 transition-[border-color,color] duration-300 hover:border-white hover:text-white">
+                  <button type="button" onClick={() => setCreateOpen(true)} className="inline-flex items-center gap-2 border-b border-white/45 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.13em] text-white/72 transition-[border-color,color] duration-300 hover:border-white hover:text-white">
                     <Plus className="size-3.5" /> New product
-                  </Link>
+                  </button>
                 </div>
                 <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {state.products.map((product) => (
@@ -331,7 +336,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                     />
                   ))}
                   {state.products.length === 0 && (
-                    <div className="border-t border-white/10 p-12 text-center text-white/35 sm:col-span-2 lg:col-span-3">
+                    <div className="p-12 text-center text-white/35 sm:col-span-2 lg:col-span-3">
                       <ImageIcon className="mx-auto size-6" />
                       <p className="mt-3 text-sm">No products yet.</p>
                     </div>
@@ -350,6 +355,12 @@ export function StudioApp({ view }: { view: StudioView }) {
           </>
         )}
       </div>
+
+      <ArtworkCreateModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => void load()}
+      />
     </main>
   );
 }

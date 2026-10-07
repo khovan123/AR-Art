@@ -25,7 +25,7 @@ export default async function ArtworkPage({
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050507] text-white">
       <div className="pointer-events-none absolute right-[10%] top-[18%] size-80 rounded-full bg-violet-700/7 blur-[130px]" />
-      <header className="relative mx-auto grid w-full max-w-[94rem] grid-cols-[1fr_auto_1fr] items-center border-b border-white/10 px-5 py-5 sm:px-8 lg:px-12">
+      <header className="relative mx-auto grid w-full max-w-[94rem] grid-cols-[1fr_auto_1fr] items-center everie-nav-surface px-5 py-5 sm:px-8 lg:px-12">
         <HistoryBackButton
           fallbackHref="/"
           variant="ghost"
@@ -48,7 +48,7 @@ export default async function ArtworkPage({
               className="mx-auto aspect-[4/5] max-h-[74svh] w-full object-contain"
             />
           </div>
-          <div className="mt-3 flex items-center justify-between border-t border-white/12 pt-3 text-[0.62rem] uppercase tracking-[0.15em] text-white/30">
+          <div className="mt-3 flex items-center justify-between pt-1 text-[0.62rem] uppercase tracking-[0.15em] text-white/30">
             <span>Everie archive</span>
             <span className="text-cyan-100/45">AR enabled</span>
           </div>

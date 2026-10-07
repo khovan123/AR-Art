@@ -48,7 +48,7 @@ export function Modal({
       <button
         type="button"
         aria-label="Close dialog"
-        className="absolute inset-0 cursor-default bg-black/78 backdrop-blur-sm"
+        className="everie-modal-backdrop absolute inset-0 cursor-default bg-black/78 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -56,9 +56,9 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`relative z-10 flex max-h-[88vh] w-full ${maxWidthClassName} flex-col overflow-hidden rounded-[8px] border border-white/10 bg-[#09090d]/94 shadow-[0_45px_160px_rgba(0,0,0,0.72)] backdrop-blur-2xl`}
+        className={`everie-modal-surface relative z-10 flex max-h-[88vh] w-full ${maxWidthClassName} flex-col overflow-hidden rounded-[8px] bg-[#09090d]/94 shadow-[0_45px_160px_rgba(0,0,0,0.72),0_0_0_1px_rgba(255,255,255,0.055)] backdrop-blur-2xl`}
       >
-        <header className="relative flex items-center justify-between gap-4 border-b border-white/8 px-5 py-4 sm:px-6">
+        <header className="relative flex items-center justify-between gap-4 bg-white/[0.012] px-5 py-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             {icon ? (
               <div className="flex size-9 shrink-0 items-center justify-center rounded-[4px] bg-violet-300/8 text-violet-100">
@@ -90,7 +90,7 @@ export function Modal({
         </div>
 
         {footer ? (
-          <footer className="relative border-t border-white/8 px-5 py-4 sm:px-6">
+          <footer className="relative bg-black/14 px-5 py-4 sm:px-6">
             {footer}
           </footer>
         ) : null}

@@ -76,8 +76,8 @@ export function SiteHeader() {
     <header
       className={`fixed inset-x-0 top-0 z-50 text-white transition-[background-color,border-color,backdrop-filter] duration-500 ${
         scrolled
-          ? "border-b border-white/10 bg-[#030305]/92 backdrop-blur-xl"
-          : "border-b border-transparent bg-transparent"
+          ? "everie-nav-surface bg-[#030305]/92 backdrop-blur-xl"
+          : "bg-transparent"
       }`}
     >
       <div className="mx-auto flex w-full max-w-[94rem] items-center justify-between px-5 py-4 sm:px-8 lg:px-12">

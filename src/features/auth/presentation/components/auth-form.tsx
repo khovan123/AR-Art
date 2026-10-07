@@ -264,7 +264,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
     <div className="auth-card relative mt-10 w-full overflow-hidden rounded-[8px] bg-[#0d0a14]/76 shadow-[0_34px_110px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/[0.07] backdrop-blur-2xl">
       <div className="auth-card-glow" />
 
-      <div className="auth-mode-switch relative grid grid-cols-2 border-b border-white/10">
+      <div className="auth-mode-switch relative grid grid-cols-2">
         <span
           aria-hidden="true"
           className={`auth-mode-indicator ${mode === "signup" ? "is-signup" : ""}`}
@@ -410,7 +410,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
         </Button>
       </form>
 
-      <p className="auth-footnote border-t border-white/10 px-5 py-4 text-xs leading-5 text-white/30 sm:px-7">
+      <p className="auth-footnote px-5 py-4 text-xs leading-5 text-white/30 sm:px-7">
         Bộ sưu tập đi theo tài khoản của bạn trên mọi thiết bị.
       </p>
     </div>

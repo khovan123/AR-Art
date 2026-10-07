@@ -36,7 +36,7 @@ export default async function LoginPage({
         </section>
 
         <section className="relative flex min-h-screen flex-col px-5 py-6 sm:px-10 lg:px-14 xl:px-20">
-          <div className="auth-home-enter relative grid grid-cols-[1fr_auto_1fr] items-center border-b border-white/10 pb-5">
+          <div className="auth-home-enter everie-nav-surface relative grid grid-cols-[1fr_auto_1fr] items-center rounded-[6px] px-4 py-4">
             <BackLink href="/" />
             <EverieBrand />
             <span aria-hidden="true" />
@@ -54,7 +54,7 @@ export default async function LoginPage({
             </div>
           </div>
 
-          <div className="auth-home-enter relative flex justify-end border-t border-white/10 pt-5 text-[0.6rem] uppercase tracking-[0.14em] text-white/28">
+          <div className="auth-home-enter relative flex justify-end pt-5 text-[0.6rem] uppercase tracking-[0.14em] text-white/28">
             <Link href="/collection" className="inline-flex items-center gap-2 transition hover:text-white">
               View collection <ArrowUpRight className="size-3" />
             </Link>

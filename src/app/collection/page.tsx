@@ -12,7 +12,7 @@ export default async function CollectionPage() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050507] text-white">
       <div className="pointer-events-none absolute right-[8%] top-24 size-80 rounded-full bg-violet-700/7 blur-[130px]" />
-      <header className="relative mx-auto grid w-full max-w-[94rem] grid-cols-[1fr_auto_1fr] items-center border-b border-white/10 px-5 py-5 sm:px-8 lg:px-12">
+      <header className="relative mx-auto grid w-full max-w-[94rem] grid-cols-[1fr_auto_1fr] items-center everie-nav-surface px-5 py-5 sm:px-8 lg:px-12">
         <BackLink href="/" />
         <EverieBrand />
         <span aria-hidden="true" />

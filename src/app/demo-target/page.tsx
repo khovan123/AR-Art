@@ -9,7 +9,7 @@ export default function DemoTargetPage() {
     <main className="relative min-h-screen overflow-hidden bg-[#050507] px-5 py-6 text-white sm:px-8">
       <div className="pointer-events-none absolute right-[12%] top-20 size-72 rounded-full bg-violet-700/7 blur-[120px]" />
       <div className="relative mx-auto w-full max-w-4xl">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 border-b border-white/12 pb-5">
+        <div className="everie-nav-surface grid grid-cols-[1fr_auto_1fr] items-center gap-4 rounded-[6px] px-4 py-4">
           <BackLink href="/" label="Home" className="justify-self-start" />
           <EverieBrand />
           <span aria-hidden="true" />

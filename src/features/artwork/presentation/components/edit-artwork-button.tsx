@@ -121,8 +121,8 @@ export function EditArtworkButton({
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-          title={title}
-          maxWidthClassName="max-w-2xl"
+        title={title}
+        maxWidthClassName="max-w-2xl"
         footer={
           <div className="flex justify-end gap-2">
             <Button
@@ -182,7 +182,7 @@ export function EditArtworkButton({
 
           <div>
             <Label className="text-white/68">Visibility</Label>
-            <div className="mt-2 flex gap-6 border-b border-white/10">
+            <div className="mt-2 flex gap-6">
               <button
                 type="button"
                 onClick={() => setValue("status", "draft", { shouldValidate: true, shouldDirty: true })}

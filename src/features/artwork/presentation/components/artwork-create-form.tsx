@@ -147,7 +147,15 @@ async function readLayerAspectRatio(file: File) {
   return undefined;
 }
 
-export function ArtworkCreateForm() {
+export function ArtworkCreateForm({
+  embedded = false,
+  onCreated,
+  onDone,
+}: {
+  embedded?: boolean;
+  onCreated?: (productId: string) => void;
+  onDone?: () => void;
+}) {
   const [workflow, dispatch] = useReducer(workflowReducer, initialWorkflowState);
 
   const {
@@ -317,21 +325,22 @@ export function ArtworkCreateForm() {
       );
 
       if (intent === "draft") {
-        dispatch({
-          type: "success",
-          result: {
-            status: "draft",
-            productId: session.artworkId,
-            shareUrl: null,
-            arUrl: null,
-            qrDataUrl: null,
-          },
-        });
+        const result: PublishResult = {
+          status: "draft",
+          productId: session.artworkId,
+          shareUrl: null,
+          arUrl: null,
+          qrDataUrl: null,
+        };
+        dispatch({ type: "success", result });
+        onCreated?.(result.productId);
         return;
       }
 
       dispatch({ type: "message", message: "Finishing up…" });
-      dispatch({ type: "success", result: await publishArtwork(session) });
+      const result = await publishArtwork(session);
+      dispatch({ type: "success", result });
+      onCreated?.(result.productId);
     } catch (cause) {
       dispatch({
         type: "error",
@@ -371,17 +380,17 @@ export function ArtworkCreateForm() {
 
   if (workflow.result) {
     return (
-      <main className="relative min-h-screen overflow-hidden bg-[#050507] text-white">
-        <div className="pointer-events-none absolute right-[8%] top-24 size-80 rounded-full bg-violet-700/7 blur-[130px]" />
-        <header className="relative mx-auto grid w-full max-w-[94rem] grid-cols-[1fr_auto_1fr] items-center border-b border-white/10 px-5 py-5 sm:px-8 lg:px-12">
+      <main className={embedded ? "relative text-white" : "relative min-h-screen overflow-hidden bg-[#050507] text-white"}>
+        <div className={embedded ? "hidden" : "pointer-events-none absolute right-[8%] top-24 size-80 rounded-full bg-violet-700/7 blur-[130px]"} />
+        <header className={embedded ? "hidden" : "relative mx-auto grid w-full max-w-[94rem] grid-cols-[1fr_auto_1fr] items-center everie-nav-surface px-5 py-5 sm:px-8 lg:px-12"}>
           <BackLink href="/studio/products" label="Products" />
           <EverieBrand />
           <span aria-hidden="true" />
         </header>
 
-        <section className="relative mx-auto grid min-h-[calc(100svh-4.8rem)] w-full max-w-[94rem] items-center gap-12 px-5 py-14 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:px-12 lg:py-20">
+        <section className={embedded ? "relative mx-auto grid w-full items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]" : "relative mx-auto grid min-h-[calc(100svh-4.8rem)] w-full max-w-[94rem] items-center gap-12 px-5 py-14 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:px-12 lg:py-20"}>
           <div>
-            <h1 className="max-w-3xl font-serif text-6xl leading-[0.88] tracking-[-0.055em] sm:text-8xl">
+            <h1 className={embedded ? "max-w-3xl font-serif text-4xl leading-[0.92] tracking-[-0.045em] sm:text-5xl" : "max-w-3xl font-serif text-6xl leading-[0.88] tracking-[-0.055em] sm:text-8xl"}>
               {workflow.result.status === "published" ? (
                 <>Ready for<br /><span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">the wall.</span></>
               ) : (
@@ -390,7 +399,7 @@ export function ArtworkCreateForm() {
             </h1>
 
             {workflow.result.shareUrl ? (
-              <div className="mt-10 border-t border-white/10 pt-4">
+              <div className="mt-10 rounded-[5px] bg-white/[0.018] p-4">
                 <p className="text-[0.62rem] uppercase tracking-[0.16em] text-white/28">Artwork link</p>
                 <p className="mt-2 break-all text-sm text-white/58">{workflow.result.shareUrl}</p>
               </div>
@@ -415,7 +424,16 @@ export function ArtworkCreateForm() {
                   <a href={workflow.result.shareUrl} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center rounded-[4px] bg-white/[0.035] px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/58 ring-1 ring-inset ring-white/10 transition hover:bg-white/[0.06] hover:text-white hover:ring-white/20">
                     Open work
                   </a>
+                  {embedded && onDone ? (
+                    <button type="button" onClick={onDone} className="inline-flex h-12 items-center rounded-[4px] px-4 text-xs font-medium uppercase tracking-[0.12em] text-white/46 transition hover:text-white">
+                      Done
+                    </button>
+                  ) : null}
                 </>
+              ) : embedded && onDone ? (
+                <button type="button" onClick={onDone} className="inline-flex h-12 items-center rounded-[4px] bg-white px-5 text-xs font-medium uppercase tracking-[0.12em] text-black transition hover:bg-violet-100">
+                  Manage draft
+                </button>
               ) : (
                 <Link href="/studio/products" className="inline-flex h-12 items-center rounded-[4px] bg-white px-5 text-xs font-medium uppercase tracking-[0.12em] text-black transition hover:bg-violet-100">
                   Manage draft
@@ -429,7 +447,7 @@ export function ArtworkCreateForm() {
               <div className="mx-auto max-w-sm p-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={workflow.result.qrDataUrl} alt="QR code for the published AR artwork" className="aspect-square w-full rounded-[5px] bg-white p-3" />
-                <div className="mt-5 flex items-center justify-between border-t border-white/15 pt-4 text-[0.62rem] uppercase tracking-[0.16em] text-white/45">
+                <div className="mt-5 flex items-center justify-between pt-2 text-[0.62rem] uppercase tracking-[0.16em] text-white/45">
                   <EverieBrand href={null} className="opacity-70" textClassName="text-[0.58rem]" iconClassName="size-3.5" /><span>Scan to enter AR</span>
                 </div>
               </div>
@@ -447,20 +465,20 @@ export function ArtworkCreateForm() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#050507] text-white">
-      <div className="pointer-events-none absolute right-[12%] top-28 size-80 rounded-full bg-violet-700/7 blur-[130px]" />
-      <header className="relative mx-auto grid w-full max-w-[94rem] grid-cols-[1fr_auto_1fr] items-center border-b border-white/10 px-5 py-5 sm:px-8 lg:px-12">
+    <main className={embedded ? "relative text-white" : "relative min-h-screen overflow-hidden bg-[#050507] text-white"}>
+      <div className={embedded ? "hidden" : "pointer-events-none absolute right-[12%] top-28 size-80 rounded-full bg-violet-700/7 blur-[130px]"} />
+      <header className={embedded ? "hidden" : "relative mx-auto grid w-full max-w-[94rem] grid-cols-[1fr_auto_1fr] items-center everie-nav-surface px-5 py-5 sm:px-8 lg:px-12"}>
         <BackLink href="/studio/products" label="Studio" />
         <EverieBrand />
         <span aria-hidden="true" />
       </header>
 
-      <section className="relative mx-auto w-full max-w-[94rem] px-5 py-14 sm:px-8 lg:px-12 lg:py-20">
-        <h1 className="max-w-5xl font-serif text-6xl leading-[0.86] tracking-[-0.055em] sm:text-8xl lg:text-9xl">
+      <section className={embedded ? "relative mx-auto w-full max-w-none p-0" : "relative mx-auto w-full max-w-[94rem] px-5 py-14 sm:px-8 lg:px-12 lg:py-20"}>
+        <h1 className={embedded ? "hidden" : "max-w-5xl font-serif text-6xl leading-[0.86] tracking-[-0.055em] sm:text-8xl lg:text-9xl"}>
           Give the work<br /><span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">another layer.</span>
         </h1>
 
-        <div className="mt-12 grid grid-cols-4 gap-5 border-t border-white/10 pt-4">
+        <div className={`${embedded ? "mt-0" : "mt-12"} grid grid-cols-4 gap-5 pt-2`}>
           {[
             ["01", "Details", detailsReady],
             ["02", "Artwork", Boolean(targetImage)],
@@ -611,7 +629,7 @@ export function ArtworkCreateForm() {
               </div>
             )}
 
-            <div className="flex flex-wrap items-center justify-between gap-5 border-t border-white/12 pt-5">
+            <div className="flex flex-wrap items-center justify-between gap-5 rounded-[5px] bg-white/[0.018] px-4 py-4">
               <p className="max-w-sm text-xs leading-5 text-white/32">
                 Publish creates a public artwork page and a QR that opens the AR camera directly. Collection happens only after target recognition.
               </p>
@@ -630,7 +648,7 @@ export function ArtworkCreateForm() {
             {workflow.message ? <p className={`text-sm ${isSubmitting ? "text-white/40" : "text-rose-200/80"}`} role="status">{workflow.message}</p> : null}
           </div>
 
-          <aside className="relative min-h-[34rem] overflow-hidden border-t border-white/10 bg-[#09090d] text-white lg:border-l lg:border-t-0">
+          <aside className="relative min-h-[34rem] overflow-hidden bg-[#09090d] text-white">
             {targetImage ? (
               <ArCompositionPreview
                 targetImage={targetImage}
@@ -644,10 +662,10 @@ export function ArtworkCreateForm() {
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/78 via-black/5 to-black/20" />
             <div className="absolute inset-x-0 bottom-0 z-10 p-6 sm:p-8">
               {arMode === "spatial_layers" ? (
-                <div className="mt-6 flex items-center gap-3 border-t border-white/15 pt-4 text-xs text-white/45"><Box className="size-4" /><span>{spatialLayers.length} spatial layer{spatialLayers.length === 1 ? "" : "s"}</span></div>
+                <div className="mt-6 flex items-center gap-3 pt-2 text-xs text-white/45"><Box className="size-4" /><span>{spatialLayers.length} spatial layer{spatialLayers.length === 1 ? "" : "s"}</span></div>
               ) : null}
               {isSubmitting && workflow.compilerProgress > 0 && workflow.compilerProgress < 100 ? (
-                <div className="mt-6 border-t border-white/15 pt-4">
+                <div className="mt-6 pt-2">
                   <div className="flex justify-between text-[0.62rem] uppercase tracking-[0.12em] text-white/45"><span>Preparing</span><span>{workflow.compilerProgress}%</span></div>
                   <div className="mt-2 h-px bg-white/15"><div className="h-px bg-cyan-100 transition-[width]" style={{ width: `${workflow.compilerProgress}%` }} /></div>
                 </div>

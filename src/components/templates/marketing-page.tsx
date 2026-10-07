@@ -10,6 +10,7 @@ import {
   Video,
 } from "lucide-react";
 
+import { AmbientDivider } from "@/components/atoms/ambient-divider";
 import { EverieBrand } from "@/components/atoms/everie-brand";
 import { ImmersiveGalleryShowcase } from "@/components/organisms/immersive-gallery-showcase";
 import { SiteHeader } from "@/components/organisms/site-header";
@@ -91,7 +92,7 @@ export async function MarketingPage() {
 
   return (
     <main className="everie-page min-h-screen overflow-hidden bg-[#030305] text-white">
-      <div className="relative border-b border-white/10">
+      <div className="relative">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_28%,rgba(124,58,237,0.18),transparent_35%),radial-gradient(circle_at_88%_58%,rgba(34,211,238,0.1),transparent_28%)]" />
         <SiteHeader />
 
@@ -124,13 +125,13 @@ export async function MarketingPage() {
               </Link>
             </div>
 
-            <div className="mt-9 grid max-w-xl grid-cols-3 border-y border-white/12 py-4">
+            <div className="mt-9 grid max-w-xl grid-cols-3 gap-5 py-2">
               {[
                 ["01", "Open in browser"],
                 ["02", "Point at the work"],
                 ["03", "Recognition unlocks"],
               ].map(([number, label]) => (
-                <div key={number} className="border-r border-white/10 px-3 first:pl-0 last:border-r-0 last:pr-0">
+                <div key={number} className="px-1 first:pl-0 last:pr-0">
                   <p className="text-[0.58rem] tabular-nums text-white/24">{number}</p>
                   <p className="mt-1 text-[0.6rem] uppercase leading-4 tracking-[0.1em] text-white/45">{label}</p>
                 </div>
@@ -173,8 +174,9 @@ export async function MarketingPage() {
           </div>
         </section>
       </div>
+      <AmbientDivider />
 
-      <section className="everie-capability-strip border-b border-white/10 bg-[#07070a]" aria-label="Everie capabilities">
+      <section className="everie-capability-strip bg-[#07070a]" aria-label="Everie capabilities">
         <p className="sr-only">{CAPABILITIES.join(", ")}</p>
         <div className="overflow-hidden py-4" aria-hidden="true">
           <div className="everie-marquee-track flex w-max items-center">
@@ -189,8 +191,9 @@ export async function MarketingPage() {
           </div>
         </div>
       </section>
+      <AmbientDivider compact />
 
-      <section id="how-it-works" className="everie-section relative border-b border-white/10">
+      <section id="how-it-works" className="everie-section relative">
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(76,29,149,0.12)_45%,transparent)]" />
         <div className="relative mx-auto w-full max-w-[94rem] px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
           <div className="grid gap-8 lg:grid-cols-[0.38fr_1.62fr]">
@@ -227,7 +230,7 @@ export async function MarketingPage() {
                         {step.title}
                       </h3>
                       <p className="relative mt-4 max-w-md text-sm leading-6 text-white/48">{step.text}</p>
-                      <p className="relative mt-6 border-t border-white/10 pt-4 text-xs leading-5 text-violet-100/62">
+                      <p className="relative mt-6 text-xs leading-5 text-violet-100/62">
                         {step.outcome}
                       </p>
                     </article>
@@ -238,8 +241,9 @@ export async function MarketingPage() {
           </div>
         </div>
       </section>
+      <AmbientDivider />
 
-      <section id="works" className="everie-section relative mx-auto w-full max-w-[94rem] border-b border-white/10 px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
+      <section id="works" className="everie-section relative mx-auto w-full max-w-[94rem] px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
         <div className="pointer-events-none absolute left-[28%] top-12 h-72 w-72 rounded-full bg-violet-600/5 blur-[100px]" />
         <div className="relative grid gap-8 lg:grid-cols-[0.35fr_1.65fr]">
           <div>
@@ -266,7 +270,7 @@ export async function MarketingPage() {
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-violet-950/25 via-transparent to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
                 </div>
-                <div className="mt-4 flex items-start justify-between gap-4 border-t border-white/15 pt-3">
+                <div className="mt-4 flex items-start justify-between gap-4 pt-1">
                   <div>
                     <h2 className="font-serif text-2xl leading-none text-white">{artwork.title}</h2>
                     <p className="mt-2 text-xs uppercase tracking-[0.12em] text-white/35">{artwork.artistName}</p>
@@ -276,15 +280,16 @@ export async function MarketingPage() {
               </Link>
             ))}
             {selected.length === 0 ? (
-              <p className="col-span-full border-t border-white/15 py-12 text-sm text-white/35">
+              <p className="col-span-full py-12 text-sm text-white/35">
                 The first exhibition is being prepared.
               </p>
             ) : null}
           </div>
         </div>
       </section>
+      <AmbientDivider />
 
-      <section className="everie-section relative border-b border-white/10 bg-[#050509]">
+      <section className="everie-section relative bg-[#050509]">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_38%,rgba(76,29,149,0.2),transparent_30%),radial-gradient(circle_at_86%_72%,rgba(8,145,178,0.08),transparent_24%)]" />
         <div className="relative mx-auto grid w-full max-w-[94rem] gap-12 px-5 py-20 sm:px-8 lg:grid-cols-[0.62fr_1.38fr] lg:px-12 lg:py-28">
           <div className="relative z-10">
@@ -307,7 +312,7 @@ export async function MarketingPage() {
           </div>
 
           <div className="relative overflow-hidden rounded-[8px] bg-[#09090d]/92 shadow-[0_45px_140px_rgba(0,0,0,0.5)] ring-1 ring-inset ring-white/[0.07]">
-            <div className="flex items-center justify-between border-b border-white/10 bg-[#07070a] px-4 py-3 sm:px-5">
+            <div className="flex items-center justify-between bg-[#07070a]/72 px-4 py-3 sm:px-5">
               <div className="flex items-center gap-2" aria-hidden="true">
                 <span className="size-2.5 rounded-full bg-rose-300/70" />
                 <span className="size-2.5 rounded-full bg-amber-200/70" />
@@ -317,7 +322,7 @@ export async function MarketingPage() {
             </div>
 
             <div className="grid min-h-[34rem] sm:grid-cols-[8.5rem_1fr]">
-              <aside className="hidden border-r border-white/10 bg-black/20 p-4 sm:block">
+              <aside className="hidden bg-black/20 p-4 sm:block">
                 <p className="text-[0.58rem] uppercase tracking-[0.16em] text-white/25">Workflow</p>
                 <div className="mt-6 space-y-1 text-xs">
                   {["Details", "Artwork", "AR layer", "Publish"].map((item) => (
@@ -332,7 +337,7 @@ export async function MarketingPage() {
               </aside>
 
               <div className="p-4 sm:p-6 lg:p-8">
-                <div className="flex flex-wrap items-end justify-between gap-4 border-b border-white/10 pb-5">
+                <div className="flex flex-wrap items-end justify-between gap-4 pb-3">
                   <div>
                     <p className="text-[0.58rem] uppercase tracking-[0.17em] text-violet-100/50">AR experience</p>
                     <h3 className="mt-2 font-serif text-3xl tracking-[-0.03em]">Select a rendering mode</h3>
@@ -359,7 +364,7 @@ export async function MarketingPage() {
                   })}
                 </div>
 
-                <div className="mt-6 grid gap-4 border-t border-cyan-100/12 pt-5 sm:grid-cols-[auto_1fr_auto] sm:items-center">
+                <div className="mt-6 grid gap-4 rounded-[5px] bg-cyan-100/[0.035] px-4 py-4 sm:grid-cols-[auto_1fr_auto] sm:items-center">
                   <div className="flex size-8 items-center justify-center text-cyan-100/65">
                     <ScanLine className="size-4" />
                   </div>
@@ -374,8 +379,9 @@ export async function MarketingPage() {
           </div>
         </div>
       </section>
+      <AmbientDivider />
 
-      <section id="artists" className="everie-section mx-auto w-full max-w-[94rem] border-b border-white/10 px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
+      <section id="artists" className="everie-section mx-auto w-full max-w-[94rem] px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
         <div className="grid gap-8 lg:grid-cols-[0.35fr_1.65fr]">
           <p className="text-[0.68rem] uppercase tracking-[0.25em] text-white/38">04 · Artists</p>
           <div>
@@ -385,7 +391,7 @@ export async function MarketingPage() {
                   key={artist}
                   data-reveal
                   data-reveal-delay={String(index * 55)}
-                  className="group grid grid-cols-[3rem_1fr_auto] items-baseline gap-4 border-t border-white/15 py-5 transition hover:border-violet-300/35 sm:grid-cols-[5rem_1fr_auto]"
+                  className="group grid grid-cols-[3rem_1fr_auto] items-baseline gap-4 rounded-[4px] px-2 py-5 transition duration-300 hover:translate-x-1 hover:bg-white/[0.025] sm:grid-cols-[5rem_1fr_auto]"
                 >
                   <span className="text-xs text-white/25">{String(index + 1).padStart(2, "0")}</span>
                   <span className="font-serif text-3xl text-white transition group-hover:text-violet-100 sm:text-5xl">{artist}</span>
@@ -395,13 +401,14 @@ export async function MarketingPage() {
                 </div>
               ))
             ) : (
-              <div className="border-t border-white/15 py-8 text-sm text-white/35">
+              <div className="py-8 text-sm text-white/35">
                 Artist profiles will appear with published works.
               </div>
             )}
           </div>
         </div>
       </section>
+      <AmbientDivider />
 
       <section className="everie-section relative mx-auto grid min-h-[58svh] w-full max-w-[94rem] items-center gap-12 overflow-hidden px-5 py-20 sm:px-8 lg:grid-cols-2 lg:px-12 lg:py-28">
         <div className="pointer-events-none absolute -bottom-32 left-[18%] h-80 w-80 rounded-full bg-violet-700/10 blur-[120px]" />
@@ -414,7 +421,7 @@ export async function MarketingPage() {
             </span>
           </h2>
         </div>
-        <div className="relative border-l border-white/12 pl-6 lg:ml-10 lg:pl-10">
+        <div className="relative pl-0 lg:ml-10 lg:pl-4">
           <p className="max-w-md text-base leading-7 text-white/45">
             Upload the artwork and its AR layer, then place its QR beside the physical work. Visitors only collect what the camera truly recognizes.
           </p>
@@ -427,7 +434,8 @@ export async function MarketingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-white/10 bg-[#050507]">
+      <footer className="bg-[#050507]">
+        <AmbientDivider compact />
         <div className="mx-auto grid w-full max-w-[94rem] gap-8 px-5 py-10 sm:px-8 md:grid-cols-[1.5fr_1fr_1fr] lg:px-12">
           <div>
             <EverieBrand className="opacity-90" />
@@ -452,7 +460,7 @@ export async function MarketingPage() {
             </div>
           </div>
         </div>
-        <div className="mx-auto flex w-full max-w-[94rem] items-end justify-between border-t border-white/8 px-5 py-6 text-[0.6rem] uppercase tracking-[0.14em] text-white/24 sm:px-8 lg:px-12">
+        <div className="mx-auto flex w-full max-w-[94rem] items-end justify-between px-5 py-6 text-[0.6rem] uppercase tracking-[0.14em] text-white/24 sm:px-8 lg:px-12">
           <span>Everie · Web AR gallery</span>
           <span>2026</span>
         </div>

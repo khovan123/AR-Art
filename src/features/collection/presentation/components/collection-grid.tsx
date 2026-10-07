@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, LoaderCircle, LogOut, ScanLine, Trash2 } from "lucide-react";
 
+import { AmbientDivider } from "@/components/atoms/ambient-divider";
 import type { PublishedArtwork } from "@/features/artwork/domain/artwork";
 import { getSupabaseBrowserClient } from "@/features/artwork/infrastructure/supabase/supabase-clients";
 import {
@@ -87,7 +88,7 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
 
   if (loading) {
     return (
-      <div className="border-b border-white/10 py-10 text-xs uppercase tracking-[0.16em] text-white/30">
+      <div className="py-10 text-xs uppercase tracking-[0.16em] text-white/30">
         Loading your collection…
       </div>
     );
@@ -95,7 +96,7 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
 
   if (!userEmail) {
     return (
-      <section className="min-h-[28rem] border-t border-white/10 py-14">
+      <section className="min-h-[28rem] py-14">
         <div className="max-w-2xl">
           <ScanLine className="size-5 text-white/30" aria-hidden="true" />
           <h2 className="mt-6 font-serif text-5xl leading-[0.95] tracking-[-0.045em] sm:text-6xl">
@@ -114,7 +115,7 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
 
   return (
     <div>
-      <div className="mb-12 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 py-4">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-[5px] bg-white/[0.018] px-4 py-4">
         <div className="flex items-baseline gap-4">
           <span className="text-[0.62rem] uppercase tracking-[0.18em] text-white/28">Signed in</span>
           <span className="text-sm text-white/58">{userEmail}</span>
@@ -128,8 +129,10 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
         </button>
       </div>
 
+      <AmbientDivider compact className="mb-7" />
+
       {error ? (
-        <div className="mb-8 border-l-2 border-rose-300/60 py-1 pl-4 text-sm text-rose-200/80">{error}</div>
+        <div className="mb-8 rounded-[5px] bg-rose-300/[0.035] px-4 py-3 text-sm text-rose-200/80">{error}</div>
       ) : null}
 
       {collectedArtworks.length > 0 ? (
@@ -150,7 +153,7 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-[1fr_auto] gap-5 border-t border-white/12 pt-3">
+                <div className="mt-4 grid grid-cols-[1fr_auto] gap-5 pt-1">
                   <div>
                     <h2 className="font-serif text-2xl leading-none text-white">{artwork.title}</h2>
                     <p className="mt-2 text-xs uppercase tracking-[0.12em] text-white/35">{artwork.artistName}</p>
@@ -176,7 +179,7 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
           ))}
         </div>
       ) : (
-        <section className="flex min-h-[24rem] flex-col items-center justify-center border-t border-white/10 px-6 text-center">
+        <section className="flex min-h-[24rem] flex-col items-center justify-center px-6 text-center">
           <div className="flex size-14 items-center justify-center rounded-full bg-white/[0.035] text-white/30">
             <ScanLine className="size-6" />
           </div>
