@@ -33,6 +33,7 @@ export default async function PublishedArPage({
         slug: artwork.slug,
         title: artwork.title,
         artistName: artwork.artistName,
+        ownerId: artwork.ownerId,
       }}
     />
   );

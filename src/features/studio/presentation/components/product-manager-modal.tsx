@@ -46,13 +46,11 @@ async function authHeaders() {
 
 export function ProductManagerModal({
   product,
-  collectionCount,
   onClose,
   onSaved,
   onDeleted,
 }: {
   product: PublishedArtwork | null;
-  collectionCount: number;
   onClose: () => void;
   onSaved: (product: PublishedArtwork) => void;
   onDeleted: (productId: string) => void;
@@ -101,8 +99,9 @@ export function ProductManagerModal({
     let active = true;
     if (!publicPath || product?.status !== "published") return;
 
-    const absoluteUrl = new URL(publicPath, window.location.origin).toString();
-    void QRCode.toDataURL(absoluteUrl, {
+    const scanUrl = new URL(publicPath, window.location.origin);
+    scanUrl.searchParams.set("collect", "1");
+    void QRCode.toDataURL(scanUrl.toString(), {
       width: 640,
       margin: 2,
       errorCorrectionLevel: "M",
@@ -333,7 +332,7 @@ export function ProductManagerModal({
                 Distribution
               </p>
               <p className="mt-1 text-sm text-white/58">
-                {collectionCount} collection{collectionCount === 1 ? "" : "s"}
+                {product.status === "published" ? "Public QR and AR access" : "Private until published"}
               </p>
             </div>
             <span
