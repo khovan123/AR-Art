@@ -473,8 +473,34 @@ export function ArtworkCreateForm() {
           </div>
         </div>
 
-        <form onSubmit={publish} noValidate className="mt-16 grid gap-10 border-t border-white/12 pt-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="space-y-9">
+        <div className="mt-12 grid grid-cols-4 gap-px border border-white/10 bg-white/10 p-px">
+          {[
+            ["01", "Details", detailsReady],
+            ["02", "Artwork", Boolean(targetImage)],
+            ["03", "AR layer", arReady],
+            ["04", "Publish", canPublish],
+          ].map(([number, label, ready]) => (
+            <div
+              key={String(label)}
+              className={`min-w-0 bg-[#08080b] px-3 py-3 sm:px-4 ${ready ? "text-white" : "text-white/28"}`}
+            >
+              <p className="text-[0.55rem] tabular-nums tracking-[0.14em] opacity-55">{String(number)}</p>
+              <p className="mt-1 truncate text-[0.58rem] font-medium uppercase tracking-[0.1em] sm:text-[0.62rem]">
+                {String(label)}
+              </p>
+              <div className="mt-2 h-px bg-white/10">
+                <div className={`h-px transition-all duration-500 ${ready ? "w-full bg-violet-200" : "w-0"}`} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <form
+          onSubmit={publish}
+          noValidate
+          className="mt-5 grid overflow-hidden border border-white/10 bg-[#07070a]/72 shadow-[0_36px_120px_rgba(0,0,0,0.3)] lg:grid-cols-[1.05fr_0.95fr]"
+        >
+          <div className="space-y-9 p-5 sm:p-7 lg:p-8">
             <div className="grid gap-8 sm:grid-cols-2">
               <label className="block">
                 <span className="text-[0.65rem] uppercase tracking-[0.17em] text-white/35">Artwork title</span>
@@ -600,12 +626,10 @@ export function ArtworkCreateForm() {
               </div>
             )}
 
-            <div className="flex flex-wrap items-center justify-between gap-5 border-y border-white/12 py-4">
-              <div className="flex items-center gap-5 text-[0.62rem] uppercase tracking-[0.13em] text-white/28">
-                <span className={detailsReady ? "text-white" : ""}>Details</span>
-                <span className={targetImage ? "text-white" : ""}>Artwork</span>
-                <span className={arReady ? "text-white" : ""}>AR</span>
-              </div>
+            <div className="flex flex-wrap items-center justify-between gap-5 border-t border-white/12 pt-5">
+              <p className="max-w-sm text-xs leading-5 text-white/32">
+                Publish creates a public artwork page and a QR that opens the AR camera directly. Collection happens only after target recognition.
+              </p>
               <div className="flex flex-wrap items-center gap-2">
                 <Button type="button" variant="outline" disabled={!canPublish} onClick={() => void saveDraft()} className="h-12 rounded-none border-white/15 bg-transparent px-5 text-xs font-medium uppercase tracking-[0.12em] text-white/55 hover:bg-white/[0.05] hover:text-white disabled:opacity-30">
                   {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : <Check className="size-4" />}
@@ -621,7 +645,7 @@ export function ArtworkCreateForm() {
             {workflow.message ? <p className={`text-sm ${isSubmitting ? "text-white/40" : "text-rose-200/80"}`} role="status">{workflow.message}</p> : null}
           </div>
 
-          <aside className="relative min-h-[34rem] overflow-hidden border border-white/10 bg-[#09090d] text-white">
+          <aside className="relative min-h-[34rem] overflow-hidden border-t border-white/10 bg-[#09090d] text-white lg:border-l lg:border-t-0">
             {targetImage ? (
               <ArCompositionPreview
                 targetImage={targetImage}

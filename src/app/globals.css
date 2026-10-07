@@ -954,7 +954,7 @@ a {
   top: 0.25rem;
   bottom: 0.25rem;
   width: calc(50% - 0.25rem);
-  border-radius: 999px;
+  border-radius: 0;
   background: linear-gradient(120deg, #ffffff, #f5f3ff 58%, #ecfeff);
   box-shadow:
     0 8px 24px rgba(255,255,255,0.08),
@@ -1124,5 +1124,69 @@ a {
   .auth-field input,
   .auth-submit-button {
     transition-duration: 120ms;
+  }
+}
+
+
+/* Everie marketing motion system */
+.everie-page {
+  --everie-ink: #030305;
+  --everie-panel: #09090d;
+  --everie-violet: #a78bfa;
+  isolation: isolate;
+}
+
+.everie-hero-copy {
+  animation: everie-hero-rise 780ms cubic-bezier(0.16, 1, 0.3, 1) 90ms both;
+}
+
+.everie-hero-visual {
+  animation: everie-visual-enter 920ms cubic-bezier(0.16, 1, 0.3, 1) 170ms both;
+}
+
+.everie-marquee-track {
+  animation: everie-marquee 28s linear infinite;
+  will-change: transform;
+}
+
+@keyframes everie-hero-rise {
+  from { opacity: 0; transform: translateY(22px); filter: blur(7px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@keyframes everie-visual-enter {
+  from { opacity: 0; transform: translate3d(24px, 12px, 0) scale(0.985); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes everie-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes everie-section-in {
+  from { opacity: 0.32; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .everie-section {
+      animation: everie-section-in linear both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 24%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .everie-hero-copy,
+  .everie-hero-visual,
+  .everie-marquee-track {
+    animation: none !important;
+  }
+
+  .everie-capability-strip {
+    overflow-x: auto;
   }
 }

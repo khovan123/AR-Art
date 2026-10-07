@@ -83,11 +83,17 @@ function reducer(state: StudioState, action: StudioAction): StudioState {
 }
 
 function navClass(active: boolean) {
-  return `border-b py-2 text-[0.65rem] font-medium uppercase tracking-[0.15em] transition ${
+  return `px-4 py-2.5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] transition ${
     active
-      ? "border-white text-white"
-      : "border-transparent text-white/42 hover:text-white/78"
+      ? "bg-white text-black"
+      : "bg-[#09090d] text-white/42 hover:bg-white/[0.055] hover:text-white/80"
   }`;
+}
+
+function productModeLabel(mode: PublishedArtwork["arMode"]) {
+  if (mode === "transparent_motion") return "Transparent motion";
+  if (mode === "spatial_layers") return "Layered AR";
+  return "Animated artwork";
 }
 
 function ProductCard({
@@ -107,7 +113,13 @@ function ProductCard({
           className="h-full w-full object-cover opacity-80 transition duration-700 group-hover:scale-[1.035] group-hover:opacity-100"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-        <span className="absolute left-3 top-3 border border-white/25 bg-black/45 px-2 py-1 text-[0.58rem] uppercase tracking-[0.16em] text-white/70">
+        <span
+          className={`absolute left-3 top-3 border px-2 py-1 text-[0.58rem] uppercase tracking-[0.16em] backdrop-blur-md ${
+            product.status === "published"
+              ? "border-emerald-200/20 bg-emerald-300/10 text-emerald-100/78"
+              : "border-white/16 bg-black/55 text-white/58"
+          }`}
+        >
           {product.status === "published" ? "Live" : "Draft"}
         </span>
       </div>
@@ -137,9 +149,11 @@ function ProductCard({
             ) : null}
           </div>
         </div>
-        <p className="mt-3 text-[0.62rem] uppercase tracking-[0.13em] text-white/24">
-          {product.status === "draft" ? "Ready to continue" : "QR ready"}
-        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-[0.58rem] uppercase tracking-[0.12em] text-white/26">
+          <span>{productModeLabel(product.arMode)}</span>
+          <span className="text-white/14">·</span>
+          <span>{product.status === "draft" ? "Ready to continue" : "QR opens AR"}</span>
+        </div>
       </div>
     </article>
   );
@@ -201,7 +215,7 @@ export function StudioApp({ view }: { view: StudioView }) {
       <div className="pointer-events-none fixed inset-0 z-[1] bg-black/66" />
 
       <div className="relative z-10 mx-auto min-h-screen w-full max-w-[94rem] px-5 py-5 sm:px-8 lg:px-12">
-        <header className="flex flex-wrap items-center justify-between gap-5 border-b border-white/18 py-3">
+        <header className="sticky top-3 z-30 flex flex-wrap items-center justify-between gap-4 border border-white/10 bg-[#07070a]/82 p-3 shadow-[0_18px_60px_rgba(0,0,0,0.3)] backdrop-blur-xl">
           <div className="flex items-center gap-2">
             <Link href="/" className="flex size-9 items-center justify-center border border-white/15 text-white/52 transition hover:border-white/40 hover:text-white" aria-label="Home">
               <ArrowLeft className="size-4" />
@@ -212,7 +226,7 @@ export function StudioApp({ view }: { view: StudioView }) {
             </Link>
           </div>
 
-          <nav className="order-3 flex w-full items-center justify-center gap-6 sm:order-none sm:w-auto">
+          <nav className="order-3 flex w-full items-center justify-center gap-px border border-white/10 bg-white/10 p-px sm:order-none sm:w-auto">
             <Link href="/studio" className={navClass(view === "overview")}>OVERVIEW</Link>
             <Link href="/studio/products" className={navClass(view === "products")}>PRODUCTS</Link>
           </nav>

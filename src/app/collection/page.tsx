@@ -29,7 +29,7 @@ export default async function CollectionPage() {
               Works you <span className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text italic text-transparent">discovered.</span>
             </h1>
             <p className="mt-6 max-w-2xl text-sm leading-6 text-white/38">
-              Scan a published work to save it here automatically. Remove anything you no longer want to keep.
+              Open a published work in AR and point the camera at the physical artwork. It appears here only after recognition succeeds; remove anything you no longer want to keep.
             </p>
           </div>
         </div>

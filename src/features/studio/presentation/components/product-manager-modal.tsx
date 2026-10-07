@@ -354,6 +354,12 @@ export function ProductManagerModal({
 
           {product.status === "published" && publicPath ? (
             <div className="pt-6">
+              <div className="mb-5 border border-cyan-200/10 bg-cyan-200/[0.035] p-4">
+                <p className="text-[0.6rem] uppercase tracking-[0.16em] text-cyan-100/48">How distribution works</p>
+                <p className="mt-2 text-xs leading-5 text-white/42">
+                  The QR opens the AR camera directly. The public artwork link is view-only; the product enters a visitor’s Collection only after target recognition succeeds.
+                </p>
+              </div>
               {qrDataUrl ? (
                 <div className="mx-auto max-w-[14rem] border border-white/12 bg-white p-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -369,9 +375,12 @@ export function ProductManagerModal({
                 </div>
               )}
 
-              <p className="mt-5 break-all border-y border-white/10 py-3 text-xs leading-5 text-white/38">
-                {publicPath}
-              </p>
+              <div className="mt-5 border-y border-white/10 py-3">
+                <p className="text-[0.55rem] uppercase tracking-[0.15em] text-white/24">Public artwork link · view only</p>
+                <p className="mt-1 break-all text-xs leading-5 text-white/42">{publicPath}</p>
+                <p className="mt-3 text-[0.55rem] uppercase tracking-[0.15em] text-violet-100/38">QR destination · AR camera</p>
+                <p className="mt-1 break-all text-xs leading-5 text-white/42">{arPath}</p>
+              </div>
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 <Button
                   type="button"

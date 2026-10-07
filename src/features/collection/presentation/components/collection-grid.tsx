@@ -155,7 +155,7 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
 
                 <div className="mt-4 grid grid-cols-[1fr_auto] gap-5 border-t border-white/12 pt-3">
                   <div>
-                    <p className="text-[0.62rem] uppercase tracking-[0.15em] text-cyan-100/55">Collected</p>
+                    <p className="text-[0.62rem] uppercase tracking-[0.15em] text-cyan-100/55">Recognized in AR</p>
                     <h2 className="mt-2 font-serif text-2xl leading-none text-white">{artwork.title}</h2>
                     <p className="mt-2 text-xs uppercase tracking-[0.12em] text-white/35">{artwork.artistName}</p>
                   </div>
@@ -186,7 +186,7 @@ export function CollectionGrid({ artworks }: CollectionGridProps) {
           </div>
           <h2 className="mt-6 font-serif text-4xl tracking-[-0.035em]">Nothing collected yet.</h2>
           <p className="mt-3 max-w-md text-sm leading-6 text-white/38">
-            Scan and view a published artwork. Everie will add it here automatically.
+            Open a published work in AR and point the camera at the artwork. Everie adds it here only when the target is actually recognized.
           </p>
         </section>
       )}
