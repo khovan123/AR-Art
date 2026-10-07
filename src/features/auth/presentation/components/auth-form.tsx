@@ -53,10 +53,6 @@ function clearAuthHash() {
   );
 }
 
-function getAppUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
-}
-
 export function AuthForm({ nextPath }: AuthFormProps) {
   const router = useRouter();
   const redirectPath = sanitizeNextPath(nextPath);
@@ -183,7 +179,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
 
     try {
       const supabase = getSupabaseBrowserClient();
-      const emailRedirectTo = buildAuthRedirectUrl(getAppUrl(), redirectPath);
+      const emailRedirectTo = buildAuthRedirectUrl(window.location.origin, redirectPath);
       const { error } = await supabase.auth.resend({
         type: "signup",
         email,
@@ -227,7 +223,7 @@ export function AuthForm({ nextPath }: AuthFormProps) {
         return;
       }
 
-      const emailRedirectTo = buildAuthRedirectUrl(getAppUrl(), redirectPath);
+      const emailRedirectTo = buildAuthRedirectUrl(window.location.origin, redirectPath);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,

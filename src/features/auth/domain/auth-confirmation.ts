@@ -50,8 +50,8 @@ export function parseAuthCallbackHash(hash: string): AuthCallbackState {
   return { kind: "none" };
 }
 
-export function buildAuthRedirectUrl(appUrl: string, nextPath?: string) {
-  const origin = appUrl.replace(/\/+$/, "");
+export function buildAuthRedirectUrl(requestOrigin: string, nextPath?: string) {
+  const origin = requestOrigin.replace(/\/+$/, "");
   const safeNext = sanitizeNextPath(nextPath);
 
   return `${origin}/login?next=${encodeURIComponent(safeNext)}`;

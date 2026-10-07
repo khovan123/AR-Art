@@ -44,9 +44,9 @@ test("rejects unsafe next paths", () => {
   assert.equal(sanitizeNextPath("/create"), "/create");
 });
 
-test("builds a stable production auth redirect", () => {
+test("builds an auth redirect from the supplied request origin", () => {
   assert.equal(
-    buildAuthRedirectUrl("https://art.fogewise.io.vn/", "/create"),
-    "https://art.fogewise.io.vn/login?next=%2Fcreate",
+    buildAuthRedirectUrl("https://request-origin.example/", "/create"),
+    "https://request-origin.example/login?next=%2Fcreate",
   );
 });
