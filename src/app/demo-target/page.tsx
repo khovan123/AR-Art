@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
-import { Button } from "@/components/atoms/button";
+import { BackLink } from "@/components/atoms/back-link";
+import { EverieBrand } from "@/components/atoms/everie-brand";
 import { arConfig } from "@/config/ar";
 
 export default function DemoTargetPage() {
@@ -9,13 +9,10 @@ export default function DemoTargetPage() {
     <main className="relative min-h-screen overflow-hidden bg-[#050507] px-5 py-6 text-white sm:px-8">
       <div className="pointer-events-none absolute right-[12%] top-20 size-72 rounded-full bg-violet-700/7 blur-[120px]" />
       <div className="relative mx-auto w-full max-w-4xl">
-        <div className="flex items-center justify-between gap-4 border-b border-white/12 pb-5">
-          <Link href="/">
-            <Button variant="outline" className="rounded-none border-white/15 bg-transparent text-white/55 hover:border-white/40 hover:bg-transparent hover:text-white">
-              <ArrowLeft className="size-4" aria-hidden="true" /> Home
-            </Button>
-          </Link>
-          <span className="text-[0.62rem] uppercase tracking-[0.18em] text-white/28">AR test target</span>
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 border-b border-white/12 pb-5">
+          <BackLink href="/" label="Home" className="justify-self-start" />
+          <EverieBrand />
+          <span className="justify-self-end text-[0.62rem] uppercase tracking-[0.18em] text-white/28">AR test target</span>
         </div>
 
         <section className="mx-auto mt-14 max-w-2xl">

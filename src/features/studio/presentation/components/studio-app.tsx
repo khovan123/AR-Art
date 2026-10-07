@@ -4,19 +4,19 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useReducer } from "react";
 import {
-  ArrowLeft,
   ArrowUpRight,
   Boxes,
   CircleDot,
   ImageIcon,
   LoaderCircle,
-  Orbit,
   Pencil,
   Plus,
   Sparkles,
 } from "lucide-react";
 
+import { BackLink } from "@/components/atoms/back-link";
 import { Button } from "@/components/atoms/button";
+import { EverieBrand } from "@/components/atoms/everie-brand";
 import type { PublishedArtwork } from "@/features/artwork/domain/artwork";
 import { getSupabaseBrowserClient } from "@/features/artwork/infrastructure/supabase/supabase-clients";
 import { CreatorSpatialScene } from "@/features/artwork/presentation/components/creator-spatial-scene";
@@ -83,10 +83,10 @@ function reducer(state: StudioState, action: StudioAction): StudioState {
 }
 
 function navClass(active: boolean) {
-  return `px-4 py-2.5 text-[0.62rem] font-semibold uppercase tracking-[0.14em] transition ${
+  return `group relative px-1 py-5 text-[0.62rem] font-semibold uppercase tracking-[0.15em] transition-colors duration-300 after:absolute after:inset-x-0 after:bottom-0 after:h-px after:origin-center after:bg-white after:transition-transform after:duration-300 ${
     active
-      ? "bg-white text-black"
-      : "bg-[#09090d] text-white/42 hover:bg-white/[0.055] hover:text-white/80"
+      ? "text-white after:scale-x-100"
+      : "text-white/34 after:scale-x-0 hover:text-white/72"
   }`;
 }
 
@@ -133,7 +133,7 @@ function ProductCard({
             <button
               type="button"
               onClick={onManage}
-              className="inline-flex h-9 items-center gap-2 border border-white/18 px-3 text-[0.62rem] uppercase tracking-[0.13em] text-white/50 transition hover:border-white/45 hover:text-white"
+              className="inline-flex h-9 items-center gap-2 border-b border-white/24 px-0 text-[0.62rem] uppercase tracking-[0.13em] text-white/50 transition-[border-color,color] duration-300 hover:border-white/60 hover:text-white"
             >
               <Pencil className="size-3.5" />
               Manage
@@ -141,7 +141,7 @@ function ProductCard({
             {product.status === "published" ? (
               <Link
                 href={`/art/${product.slug}`}
-                className="flex size-9 items-center justify-center border border-white/18 text-white/50 transition hover:border-white/45 hover:text-white"
+                className="flex size-9 items-center justify-center text-white/42 transition-colors duration-300 hover:text-white"
                 aria-label={`Open ${product.title}`}
               >
                 <ArrowUpRight className="size-4" />
@@ -214,35 +214,34 @@ export function StudioApp({ view }: { view: StudioView }) {
       <div className="pointer-events-none fixed inset-0 opacity-38"><CreatorSpatialScene /></div>
       <div className="pointer-events-none fixed inset-0 z-[1] bg-black/66" />
 
-      <div className="relative z-10 mx-auto min-h-screen w-full max-w-[94rem] px-5 py-5 sm:px-8 lg:px-12">
-        <header className="sticky top-3 z-30 flex flex-wrap items-center justify-between gap-4 border border-white/10 bg-[#07070a]/82 p-3 shadow-[0_18px_60px_rgba(0,0,0,0.3)] backdrop-blur-xl">
-          <div className="flex items-center gap-2">
-            <Link href="/" className="flex size-9 items-center justify-center border border-white/15 text-white/52 transition hover:border-white/40 hover:text-white" aria-label="Home">
-              <ArrowLeft className="size-4" />
-            </Link>
-            <Link href="/studio" className="hidden items-center gap-2 text-xs font-semibold tracking-[0.18em] text-white/75 sm:flex">
-              <Orbit className="size-4 text-white/45" />
-              EVERIE STUDIO
+      <div className="relative z-10 mx-auto min-h-screen w-full max-w-[94rem] px-5 sm:px-8 lg:px-12">
+        <header className="sticky top-0 z-30 border-b border-white/12 bg-[#050507]/88 backdrop-blur-xl">
+          <div className="grid min-h-16 grid-cols-[1fr_auto] items-center gap-x-5 sm:grid-cols-[1fr_auto_1fr]">
+            <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+              <BackLink href="/" className="shrink-0" />
+              <span className="hidden h-4 w-px bg-white/12 md:block" aria-hidden="true" />
+              <EverieBrand href="/studio" suffix="Studio" className="hidden opacity-90 md:inline-flex" />
+            </div>
+
+            <nav className="order-3 col-span-2 flex items-center justify-center gap-7 border-t border-white/8 sm:order-none sm:col-span-1 sm:border-t-0">
+              <Link href="/studio" scroll={false} className={navClass(view === "overview")}>OVERVIEW</Link>
+              <Link href="/studio/products" scroll={false} className={navClass(view === "products")}>PRODUCTS</Link>
+            </nav>
+
+            <Link
+              href="/create"
+              className="justify-self-end inline-flex items-center gap-2 border-b border-white/45 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.13em] text-white/72 transition-[border-color,color] duration-300 hover:border-white hover:text-white"
+            >
+              <Plus className="size-3.5" />
+              Add product
             </Link>
           </div>
-
-          <nav className="order-3 flex w-full items-center justify-center gap-px border border-white/10 bg-white/10 p-px sm:order-none sm:w-auto">
-            <Link href="/studio" className={navClass(view === "overview")}>OVERVIEW</Link>
-            <Link href="/studio/products" className={navClass(view === "products")}>PRODUCTS</Link>
-          </nav>
-
-          <Link href="/create">
-            <Button className="rounded-none bg-white px-5 text-black hover:bg-violet-100">
-              <Plus className="size-4" />
-              Add product
-            </Button>
-          </Link>
         </header>
 
         {state.phase !== "ready" ? (
           <section className="flex min-h-[70vh] items-center justify-center">
             {state.phase === "error" ? (
-              <div className="max-w-md border border-rose-300/20 bg-black/65 p-6 text-center">
+              <div className="max-w-md border-t border-rose-300/30 py-6 text-center">
                 <p className="text-sm text-rose-200">{state.error}</p>
                 <Button onClick={() => void load()} className="mt-4 rounded-none bg-white text-black">Try again</Button>
               </div>
@@ -256,7 +255,7 @@ export function StudioApp({ view }: { view: StudioView }) {
         ) : (
           <>
             {view === "overview" && (
-              <section className="pb-16 pt-16 sm:pt-24">
+              <section className="studio-view-enter pb-16 pt-16 sm:pt-24">
                 <div className="grid items-end gap-10 lg:grid-cols-[1.1fr_0.9fr]">
                   <div>
                     <p className="flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.24em] text-violet-200/45">
@@ -291,7 +290,7 @@ export function StudioApp({ view }: { view: StudioView }) {
                       <p className="text-xs uppercase tracking-[0.18em] text-white/30">Recent products</p>
                       <h2 className="mt-1 text-xl font-medium">Products</h2>
                     </div>
-                    <Link href="/studio/products" className="text-xs text-white/50 hover:text-white">View all →</Link>
+                    <Link href="/studio/products" scroll={false} className="text-xs text-white/50 transition-colors duration-300 hover:text-white">View all →</Link>
                   </div>
                   <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {state.products.slice(0, 4).map((product) => (
@@ -312,16 +311,14 @@ export function StudioApp({ view }: { view: StudioView }) {
             )}
 
             {view === "products" && (
-              <section className="pb-16 pt-14 sm:pt-20">
+              <section className="studio-view-enter pb-16 pt-14 sm:pt-20">
                 <div className="flex flex-wrap items-end justify-between gap-5">
                   <div>
                     <p className="text-xs uppercase tracking-[0.24em] text-cyan-200/45">Your products</p>
                     <h1 className="mt-4 font-serif text-6xl font-normal leading-none tracking-[-0.05em] sm:text-8xl">Products</h1>
                   </div>
-                  <Link href="/create">
-                    <Button className="rounded-none bg-white px-5 text-black hover:bg-violet-100">
-                      <Plus className="size-4" /> New product
-                    </Button>
+                  <Link href="/create" className="inline-flex items-center gap-2 border-b border-white/45 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.13em] text-white/72 transition-[border-color,color] duration-300 hover:border-white hover:text-white">
+                    <Plus className="size-3.5" /> New product
                   </Link>
                 </div>
                 <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

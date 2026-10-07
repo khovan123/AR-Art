@@ -6,7 +6,6 @@ import { useReducer } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import QRCode from "qrcode";
 import {
-  ArrowLeft,
   Box,
   Check,
   Copy,
@@ -20,7 +19,9 @@ import {
   Video,
 } from "lucide-react";
 
+import { BackLink } from "@/components/atoms/back-link";
 import { Button } from "@/components/atoms/button";
+import { EverieBrand } from "@/components/atoms/everie-brand";
 import { Input } from "@/components/atoms/input";
 import type { ArtworkArMode, ArtworkUploadSession } from "@/features/artwork/domain/artwork";
 import {
@@ -373,10 +374,8 @@ export function ArtworkCreateForm() {
       <main className="relative min-h-screen overflow-hidden bg-[#050507] text-white">
         <div className="pointer-events-none absolute right-[8%] top-24 size-80 rounded-full bg-violet-700/7 blur-[130px]" />
         <header className="relative mx-auto flex w-full max-w-[94rem] items-center justify-between border-b border-white/12 px-5 py-5 sm:px-8 lg:px-12">
-          <Link href="/studio/products" className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-white/50 transition hover:text-white">
-            <ArrowLeft className="size-3.5" /> Products
-          </Link>
-          <span className="text-lg font-semibold tracking-[-0.045em]">EVERIE</span>
+          <BackLink href="/studio/products" label="Products" />
+          <EverieBrand />
           <span className="text-[0.62rem] uppercase tracking-[0.18em] text-cyan-100/45">
             {workflow.result.status === "published" ? "Published" : "Draft saved"}
           </span>
@@ -436,7 +435,7 @@ export function ArtworkCreateForm() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={workflow.result.qrDataUrl} alt="QR code for the published AR artwork" className="aspect-square w-full bg-white p-3" />
                 <div className="mt-5 flex items-center justify-between border-t border-white/15 pt-4 text-[0.62rem] uppercase tracking-[0.16em] text-white/45">
-                  <span>Everie</span><span>Scan to enter AR</span>
+                  <EverieBrand href={null} className="opacity-70" textClassName="text-[0.58rem]" iconClassName="size-3.5" /><span>Scan to enter AR</span>
                 </div>
               </div>
             ) : (
@@ -456,10 +455,8 @@ export function ArtworkCreateForm() {
     <main className="relative min-h-screen overflow-hidden bg-[#050507] text-white">
       <div className="pointer-events-none absolute right-[12%] top-28 size-80 rounded-full bg-violet-700/7 blur-[130px]" />
       <header className="relative mx-auto flex w-full max-w-[94rem] items-center justify-between border-b border-white/12 px-5 py-5 sm:px-8 lg:px-12">
-        <Link href="/studio/products" className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-white/50 transition hover:text-white">
-          <ArrowLeft className="size-3.5" /> Studio
-        </Link>
-        <span className="text-lg font-semibold tracking-[-0.045em]">EVERIE</span>
+        <BackLink href="/studio/products" label="Studio" />
+        <EverieBrand />
         <span className="text-[0.62rem] uppercase tracking-[0.18em] text-white/28">New work</span>
       </header>
 

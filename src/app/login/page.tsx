@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight, ScanLine } from "lucide-react";
+import { ArrowUpRight, ScanLine } from "lucide-react";
 
+import { BackLink } from "@/components/atoms/back-link";
+import { EverieBrand } from "@/components/atoms/everie-brand";
 import { ImmersiveGalleryShowcase } from "@/components/organisms/immersive-gallery-showcase";
 import { AuthForm } from "@/features/auth/presentation/components/auth-form";
 
@@ -21,7 +23,7 @@ export default async function LoginPage({
           <ImmersiveGalleryShowcase />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_35%,transparent_18%,rgba(3,3,5,0.3)_56%,rgba(3,3,5,0.94)_100%)]" />
           <div className="auth-home-enter absolute inset-x-0 top-0 flex items-center justify-between p-8 text-[0.62rem] uppercase tracking-[0.2em] text-white/38">
-            <Link href="/" className="text-lg font-semibold tracking-[-0.04em] text-white">EVERIE</Link>
+            <EverieBrand />
             <span>Personal archive</span>
           </div>
           <div className="absolute inset-x-0 bottom-0 p-10 xl:p-14">
@@ -37,9 +39,7 @@ export default async function LoginPage({
 
         <section className="relative flex min-h-screen flex-col px-5 py-6 sm:px-10 lg:px-14 xl:px-20">
           <div className="auth-home-enter relative flex items-center justify-between border-b border-white/12 pb-5">
-            <Link href="/" className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-white/50 transition hover:text-white">
-              <ArrowLeft className="size-3.5" /> Back to gallery
-            </Link>
+            <BackLink href="/" />
             <span className="text-[0.6rem] uppercase tracking-[0.18em] text-white/28">Everie account</span>
           </div>
 

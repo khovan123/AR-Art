@@ -10,6 +10,7 @@ import {
   Video,
 } from "lucide-react";
 
+import { EverieBrand } from "@/components/atoms/everie-brand";
 import { ImmersiveGalleryShowcase } from "@/components/organisms/immersive-gallery-showcase";
 import { SiteHeader } from "@/components/organisms/site-header";
 import { createArtworkServices } from "@/features/artwork/infrastructure/supabase/artwork-services";
@@ -431,7 +432,7 @@ export async function MarketingPage() {
       <footer className="border-t border-white/10 bg-[#050507]">
         <div className="mx-auto grid w-full max-w-[94rem] gap-8 px-5 py-10 sm:px-8 md:grid-cols-[1.5fr_1fr_1fr] lg:px-12">
           <div>
-            <p className="text-lg font-semibold tracking-[-0.045em]">EVERIE</p>
+            <EverieBrand className="opacity-90" />
             <p className="mt-3 max-w-sm text-sm leading-6 text-white/34">
               Physical art with a browser-based layer for motion, depth and real-world discovery.
             </p>

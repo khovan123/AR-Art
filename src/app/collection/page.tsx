@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-
+import { BackLink } from "@/components/atoms/back-link";
+import { EverieBrand } from "@/components/atoms/everie-brand";
 import { createArtworkServices } from "@/features/artwork/infrastructure/supabase/artwork-services";
 import { CollectionGrid } from "@/features/collection/presentation/components/collection-grid";
 
@@ -14,10 +13,8 @@ export default async function CollectionPage() {
     <main className="relative min-h-screen overflow-hidden bg-[#050507] text-white">
       <div className="pointer-events-none absolute right-[8%] top-24 size-80 rounded-full bg-violet-700/7 blur-[130px]" />
       <header className="relative mx-auto flex w-full max-w-[94rem] items-center justify-between border-b border-white/12 px-5 py-5 sm:px-8 lg:px-12">
-        <Link href="/" className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-white/50 transition hover:text-white">
-          <ArrowLeft className="size-3.5" /> Gallery
-        </Link>
-        <Link href="/" className="text-lg font-semibold tracking-[-0.04em]">EVERIE</Link>
+        <BackLink href="/" />
+        <EverieBrand />
         <span className="text-[0.62rem] uppercase tracking-[0.18em] text-white/28">Personal collection</span>
       </header>
 

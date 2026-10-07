@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, Camera, Sparkles } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import { backNavigationClassName } from "@/components/atoms/back-link";
+import { EverieBrand } from "@/components/atoms/everie-brand";
 import { HistoryBackButton } from "@/components/molecules/history-back-button";
 import { createArtworkServices } from "@/features/artwork/infrastructure/supabase/artwork-services";
 import { EditArtworkButton } from "@/features/artwork/presentation/components/edit-artwork-button";
@@ -27,12 +29,12 @@ export default async function ArtworkPage({
         <HistoryBackButton
           fallbackHref="/"
           variant="ghost"
-          className="h-auto rounded-none p-0 text-xs uppercase tracking-[0.14em] text-white/50 hover:bg-transparent hover:text-white"
+          className={`${backNavigationClassName} h-auto rounded-none p-0 hover:bg-transparent`}
         >
-          <ArrowLeft className="size-3.5" aria-hidden="true" />
+          <ArrowLeft className="size-3.5 transition-transform duration-300 group-hover:-translate-x-0.5" aria-hidden="true" />
           Gallery
         </HistoryBackButton>
-        <Link href="/" className="text-lg font-semibold tracking-[-0.045em]">EVERIE</Link>
+        <EverieBrand />
         <span className="text-[0.62rem] uppercase tracking-[0.18em] text-white/28">Digital work</span>
       </header>
 
